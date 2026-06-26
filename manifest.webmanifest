@@ -1,0 +1,17 @@
+{
+  "name": "המעבדה",
+  "short_name": "המעבדה",
+  "lang": "he",
+  "dir": "rtl",
+  "start_url": ".",
+  "scope": ".",
+  "display": "standalone",
+  "background_color": "#15111e",
+  "theme_color": "#15111e",
+  "description": "אפליקציית לימוד אינטראקטיבית בעברית — כימיה, פיזיקה ומתמטיקה.",
+  "icons": [
+    { "src": "icon.svg", "type": "image/svg+xml", "sizes": "any", "purpose": "any" },
+    { "src": "icon-192.png", "type": "image/png", "sizes": "192x192", "purpose": "any maskable" },
+    { "src": "icon-512.png", "type": "image/png", "sizes": "512x512", "purpose": "any maskable" }
+  ]
+}
