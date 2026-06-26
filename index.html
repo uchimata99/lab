@@ -166,17 +166,17 @@
     padding:16px 18px;margin:6px 0 14px;color:var(--read);font-size:17px;line-height:1.7;display:none}
   .cat-explain.show{display:block;animation:fade .3s ease}
   .cat-explain b{color:var(--ink)}
-  .ptable-wrap{width:100%;overflow:visible;padding-bottom:6px}
-  .ptable{display:grid;grid-template-columns:repeat(18,1fr);gap:clamp(2px,.5vw,5px);margin:0 auto}
+  .ptable-wrap{width:100vw;position:relative;left:50%;right:50%;margin-left:-50vw;margin-right:-50vw;overflow:visible;padding:0 12px 6px}
+  .ptable{display:grid;direction:ltr;grid-template-columns:repeat(18,minmax(0,1fr));gap:clamp(3px,.55vw,6px);margin:0 auto;width:100%;max-width:1160px}
   .pt{aspect-ratio:1;border:1px solid var(--line);border-radius:clamp(4px,1vw,9px);background:var(--bg2);position:relative;
     display:flex;flex-direction:column;align-items:center;justify-content:center;cursor:pointer;transition:.16s;
     border-bottom:clamp(2px,.6vw,4px) solid var(--cat,var(--line))}
   .pt:hover{transform:scale(1.12);box-shadow:0 5px 16px rgba(0,0,0,.4);z-index:3}
   .pt.dimmed{opacity:.22}
   .pt.lit{box-shadow:0 0 0 2px var(--cat),0 4px 14px rgba(0,0,0,.4)}
-  .pt .z{font-family:'IBM Plex Mono';font-size:clamp(5px,1.1vw,10px);color:#ff9aa6;opacity:.9;position:absolute;top:2px;right:3px;line-height:1}
-  .pt .nn{font-family:'IBM Plex Mono';font-size:clamp(4px,.95vw,9px);color:#9fb2cc;opacity:.75;position:absolute;bottom:2px;right:3px;line-height:1}
-  .pt .sym{font-family:'IBM Plex Mono';font-weight:600;font-size:clamp(9px,2.4vw,22px);color:var(--ink);line-height:1}
+  .pt .z{font-family:'IBM Plex Mono';font-size:clamp(7px,1.25vw,13px);color:#ff9aa6;opacity:.9;position:absolute;top:2px;right:4px;line-height:1}
+  .pt .nn{font-family:'IBM Plex Mono';font-size:clamp(6px,1.05vw,12px);color:#9fb2cc;opacity:.75;position:absolute;bottom:2px;right:4px;line-height:1}
+  .pt .sym{font-family:'IBM Plex Mono';font-weight:600;font-size:clamp(11px,2.5vw,27px);color:var(--ink);line-height:1}
   .pt-key{display:flex;justify-content:center;gap:16px;flex-wrap:wrap;margin:10px 2px 0;font-size:13px;color:var(--muted)}
   .pt-key b{font-family:'IBM Plex Mono'}
   .pt-key .pk-p{color:#ff9aa6} .pt-key .pk-n{color:#9fb2cc}
@@ -343,8 +343,8 @@
   .feedback{font-size:17px}
   .qcount{font-size:15px}
   .numpad-input input{font-size:24px}
-  .pt .sym{font-size:clamp(10px,2.7vw,24px)}
-  .pt .z{font-size:clamp(6px,1.25vw,11px)}
+  .pt .sym{font-size:clamp(13px,2.8vw,30px)}
+  .pt .z{font-size:clamp(8px,1.4vw,14px)}
   .done-card h3{font-size:25px}
   .done-card p{font-size:18px}
   .hitem .h-title{font-size:18px}
@@ -677,7 +677,8 @@ const CURRICULUM=[
       {h:'קטן שאי אפשר לתפוס',t:'אטום כל כך קטן שאי אפשר לראות אותו אפילו במיקרוסקופ של בית הספר. כמה קטן? בתוך נקודה אחת בקצה העיפרון מסתתרים יותר אטומים מכל האנשים שחיים על כדור הארץ. ואם היינו מגדילים אטום אחד לגודל של תפוח, תפוח רגיל היה גדל אז לגודל של כדור הארץ כולו. זה קטן מעבר לכל דמיון — ובכל זאת ממנו עשוי הכול.'},
       {h:'מעט סוגים, אינסוף שילובים',t:'מפתיע, אבל אין הרבה סוגים של אטומים — בערך מאה בלבד. זה דומה לאלפבית: עם עשרים ושתיים אותיות אפשר לכתוב אינסוף מילים וסיפורים. כך גם כאן: ממאה סוגי אטומים מצטרפים כל החומרים שבעולם — המים, הזהב, הסוכר והאוויר. אותם אטומים, מסודרים אחרת, נותנים חומרים שונים לחלוטין.'},
       {h:'שלושה חלקיקים בפנים',t:'אם נוכל לפתוח אטום ולהציץ פנימה, נגלה שגם הוא בנוי מחלקיקים קטנים עוד יותר, משלושה סוגים: פרוטונים, נייטרונים ואלקטרונים. כל אחד יושב במקום אחר וממלא תפקיד אחר, ממש כמו שחקנים שונים באותה קבוצה. בשיעורים הקרובים נכיר כל אחד מהם מקרוב.'},
-      {h:'למה כדאי להבין את זה',t:'כשנבין איך בנוי אטום, ייפתח לנו סוד גדול על העולם: למה הזהב מבריק ושונה מהברזל, למה דווקא את החמצן אנחנו נושמים, ולמה כל חומר מתנהג כמו שהוא מתנהג. כל הכימיה מתחילה כאן, מהלבנה הקטנה ביותר — ואת עומדת בדיוק בנקודת ההתחלה.'}
+      {h:'למה כדאי להבין את זה',t:'כשנבין איך בנוי אטום, ייפתח לנו סוד גדול על העולם: למה הזהב מבריק ושונה מהברזל, למה דווקא את החמצן אנחנו נושמים, ולמה כל חומר מתנהג כמו שהוא מתנהג. כל הכימיה מתחילה כאן, מהלבנה הקטנה ביותר — ואת עומדת בדיוק בנקודת ההתחלה.'},
+      {h:'מפת היסודות — הטבלה המחזורית',t:'את כל סוגי האטומים סידרו המדענים בטבלה אחת גדולה ומסודרת — הטבלה המחזורית. כל משבצת בה היא יסוד אחד, ובתוכה כתוב סמלו (אות או שתיים, כמו H למימן או O לחמצן) ומספר הפרוטונים שלו. היסודות מסודרים לפי מספר הפרוטונים: המימן, עם פרוטון אחד, פותח את הטבלה בפינה השמאלית-העליונה, ומשם המספר גדל משבצת אחר משבצת. גם השורות וגם הטורים מספרים סיפור — יסודות שמתנהגים דומה יושבים יחד באותו טור. ממש עכשיו, בטבלה שלמטה, תכירי אותה בעצמך.'}
     ],interactive:{kind:'find',instruct:'בואי נפגוש את האטום הראשון. בטבלה שלמטה, לחצי על המימן — היסוד הקל והפשוט ביותר, שמסומן באות H ויש לו פרוטון אחד בלבד.',match:{z:1},reveal:'זה מימן! האטום הקטן והקל ביותר ביקום. ממנו עשויים השמש והכוכבים.'},questions:[
       {type:'mc',q:'ממה עשוי כל דבר שמסביבנו — אוויר, מים, וגם אנחנו?',opts:['מאטומים','מצבעים','ממים בלבד','מאוויר בלבד'],a:0,ex:'כל החומר בעולם בנוי מחלקיקים זעירים שנקראים אטומים.'},
       {type:'mc',q:'בערך כמה סוגים שונים של אטומים קיימים?',opts:['בערך עשרה','בערך מאה','בערך מיליון','אינסוף'],a:1,ex:'יש בערך מאה סוגי אטומים, ומהם מורכבים כל החומרים.'},
@@ -694,7 +695,7 @@ const CURRICULUM=[
       {type:'mc',q:'מה נמצא במרכז האטום?',opts:['הגרעין','אלקטרון בודד','חלל ריק','אוויר'],a:0,ex:'במרכז האטום יש גרעין צפוף, ובו הפרוטונים והנייטרונים.'},
       {type:'mc',q:'מה המטען של הפרוטון?',opts:['חיובי (+)','שלילי (−)','אין מטען','משתנה'],a:0,ex:'לפרוטון מטען חיובי, שמסומן בפלוס.'},
       {type:'mc',q:'מה המטען של הנייטרון?',opts:['חיובי','שלילי','אין מטען','תלוי ביסוד'],a:2,ex:'לנייטרון אין מטען כלל — לא חיובי ולא שלילי.'},
-      {type:'num',q:'אם בגרעין יש 8 פרוטונים, כמה פרוטונים בדיוק יש שם?',a:8,unit:'פרוטונים',ex:'מספר הפרוטונים בגרעין הוא בדיוק 8.'}
+      {type:'num',q:'בגרעין יש 6 פרוטונים ו־6 נייטרונים. כמה חלקיקים יש בגרעין בסך הכול?',a:12,unit:'חלקיקים',ex:'בגרעין יושבים פרוטונים ונייטרונים יחד: 6 ועוד 6 הם 12 חלקיקים.'}
     ]},
     {title:'האלקטרונים סביב הגרעין',read:[
       {h:'דוהרים מסביב',t:'במרחב הריק שמקיף את הגרעין דוהרים האלקטרונים. הם חלקיקים זעירים וקלילים מאוד — קלים פי אלפיים מפרוטון — והם נעים מהר בטירוף סביב הגרעין, בערך כמו כוכבי לכת שמקיפים את השמש בלי הפסקה.'},
