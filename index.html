@@ -483,6 +483,34 @@
   }
   @media(max-width:420px){.stations{grid-template-columns:1fr}}
   @media(prefers-reduced-motion:reduce){*{animation-duration:.01ms!important;transition-duration:.05ms!important}}
+
+  /* ===== מצב סקירת הורה ===== */
+  .p-tools{display:flex;gap:10px;flex-wrap:wrap;margin:0 0 6px}
+  .pr-banner{background:color-mix(in srgb,var(--matter) 13%,var(--surface));border:1px solid var(--line);border-radius:14px;padding:12px 16px;color:var(--read);font-size:15px;line-height:1.6;margin-bottom:14px}
+  .pr-banner b{color:var(--ink)}
+  .pr-bar{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-bottom:12px}
+  .pr-bar select{flex:1;min-width:220px;background:var(--surface);color:var(--ink);border:1px solid var(--line);border-radius:12px;padding:11px 12px;font-family:'Heebo';font-size:15px}
+  .pr-tabs{display:flex;gap:8px;margin-bottom:14px;flex-wrap:wrap}
+  .pr-tab{border:1px solid var(--line);background:var(--surface);color:var(--muted);border-radius:999px;padding:8px 18px;cursor:pointer;font-weight:600;font-size:14px;transition:.15s}
+  .pr-tab.on{background:var(--matter);color:#06122a;border-color:var(--matter)}
+  .pr-tools-fab{position:fixed;bottom:14px;left:50%;transform:translateX(-50%);display:flex;gap:8px;flex-wrap:wrap;justify-content:center;z-index:60;max-width:96vw}
+  .pr-fab{border:1px solid var(--line);background:var(--surface2);color:var(--ink);border-radius:999px;padding:11px 16px;cursor:pointer;font-family:'Heebo';font-weight:700;font-size:14px;box-shadow:0 6px 18px rgba(0,0,0,.4)}
+  .pr-fab.on{background:var(--bad);color:#2a0a0f;border-color:var(--bad)}
+  .pr-notes-panel{border:1px solid var(--line);background:var(--bg2);border-radius:16px;padding:16px;margin-top:14px;margin-bottom:70px}
+  .pr-note-item{border:1px solid var(--line);border-radius:12px;padding:10px 12px;margin-bottom:8px;background:var(--surface)}
+  .pr-note-loc{color:var(--faint);font-size:12.5px;margin-bottom:4px}
+  .pr-note-x{float:left;cursor:pointer;color:var(--bad);font-weight:700;margin-right:8px}
+  .pr-export{width:100%;min-height:130px;background:var(--surface);color:var(--ink);border:1px solid var(--line);border-radius:12px;padding:10px;font-family:'IBM Plex Mono';font-size:12.5px;direction:rtl;margin-top:10px;resize:vertical}
+  .pr-pen{position:fixed;inset:0;z-index:50;touch-action:none;display:none;pointer-events:none}
+  .pr-pen.on{display:block;pointer-events:auto;cursor:crosshair}
+  .pr-q{border:1px solid var(--line);border-radius:14px;padding:14px 16px;margin-bottom:12px;background:var(--surface)}
+  .pr-q-h{color:var(--faint);font-size:12.5px;margin-bottom:4px}
+  .pr-q-t{font-weight:600;margin-bottom:10px;font-size:17px}
+  .pr-opts{display:flex;flex-direction:column;gap:6px}
+  .pr-opt{border:1px solid var(--line);border-radius:10px;padding:8px 12px;color:var(--muted)}
+  .pr-opt.correct{border-color:var(--good);color:var(--good);font-weight:700}
+  .pr-ans{color:var(--good);font-weight:700;margin-top:4px}
+  .pr-ex{color:var(--read);font-size:14px;margin-top:8px;line-height:1.6}
 </style>
 </head>
 <body>
@@ -641,6 +669,30 @@
       <div><div class="crumb">מבט-על</div><h2>מסך הורה</h2></div>
     </div>
     <div id="parentBody"></div>
+  </section>
+
+  <!-- ============ PARENT REVIEW (להורה — לא משפיע על ההתקדמות) ============ -->
+  <section class="view" id="preview" style="--accent:var(--matter)">
+    <div class="module-head">
+      <div class="badge">✎</div>
+      <div><div class="crumb">להורה בלבד</div><h2>סקירת הורה</h2></div>
+    </div>
+    <div class="pr-banner">מצב סקירה — אפשר לעבור על כל השיעורים, לכתוב הערות ולסמן עם העט. <b>שום דבר כאן לא משפיע על ההתקדמות של הילדה.</b></div>
+    <div class="pr-bar">
+      <button class="btn btn-ghost" onclick="prNavLesson(-1)">‹ הקודם</button>
+      <select id="prLessonSel" onchange="prSelectLesson(+this.value)"></select>
+      <button class="btn btn-ghost" onclick="prNavLesson(1)">הבא ›</button>
+    </div>
+    <div class="pr-tabs" id="prTabs"></div>
+    <div id="prBody"></div>
+    <div class="pr-notes-panel" id="prNotesPanel" style="display:none"></div>
+    <div class="pr-tools-fab">
+      <button class="pr-fab" onclick="prAddNote()">✎ הערה כאן</button>
+      <button class="pr-fab" id="prPenBtn" onclick="prPenToggle()">🖊️ עט</button>
+      <button class="pr-fab" onclick="prPenClear()">🧽 נקי</button>
+      <button class="pr-fab" onclick="prToggleNotes()">🗒️ הערות (<span id="prNoteCount">0</span>)</button>
+    </div>
+    <canvas class="pr-pen" id="prPen"></canvas>
   </section>
 </div>
 
@@ -1664,8 +1716,139 @@ function renderParent(){
   const h=store.get('history',[]).slice(0,5);
   const recent=h.length?'<div class="section-label">פעילות אחרונה</div>'+h.map(e=>`<div class="p-recent"><div>${e.title}</div><div class="p-recent-meta">${new Date(e.date).toLocaleDateString('he-IL',{day:'2-digit',month:'2-digit'})} · ${e.score}/${e.total}</div></div>`).join(''):'';
   const mapSec='<div class="section-label">מפת הנושאים — מה הושלם ומה הבא</div><div id="lessonMap"></div>';
-  el.innerHTML=overview+mapSec+bysub+ach+recent;
+  const tools='<div class="section-label">כלי הורה</div><div class="p-tools">'
+    +'<button class="btn btn-primary" onclick="openParentReview()">✎ מצב סקירת הורה</button>'
+    +'<button class="btn btn-ghost" onclick="resetProgress()">↺ אפס התקדמות (חזרה לשיעור הראשון)</button></div>';
+  el.innerHTML=overview+tools+mapSec+bysub+ach+recent;
   renderLessonMap();
+}
+
+/* ============ PARENT REVIEW (מבודד מההתקדמות) ============ */
+const PR_SUBJ={chemistry:'כימיה',physics:'פיזיקה',math:'מתמטיקה'};
+let PR={i:0,view:'read',page:0};
+function openParentReview(){
+  document.getElementById('pracBody').innerHTML='';      /* מנקה כדי למנוע התנגשות מזהים */
+  PR={i:0,view:'read',page:0};prPenSetOff();
+  go('preview');prBuildSelector();renderParentReview();
+}
+function prBuildSelector(){
+  const sel=document.getElementById('prLessonSel');
+  sel.innerHTML=LESSON_SEQ.map((s,i)=>`<option value="${i}">${PR_SUBJ[s.subject]} · ${s.topicTitle} · שיעור ${s.lessonIndex+1}: ${s.lesson.title}</option>`).join('');
+  sel.value=PR.i;
+}
+function prSelectLesson(i){PR.i=i;PR.view='read';PR.page=0;renderParentReview();}
+function prNavLesson(d){PR.i=Math.max(0,Math.min(LESSON_SEQ.length-1,PR.i+d));PR.view='read';PR.page=0;renderParentReview();}
+function prSetView(v){PR.view=v;if(v==='read')PR.page=0;renderParentReview();}
+function prReadNav(d){PR.page+=d;renderParentReview();}
+function prNoop(){}
+function prFindAns(m){if(m.z!=null)return 'לחיצה על היסוד מספר '+m.z+' ('+SYM[m.z-1]+')';if(m.cat)return 'לחיצה על יסוד ממשפחת '+(CATS[m.cat]?CATS[m.cat].name:m.cat);return 'לחיצה על היסוד הנכון';}
+function prQuestionsHTML(qs){
+  return (qs||[]).map((q,i)=>{
+    let body='';
+    if(q.type==='mc')body='<div class="pr-opts">'+q.opts.map((o,k)=>`<div class="pr-opt ${k===q.a?'correct':''}">${k===q.a?'✓ ':''}${o}</div>`).join('')+'</div>';
+    else if(q.type==='num')body=`<div class="pr-ans">תשובה: ${q.a} ${q.unit||''}</div>`;
+    else if(q.type==='find')body=`<div class="pr-ans">תשובה: ${prFindAns(q.match||{})}</div>`;
+    return `<div class="pr-q"><div class="pr-q-h">שאלה ${i+1} · ${q.type}</div><div class="pr-q-t">${q.q}</div>`
+      +(q.formula?`<div class="formula-box" style="margin:0 0 8px">${q.formula}</div>`:'')
+      +body+(q.ex?`<div class="pr-ex">${q.ex}</div>`:'')+`</div>`;
+  }).join('')||'<div class="p-none">אין שאלות בשיעור הזה.</div>';
+}
+function renderParentReview(){
+  const sel=document.getElementById('prLessonSel');if(sel)sel.value=PR.i;
+  const cfg=currentCfg(PR.i),hasInter=!!cfg.lesson.interactive;
+  const tabs=[['read','קריאה']];if(hasInter)tabs.push(['interactive','התנסות']);tabs.push(['questions','שאלות']);
+  document.getElementById('prTabs').innerHTML=tabs.map(t=>`<div class="pr-tab ${PR.view===t[0]?'on':''}" onclick="prSetView('${t[0]}')">${t[1]}</div>`).join('');
+  let html='';
+  if(PR.view==='read'){
+    const pages=cfg.lesson.read||[];if(PR.page>=pages.length)PR.page=0;
+    const p=pages[PR.page]||{h:'',t:''};
+    const box=p.box?`<div class="read"><div class="formula-box">${p.box}</div></div>`:'';
+    const dots=pages.map((_,k)=>`<span class="ldot ${k===PR.page?'on':''}"></span>`).join('');
+    html=`<div class="lpage"><div class="lp-step">📖 קריאה · דף ${PR.page+1} מתוך ${pages.length}</div><h3>${p.h}</h3><p>${p.t}</p>${box}</div>`
+      +`<div class="ldots">${dots}</div>`
+      +`<div class="qnav">${PR.page>0?'<button class="btn btn-ghost" onclick="prReadNav(-1)">‹ הקודם</button>':'<span></span>'}`
+      +`${PR.page<pages.length-1?'<button class="btn btn-primary" onclick="prReadNav(1)">הבא ›</button>':'<span></span>'}</div>`;
+  }else if(PR.view==='interactive'){
+    const inter=cfg.lesson.interactive;let inner=`<div class="inter-instruct">${inter.instruct}</div>`;
+    if(inter.kind==='find')inner+=ptableGrid('prNoop');
+    else if(inter.kind==='track')inner+=trackMarkup();
+    else if(inter.kind==='fraction')inner+=fractionMarkup(inter.parts);
+    else if(inter.kind==='balance')inner+=balanceMarkup(inter);
+    html=`<div class="inter-box">${inner}</div>`;
+  }else{
+    html=prQuestionsHTML(cfg.lesson.questions);
+  }
+  document.getElementById('prBody').innerHTML=html;
+  if(PR.view==='interactive'){
+    const inter=cfg.lesson.interactive;
+    if(inter.kind==='track')initInterTrack(null);
+    else if(inter.kind==='fraction')initInterFraction({target:-1});
+    else if(inter.kind==='balance')initInterBalance(Object.assign({},inter,{rhs:Number.NEGATIVE_INFINITY}));
+  }
+  prUpdateNoteCount();
+}
+/* ---- הערות הורה (מפתח נפרד: lab_pnotes) ---- */
+function getPNotes(){return store.get('pnotes',[]);}
+function setPNotes(n){store.set('pnotes',n);}
+function prLoc(){
+  const cfg=currentCfg(PR.i);
+  const where=PR.view==='read'?('קריאה · דף '+(PR.page+1)):(PR.view==='interactive'?'התנסות':'שאלות');
+  return PR_SUBJ[cfg.subject]+' · '+cfg.topicTitle+' · שיעור '+(cfg.lessonIndex+1)+' ('+cfg.lesson.title+') · '+where;
+}
+function prAddNote(){
+  const text=(prompt('מה לתקן כאן? כתבי הערה:\n\n'+prLoc())||'').trim();
+  if(!text)return;
+  const notes=getPNotes();
+  notes.push({id:'n'+Date.now()+Math.floor(Math.random()*1000),loc:prLoc(),text:text});
+  setPNotes(notes);prUpdateNoteCount();
+  const panel=document.getElementById('prNotesPanel');
+  if(panel.style.display!=='none')prRenderNotesPanel();
+  else{panel.style.display='block';prRenderNotesPanel();}
+}
+function prUpdateNoteCount(){const c=document.getElementById('prNoteCount');if(c)c.textContent=getPNotes().length;}
+function prToggleNotes(){const p=document.getElementById('prNotesPanel');const show=p.style.display==='none';p.style.display=show?'block':'none';if(show)prRenderNotesPanel();}
+function prRenderNotesPanel(){
+  const notes=getPNotes();
+  const list=notes.length?notes.map(n=>`<div class="pr-note-item"><span class="pr-note-x" onclick="prDeleteNote('${n.id}')">✕</span><div class="pr-note-loc">${n.loc}</div><div>${n.text}</div></div>`).join('')
+    :'<div class="p-none">עוד אין הערות. נווטי לשיעור, לחצי «הערה כאן», וכתבי מה לתקן.</div>';
+  let exp='הערות הורה — המעבדה\n========================\n\n';
+  notes.forEach(n=>{exp+='['+n.loc+']\n• '+n.text+'\n\n';});
+  const extra=notes.length?`<textarea class="pr-export" id="prExportTxt" readonly>${exp}</textarea>`
+    +`<div class="qnav" style="justify-content:flex-start;gap:8px;margin-top:6px"><button class="btn btn-primary" onclick="prCopyExport()">📋 העתקי הכול</button><button class="btn btn-ghost" onclick="prClearNotes()">מחקי הכול</button></div>`
+    +`<div class="pr-ex">העתיקי את הטקסט והדביקי לי כאן בצ׳אט. לסימון עם העט: הפעילי «עט», סמני על המסך, צלמי מסך (screenshot) ושלחי לי את התמונה.</div>`:'';
+  document.getElementById('prNotesPanel').innerHTML='<div class="section-label" style="margin-top:0">ההערות שלי</div>'+list+extra;
+}
+function prDeleteNote(id){setPNotes(getPNotes().filter(n=>n.id!==id));prRenderNotesPanel();prUpdateNoteCount();}
+function prClearNotes(){if(confirm('למחוק את כל ההערות?')){setPNotes([]);prRenderNotesPanel();prUpdateNoteCount();}}
+function prCopyExport(){const t=document.getElementById('prExportTxt');if(!t)return;t.select();let ok=false;try{ok=document.execCommand('copy');}catch(e){}if(navigator.clipboard){navigator.clipboard.writeText(t.value).then(()=>{},()=>{});}alert('ההערות הועתקו. הדביקי לי אותן כאן בצ׳אט (לחיצה ארוכה ‹ הדבק).');}
+/* ---- שכבת עט/סטיילוס ---- */
+let prPenOn=false,prPenReady=false,prCtx=null,prDrawing=false,prLast=null;
+function prPenSetup(){
+  if(prPenReady)return;prPenReady=true;
+  const c=document.getElementById('prPen');
+  c.__resize=function(){const dpr=window.devicePixelRatio||1;c.width=Math.floor(innerWidth*dpr);c.height=Math.floor(innerHeight*dpr);c.style.width=innerWidth+'px';c.style.height=innerHeight+'px';prCtx=c.getContext('2d');prCtx.scale(dpr,dpr);prCtx.lineCap='round';prCtx.lineJoin='round';prCtx.strokeStyle='#ff5d6c';prCtx.lineWidth=4;};
+  c.__resize();
+  c.addEventListener('pointerdown',function(e){if(!prPenOn)return;prDrawing=true;prLast={x:e.clientX,y:e.clientY};try{c.setPointerCapture(e.pointerId);}catch(_){}e.preventDefault();});
+  c.addEventListener('pointermove',function(e){if(!prPenOn||!prDrawing||!prCtx)return;prCtx.beginPath();prCtx.moveTo(prLast.x,prLast.y);prCtx.lineTo(e.clientX,e.clientY);prCtx.stroke();prLast={x:e.clientX,y:e.clientY};e.preventDefault();});
+  c.addEventListener('pointerup',function(){prDrawing=false;});
+  c.addEventListener('pointercancel',function(){prDrawing=false;});
+}
+function prPenToggle(){
+  prPenSetup();prPenOn=!prPenOn;
+  const c=document.getElementById('prPen'),btn=document.getElementById('prPenBtn');
+  if(prPenOn){c.__resize&&c.__resize();c.classList.add('on');btn.classList.add('on');btn.textContent='🖊️ עט פעיל';}
+  else{c.classList.remove('on');btn.classList.remove('on');btn.textContent='🖊️ עט';}
+}
+function prPenSetOff(){prPenOn=false;const c=document.getElementById('prPen'),btn=document.getElementById('prPenBtn');if(c)c.classList.remove('on');if(btn){btn.classList.remove('on');btn.textContent='🖊️ עט';}}
+function prPenClear(){if(prCtx)prCtx.clearRect(0,0,innerWidth+10,innerHeight+10);}
+/* ---- איפוס התקדמות (שומר את הערות ההורה) ---- */
+function resetProgress(){
+  if(!confirm('לאפס את ההתקדמות ולהחזיר את הילדה לתחילת השיעור הראשון?\n\nההערות שלך יישמרו.'))return;
+  ['step','progress','history','banks','skill','ach','review'].forEach(k=>{try{localStorage.removeItem('lab_'+k);}catch(e){}});
+  progress.chemistry=0;progress.physics=0;progress.math=0;
+  renderMission&&renderMission();renderStations&&renderStations();renderBanks&&renderBanks();renderLessonMap&&renderLessonMap();
+  alert('ההתקדמות אופסה. הילדה תתחיל מהשיעור הראשון.');
+  go('dashboard');
 }
 
 /* ============ init ============ */
