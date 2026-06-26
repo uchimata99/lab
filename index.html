@@ -497,9 +497,9 @@
     <div class="hero">
       <canvas id="heroCanvas"></canvas>
       <div class="inner">
-        <div class="eyebrow">סביבת חקר · מתמטיקה · כימיה · פיזיקה</div>
+        <div class="eyebrow">סביבת חקר</div>
         <h2>ברוכה הבאה למעבדה</h2>
-        <p>פה לא משננים — חוקרים. למעלה התרגול של היום, ולמטה הכלים שפתוחים לך תמיד.</p>
+        <p>פה לא משננים — חוקרים.</p>
       </div>
     </div>
 
@@ -509,7 +509,7 @@
     <div class="section-label">המאגר שלך</div>
     <div id="bankView"></div>
 
-    <div class="section-label">הכלים — פתוחים תמיד</div>
+    <div class="section-label">הכלים</div>
     <div class="stations" id="stations"></div>
 
     <div class="parent-cta" onclick="go('parent')">
@@ -717,8 +717,9 @@ const CURRICULUM=[
       {h:'מהר ולאט',t:'כולנו מרגישים מה זה מהר ומה זה לאט — מכונית מרוץ מהירה, צב איטי. אבל איך מודדים את זה בדיוק? לשם כך קיימת המהירות, והיא עונה על שאלה אחת פשוטה: כמה מרחק עוברים, ובכמה זמן? שני הדברים האלה יחד מספרים לנו כמה מהר משהו נע.'},
       {h:'אותו מרחק, זמן שונה',t:'דמייני שני ילדים שמתחרים בריצה של מאה מטר. אחד מסיים בעשר שניות, השני בעשרים. שניהם עברו בדיוק אותו מרחק — מאה מטר — אבל הראשון מהיר יותר, כי הוא עשה את המרחק הזה בפחות זמן. אז כשהמרחק שווה, מי שסיים מהר יותר הוא המהיר יותר.'},
       {h:'אותו זמן, מרחק שונה',t:'עכשיו הפוך: שני רוכבי אופניים נוסעים שניהם דקה שלמה. אחד עבר בדקה הזאת מאה מטר, והשני מאתיים. הפעם הזמן שווה, אז המהיר יותר הוא זה שהספיק לעבור יותר מרחק — הרוכב השני. ככל שעוברים יותר באותו זמן, כך נעים מהר יותר.'},
-      {h:'מהירות מחברת שניים',t:'אז שמנו לב לדבר חשוב: מהירות תמיד מחברת בין שני גדלים — מרחק וזמן. אי אפשר לדעת כמה מהר משהו נע אם יודעים רק כמה רחוק הוא הגיע, או רק כמה זמן עבר. צריך את שניהם יחד. על הרעיון הפשוט הזה נבנה עכשיו את כל הנושא.'}
-    ],interactive:{kind:'track',target:8,instruct:'היעד: להביא את הכדור למרחק של בדיוק 8 מטר. הזיזי את המהירות ואת הזמן (למשל 4 ו-2), ולחצי «שגרי» כדי לראות את הכדור נע. כשהמרחק יגיע ל-8 — תיפתח הדרך לשאלות.'},questions:[
+      {h:'מהירות מחברת שניים',t:'אז שמנו לב לדבר חשוב: מהירות תמיד מחברת בין שני גדלים — מרחק וזמן. אי אפשר לדעת כמה מהר משהו נע אם יודעים רק כמה רחוק הוא הגיע, או רק כמה זמן עבר. צריך את שניהם יחד. על הרעיון הפשוט הזה נבנה עכשיו את כל הנושא.'},
+      {h:'מרחק = מהירות × זמן',t:'את הקשר הזה כותבים בקצרה עם שלוש אותיות: x למרחק, v למהירות, t לזמן. כדי לדעת כמה מרחק עבר גוף, מכפילים את המהירות בזמן — מהירות כפול זמן שווה מרחק. למשל, גוף שנע במהירות חמישה מטרים לשנייה במשך שלוש שניות, יעבור חמישה כפול שלוש — חמישה עשר מטרים. בכל שנייה הוא מוסיף עוד קצת דרך, ובמעבדת השיגור שלמטה תראי בעיניים איך זה עובד.',box:'<span class="formula">x = v · t</span>'}
+    ],interactive:{kind:'track',target:8,instruct:'זאת מעבדת השיגור: בחרי מהירות וזמן ולחצי «שגרי» כדי לראות את הכדור נע, ולמטה כמה מרחק הוא עבר (x = v·t). שגרי כמה פעמים עם מספרים שונים וראי איך המרחק משתנה. ואז האתגר: להביא את הכדור לבדיוק 8 מטר — גלי בעצמך איזה צירוף של מהירות וזמן מגיע לשם.'},questions:[
       {type:'mc',q:'על איזו שאלה עונה המהירות?',opts:['כמה מרחק בכמה זמן','כמה כבד הגוף','באיזה צבע הוא','כמה הוא עולה'],a:0,ex:'מהירות מודדת כמה מרחק עוברים בכמה זמן.'},
       {type:'mc',q:'שני ילדים רצו 100 מטר. מי מהיר יותר?',opts:['מי שסיים בזמן קצר יותר','מי שסיים בזמן ארוך יותר','הם תמיד שווים','אי אפשר לדעת'],a:0,ex:'אותו מרחק — המהיר הוא מי שעשה אותו בפחות זמן.'},
       {type:'mc',q:'מהירות תמיד מחברת בין...',opts:['מרחק וזמן','צבע ומשקל','גובה ורוחב','מספר וצורה'],a:0,ex:'מהירות מחברת בין מרחק לזמן.'}
@@ -729,7 +730,7 @@ const CURRICULUM=[
       {h:'זמן בשניות',t:'את הזמן נמדוד בשניות. שנייה אחת זה זמן קצר מאוד — בערך הזמן שלוקח לומר בלב אלף ואחת, או זמן של מצמוץ איטי אחד. שישים שניות כאלה מצטרפות לדקה אחת, ואיתן נמדוד כמה זמן נמשכת תנועה.'},
       {h:'מהירות — מטר לשנייה',t:'ועכשיו הטריק היפה: יחידת המהירות מורכבת משתי האחרות יחד. מודדים מהירות במטר לשנייה — כלומר כמה מטרים הגוף מספיק לעבור בכל שנייה אחת. השם עצמו כבר מספר את הסיפור: מטר (מרחק) חלקי שנייה (זמן).',box:'<span class="num">1</span> <span class="frac heb"><span class="fn">מטר</span><span class="fd">שנייה</span></span>'},
       {h:'דוגמה קטנה',t:'נניח שכדור מתגלגל ועובר חמישה מטרים בכל שנייה. אומרים שמהירותו חמישה מטרים לשנייה. אז אחרי שתי שניות הוא כבר במרחק עשרה מטרים, ואחרי שלוש — חמישה עשר. בכל שנייה שעוברת, הוא מוסיף עוד חמישה מטרים לדרך.'}
-    ],interactive:{kind:'track',target:12,instruct:'היעד: מרחק של בדיוק 12 מטר. אפשר במהירות 4 וזמן 3, או במהירות 6 וזמן 2 — גלי בעצמך אילו צירופים מגיעים ל-12.'},questions:[
+    ],interactive:{kind:'track',target:12,instruct:'האתגר: להביא את הכדור לבדיוק 12 מטר. נסי צירופים שונים של מהירות וזמן — יש כמה דרכים להגיע ל-12, גלי אחת בעצמך.'},questions:[
       {type:'mc',q:'באילו יחידות נמדוד מרחק?',opts:['מטרים','שניות','קילוגרמים','מעלות'],a:0,ex:'מרחק נמדד במטרים.'},
       {type:'mc',q:'מטר לשנייה אומר...',opts:['כמה מטרים בכל שנייה','כמה שניות בכל מטר','כמה כבד הגוף','כמה רחוק הוא נמצא'],a:0,ex:'מטר לשנייה = כמה מטרים הגוף עובר בכל שנייה אחת.'},
       {type:'num',q:'כדור עובר 5 מטר בכל שנייה. כמה מטרים הוא יעבור בשתי שניות?',a:10,unit:'מטר',ex:'חמישה מטרים בכל שנייה, פעמיים — עשרה מטרים.'}
@@ -740,7 +741,7 @@ const CURRICULUM=[
       {h:'מוצאים את המרחק',t:'הנוסחה עובדת גם הפוך. אם כבר יודעים את המהירות ואת הזמן, אפשר למצוא את המרחק במכפלה: המרחק שווה למהירות כפול זמן. גוף שנע חמישה מטרים בשנייה, במשך שלוש שניות, יעבור חמש כפול שלוש — חמישה עשר מטרים.',box:'<span class="formula">x = v · t</span>'},
       {h:'מוצאים את הזמן',t:'ואם יודעים מרחק ומהירות ורוצים לדעת כמה זמן זה לקח? מחלקים את המרחק במהירות. מי שצריך לעבור עשרים מטר במהירות של חמישה מטרים לשנייה, ייקח לו עשרים חלקי חמש — ארבע שניות. הנוסחה מסתובבת לפי מה שאנחנו מחפשים.',box:'<span class="formula">t =</span> <span class="frac"><span class="fn">x</span><span class="fd">v</span></span>'},
       {h:'שלושה ידידים',t:'אז יש לנו שלושה גדלים — מרחק, זמן ומהירות — והם קשורים זה לזה כמו שלושה חברים. הקסם: אם מכירים שניים מהם, תמיד אפשר למצוא את השלישי. זאת נוסחת הדרך, וברגע שתסיימי את הנושא היא תיכנס לבנק הנוסחאות שלך כדי שתישאר איתך תמיד.'}
-    ],interactive:{kind:'track',target:20,instruct:'הוכחה חיה: קבעי מהירות 5 וזמן 4. לפי הנוסחה המרחק צריך לצאת 20 (חמש כפול ארבע). הביאי את המרחק ל-20 ולחצי «שגרי» כדי לראות שהכדור עוצר בדיוק שם.'},questions:[
+    ],interactive:{kind:'track',target:20,instruct:'האתגר: לפי הנוסחה x = v·t, מצאי מהירות וזמן שמכפלתם נותנת 20, והביאי את הכדור לבדיוק 20 מטר. ואז «שגרי» כדי לראות אותו עוצר שם.'},questions:[
       {type:'num',q:'גוף נע במהירות 4 מטר לשנייה במשך 5 שניות. כמה מטרים עבר?',formula:'<span class="formula">x = v · t</span>',a:20,unit:'מטר',ex:'מציבים בנוסחה: <span class="formula">x = 4 · 5 = 20</span> מטר.'},
       {type:'num',q:'מכונית עברה 60 מטר ב-6 שניות. מה המהירות שלה?',formula:'<span class="formula">v =</span> <span class="frac"><span class="fn">x</span><span class="fd">t</span></span>',a:10,unit:'מטר לשנייה',ex:'<span class="formula">v =</span> <span class="frac"><span class="fn">60</span><span class="fd">6</span></span> <span class="formula">= 10</span>.'},
       {type:'num',q:'אופניים נעים במהירות 3 מטר לשנייה ועברו 24 מטר. כמה שניות זה לקח?',formula:'<span class="formula">t =</span> <span class="frac"><span class="fn">x</span><span class="fd">v</span></span>',a:8,unit:'שניות',ex:'<span class="formula">t =</span> <span class="frac"><span class="fn">24</span><span class="fd">3</span></span> <span class="formula">= 8</span>.'},
@@ -808,7 +809,7 @@ const CURRICULUM=[
       {h:'מאיצים ומאטים',t:'כשהמהירות גדלה, אומרים שמאיצים, ויש תאוצה חיובית — כמו רכבת הרים שמתחילה לרדת ומגבירה מהירות. כשהמהירות קטנה, מאטים, וזאת תאוצה שלילית — בדיוק מה שקורה כשלוחצים על הבלמים באופניים. בשני המקרים, המהירות לא נשארת אותו דבר.'},
       {h:'תאוצה מהחיים',t:'כשמטוס ממריא, הוא מאיץ על המסלול מאפס למהירות עצומה תוך שניות. וכשמשהו נופל מהשולחן, כוח המשיכה של כדור הארץ גורם לו להאיץ כל הזמן כלפי מטה, מהר יותר ויותר, עד שהוא פוגע ברצפה. תאוצה נמצאת ממש בכל מקום סביבנו.'},
       {h:'מה צריך כדי להאיץ',t:'כדי לשנות מהירות תמיד צריך כוח — מישהו שדוחף או מושך. המנוע דוחף את המכונית קדימה, הרגליים דוחפות את האופניים, כוח המשיכה מושך את הכדור מטה. בלי שום כוח, המהירות פשוט נשארת בדיוק כמו שהיא, ושום דבר לא מאיץ.'}
-    ],interactive:{kind:'track',target:18,instruct:'היעד: מרחק של 18 מטר (למשל מהירות 6 וזמן 3). שימי לב שככל שמגדילים את המהירות, באותו זמן הכדור מגיע רחוק יותר — זה מה שקורה כשמאיצים.'},questions:[
+    ],interactive:{kind:'track',target:18,instruct:'האתגר: להביא את הכדור למרחק של 18 מטר. שימי לב — ככל שמגדילים את המהירות, באותו זמן הכדור מגיע רחוק יותר. נסי בעצמך עד שתגיעי ל-18.'},questions:[
       {type:'mc',q:'מה זאת תאוצה?',opts:['שינוי במהירות','מהירות קבועה','מרחק קבוע','משקל הגוף'],a:0,ex:'תאוצה היא שינוי של המהירות לאורך הזמן.'},
       {type:'mc',q:'מכונית שמתחילה לנסוע ממקום עמידה...',opts:['מאיצה','עומדת','מאטה','לא משתנה'],a:0,ex:'מעבר מאפס למהירות הוא האצה.'},
       {type:'mc',q:'מה צריך כדי לשנות מהירות?',opts:['כוח','צבע','חושך','שקט'],a:0,ex:'כדי להאיץ או לבלום צריך כוח שדוחף או מושך.'}
@@ -818,7 +819,7 @@ const CURRICULUM=[
       {h:'הנוסחה',t:'מחשבים תאוצה כך: לוקחים את השינוי במהירות ומחלקים אותו בזמן שלקח. את השינוי במהירות מסמנים Δv — ההפרש בין המהירות בסוף לבין המהירות בהתחלה. ככל שהשינוי גדול יותר ומהיר יותר, התאוצה גדולה יותר.',box:'<span class="formula">a =</span> <span class="frac"><span class="fn">Δv</span><span class="fd">t</span></span>'},
       {h:'דוגמה',t:'נניח שמכונית הגבירה את מהירותה בעשרה מטרים לשנייה, וזה לקח שתי שניות. התאוצה היא עשר חלקי שתיים — כלומר חמש. המשמעות: בכל שנייה שעוברת, המהירות שלה גדלה בעוד חמישה מטרים לשנייה. כך אפשר לדעת בדיוק כמה חזק היא מאיצה.'},
       {h:'נכנס לבנק',t:'עכשיו מצטרפת אליך נוסחה שנייה. עם סיום הנושא, נוסחת התאוצה תיכנס לבנק הנוסחאות לצד נוסחת הדרך, ויהיו לך שתי נוסחאות פיזיקה שתמיד זמינות — אחת לתנועה רגילה, ואחת לשינוי המהירות.'}
-    ],interactive:{kind:'track',target:24,instruct:'היעד: מרחק של 24 מטר (למשל מהירות 6 וזמן 4). שחקי עם הצירופים — ככל שהמהירות גדלה מהר יותר משיגור לשיגור, כך התאוצה גדולה יותר.'},questions:[
+    ],interactive:{kind:'track',target:24,instruct:'האתגר: להביא את הכדור למרחק של 24 מטר. שחקי עם הצירופים וגלי איזה מגיע לשם — וזכרי: ככל שהמהירות גדלה מהר יותר משיגור לשיגור, כך התאוצה גדולה יותר.'},questions:[
       {type:'mc',q:'תאוצה מודדת...',opts:['כמה מהר משתנה המהירות','כמה רחוק הגוף','כמה הוא שוקל','כמה זמן עבר'],a:0,ex:'תאוצה מודדת את קצב השינוי של המהירות.'},
       {type:'num',q:'המהירות עלתה ב-10 מטר לשנייה במשך 2 שניות. מה התאוצה?',formula:'<span class="formula">a =</span> <span class="frac"><span class="fn">Δv</span><span class="fd">t</span></span>',a:5,unit:'',ex:'<span class="formula">a =</span> <span class="frac"><span class="fn">10</span><span class="fd">2</span></span> <span class="formula">= 5</span>.'},
       {type:'num',q:'המהירות עלתה ב-12 מטר לשנייה במשך 3 שניות. מה התאוצה?',formula:'<span class="formula">a =</span> <span class="frac"><span class="fn">Δv</span><span class="fd">t</span></span>',a:4,unit:'',ex:'שתים עשרה חלקי שלוש — ארבע.'}
@@ -884,7 +885,7 @@ const CURRICULUM=[
       {h:'כוח משנה תנועה',t:'כוח הוא בדיוק מה שגורם לדברים להתחיל לזוז, לעצור או לשנות כיוון. כדור על הדשא שוכב במקומו עד שמישהו בועט בו — הבעיטה היא הכוח שמתחיל את התנועה. ובאופניים, הבלמים מפעילים כוח שעוצר את הגלגלים. כל שינוי בתנועה מתחיל מכוח.'},
       {h:'כוחות נסתרים',t:'גם כשנדמה ששקט לגמרי, פועלים סביבנו כוחות שלא רואים. כוח הכובד מושך כל הזמן את הכול כלפי מטה — לכן דברים נופלים ולא מרחפים. כוח החיכוך מאט גוף שמחליק, ולכן מזחלת על הקרח נעצרת בסוף. הכוחות פועלים גם כשלא שמים לב אליהם.'},
       {h:'לכוח יש כיוון',t:'לכל כוח יש תמיד כיוון. דחיפה קדימה מזיזה את הגוף קדימה, ודחיפה אחורה בולמת אותו. ואם שני ילדים דוחפים ארגז מכיוונים מנוגדים בכוח שווה — הכוחות מבטלים זה את זה, והארגז לא זז כלל. הכיוון של הכוח לא פחות חשוב מהעוצמה שלו.'}
-    ],interactive:{kind:'track',target:15,instruct:'דמייני שהכוח שלך נותן לכדור מהירות. היעד: להגיע למרחק 15 מטר (למשל מהירות 5 וזמן 3). ככל שתפעילי «יותר כוח» — כלומר מהירות גדולה יותר — כך הכדור ירחיק.'},questions:[
+    ],interactive:{kind:'track',target:15,instruct:'דמייני שהכוח שלך נותן לכדור מהירות. האתגר: להגיע למרחק 15 מטר — ככל שתפעילי יותר כוח (מהירות גדולה יותר), כך הכדור ירחיק. גלי את הצירוף בעצמך.'},questions:[
       {type:'mc',q:'מה זה כוח?',opts:['דחיפה או משיכה','צבע','מספר','חום בלבד'],a:0,ex:'כוח הוא דחיפה או משיכה שמשנה תנועה.'},
       {type:'mc',q:'מה גורם לכדור עומד להתחיל לנוע?',opts:['כוח (בעיטה)','צבע','שקט','חושך'],a:0,ex:'צריך כוח — כמו בעיטה — כדי להתחיל תנועה.'},
       {type:'mc',q:'הכוח שמושך הכול כלפי מטה נקרא...',opts:['כוח הכובד','כוח חיכוך','מהירות','תאוצה'],a:0,ex:'כוח הכובד מושך את הכול אל האדמה.'}
@@ -1069,7 +1070,7 @@ function renderMission(){
     <span class="tag">${t.tag} · נושא: ${cfg.topicTitle}</span>
     <h3>${cfg.title}</h3>
     <p class="m-tagline">${cfg.concept.sub}</p>
-    <div class="mission-meta"><div>שיעור · <b>${cfg.lessonIndex+1} מתוך ${cfg.lessonCount}</b></div><div>קריאה · <b>${cfg.lesson.read?cfg.lesson.read.length:0} דפים</b></div><div>ואז תרגול ושאלות</div></div>
+    <div class="mission-meta"><div>שיעור <b>${cfg.lessonIndex+1}</b> מתוך <b>${cfg.lessonCount}</b></div><div>קריאה · תרגול · שאלות</div></div>
     <div class="qnav" style="justify-content:flex-start">
       <button class="btn btn-primary" onclick="startPractice(currentCfg(${step}))">להתחיל את השיעור ›</button>
       ${toolBtn}
@@ -1317,11 +1318,9 @@ function initPhysics(){
     document.getElementById('vVal').textContent=vv;document.getElementById('tVal').textContent=tt;
     document.getElementById('roV').textContent=vv;document.getElementById('roT').textContent=tt;
     document.getElementById('roX').textContent=xx;document.getElementById('trackEnd').textContent=xx+' מ׳';
-    const m=document.getElementById('mover');m.style.transition='none';m.style.right='8px';}
+    const m=document.getElementById('mover');if(m._raf)cancelAnimationFrame(m._raf);m.style.transition='none';m.style.right='8px';}
   v.oninput=upd;t.oninput=upd;upd();
-  document.getElementById('runBtn').onclick=()=>{const tt=+t.value;const m=document.getElementById('mover');
-    const trackW=m.parentElement.clientWidth-44;m.style.transition='none';m.style.right='8px';void m.offsetWidth;
-    m.style.transition='right '+tt+'s linear';requestAnimationFrame(()=>{m.style.right=(8+trackW)+'px';});};
+  document.getElementById('runBtn').onclick=()=>{launchMover(document.getElementById('mover'),+t.value);};
 }
 /* ============ PRACTICE engine: read -> interactive -> questions ============ */
 function matchEl(m,z){if(m.z)return z===m.z;if(m.cat)return catOf(z)===m.cat;if(m.neu!=null)return NEU[z-1]===m.neu;return false;}
@@ -1456,6 +1455,20 @@ function interFind(z){
     interFb(false,'כמעט! לא היסוד הזה. נסי שוב לפי הרמז.');
   }
 }
+/* אנימציית שיגור עם requestAnimationFrame — נמשכת בדיוק כמספר השניות,
+   ועובדת גם כשמופעל "צמצום תנועה" (reduced-motion), שמבטל מעברי CSS. */
+function launchMover(m,seconds){
+  if(!m)return;
+  if(m._raf)cancelAnimationFrame(m._raf);
+  const trackW=Math.max(0,m.parentElement.clientWidth-44);
+  m.style.transition='none';m.style.right='8px';
+  const startR=8,endR=8+trackW,dur=Math.max(150,seconds*1000);
+  let t0=null;
+  function step(ts){if(t0==null)t0=ts;const p=Math.min(1,(ts-t0)/dur);
+    m.style.right=(startR+(endR-startR)*p)+'px';
+    if(p<1)m._raf=requestAnimationFrame(step);}
+  m._raf=requestAnimationFrame(step);
+}
 function trackMarkup(){
   return `<div class="track"><div class="road"></div><div class="mover" id="it_mover"></div>
     <div class="marks"><span>0</span><span>מרחק</span><span id="it_end">9 מ׳</span></div></div>
@@ -1478,12 +1491,10 @@ function initInterTrack(inter){
     document.getElementById('it_vVal').textContent=vv;document.getElementById('it_tVal').textContent=tt;
     document.getElementById('it_roV').textContent=vv;document.getElementById('it_roT').textContent=tt;
     document.getElementById('it_roX').textContent=xx;document.getElementById('it_end').textContent=xx+' מ׳';
-    const m=document.getElementById('it_mover');m.style.transition='none';m.style.right='8px';
+    const m=document.getElementById('it_mover');if(m._raf)cancelAnimationFrame(m._raf);m.style.transition='none';m.style.right='8px';
     if(target!=null&&xx===target)interSolved('הגעת ליעד — בדיוק '+xx+' מטר!');}
   v.oninput=upd;t.oninput=upd;upd();
-  document.getElementById('it_run').onclick=()=>{const tt=+t.value;const m=document.getElementById('it_mover');
-    const trackW=m.parentElement.clientWidth-44;m.style.transition='none';m.style.right='8px';void m.offsetWidth;
-    m.style.transition='right '+tt+'s linear';requestAnimationFrame(()=>{m.style.right=(8+trackW)+'px';});};
+  document.getElementById('it_run').onclick=()=>{launchMover(document.getElementById('it_mover'),+t.value);};
 }
 function fractionMarkup(parts){
   let segs='';for(let k=0;k<parts;k++)segs+=`<div class="seg" data-k="${k}"></div>`;
