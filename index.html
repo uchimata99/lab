@@ -1814,13 +1814,25 @@ function prRenderNotesPanel(){
   let exp='הערות הורה — המעבדה\n========================\n\n';
   notes.forEach(n=>{exp+='['+n.loc+']\n• '+n.text+'\n\n';});
   const extra=notes.length?`<textarea class="pr-export" id="prExportTxt" readonly>${exp}</textarea>`
-    +`<div class="qnav" style="justify-content:flex-start;gap:8px;margin-top:6px"><button class="btn btn-primary" onclick="prCopyExport()">📋 העתקי הכול</button><button class="btn btn-ghost" onclick="prClearNotes()">מחקי הכול</button></div>`
-    +`<div class="pr-ex">העתיקי את הטקסט והדביקי לי כאן בצ׳אט. לסימון עם העט: הפעילי «עט», סמני על המסך, צלמי מסך (screenshot) ושלחי לי את התמונה.</div>`:'';
+    +`<div class="qnav" style="justify-content:flex-start;gap:8px;margin-top:6px;flex-wrap:wrap"><button class="btn btn-primary" onclick="prShare()">📤 שלח / שתף</button><button class="btn btn-ghost" onclick="prCopyExport()">📋 העתק</button><button class="btn btn-ghost" onclick="prClearNotes()">מחק הכול</button></div>`
+    +`<div class="pr-ex">«שלח / שתף» פותח את חלון השיתוף של הטאבלט — בחרי את Claude (או מייל) ושלחי לי את כל ההערות בבת אחת. לסימון עם העט: הפעילי «עט», סמני על המסך, צלמי מסך (screenshot) ושלחי לי את התמונה.</div>`:'';
   document.getElementById('prNotesPanel').innerHTML='<div class="section-label" style="margin-top:0">ההערות שלי</div>'+list+extra;
 }
 function prDeleteNote(id){setPNotes(getPNotes().filter(n=>n.id!==id));prRenderNotesPanel();prUpdateNoteCount();}
 function prClearNotes(){if(confirm('למחוק את כל ההערות?')){setPNotes([]);prRenderNotesPanel();prUpdateNoteCount();}}
 function prCopyExport(){const t=document.getElementById('prExportTxt');if(!t)return;t.select();let ok=false;try{ok=document.execCommand('copy');}catch(e){}if(navigator.clipboard){navigator.clipboard.writeText(t.value).then(()=>{},()=>{});}alert('ההערות הועתקו. הדביקי לי אותן כאן בצ׳אט (לחיצה ארוכה ‹ הדבק).');}
+function prExportText(){let exp='הערות הורה — המעבדה\n========================\n\n';getPNotes().forEach(n=>{exp+='['+n.loc+']\n• '+n.text+'\n\n';});return exp;}
+function prShare(){
+  const notes=getPNotes();
+  if(!notes.length){alert('אין עדיין הערות לשליחה.');return;}
+  const txt=prExportText();
+  if(navigator.share){
+    navigator.share({title:'הערות הורה — המעבדה',text:txt}).catch(function(){});
+  }else{
+    prCopyExport();
+    alert('הדפדפן לא תומך בשיתוף ישיר — ההערות הועתקו במקום. הדביקי אותן ל-Claude.');
+  }
+}
 /* ---- שכבת עט/סטיילוס ---- */
 let prPenOn=false,prPenReady=false,prCtx=null,prDrawing=false,prLast=null;
 function prPenSetup(){
