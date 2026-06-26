@@ -1814,8 +1814,8 @@ function prRenderNotesPanel(){
   let exp='הערות הורה — המעבדה\n========================\n\n';
   notes.forEach(n=>{exp+='['+n.loc+']\n• '+n.text+'\n\n';});
   const extra=notes.length?`<textarea class="pr-export" id="prExportTxt" readonly>${exp}</textarea>`
-    +`<div class="qnav" style="justify-content:flex-start;gap:8px;margin-top:6px;flex-wrap:wrap"><button class="btn btn-primary" onclick="prShare()">📤 שלח / שתף</button><button class="btn btn-ghost" onclick="prCopyExport()">📋 העתק</button><button class="btn btn-ghost" onclick="prClearNotes()">מחק הכול</button></div>`
-    +`<div class="pr-ex">«שלח / שתף» פותח את חלון השיתוף של הטאבלט — בחרי את Claude (או מייל) ושלחי לי את כל ההערות בבת אחת. לסימון עם העט: הפעילי «עט», סמני על המסך, צלמי מסך (screenshot) ושלחי לי את התמונה.</div>`:'';
+    +`<div class="qnav" style="justify-content:flex-start;gap:8px;margin-top:6px;flex-wrap:wrap"><button class="btn btn-primary" onclick="prSendToClaude()">📤 שלח לקלוד</button><button class="btn btn-ghost" onclick="prShare()">שתף</button><button class="btn btn-ghost" onclick="prCopyExport()">העתק</button><button class="btn btn-ghost" onclick="prClearNotes()">מחק הכול</button></div>`
+    +`<div class="pr-ex">«שלח לקלוד» פותח עמוד GitHub עם כל ההערות — לחיצה אחת על «Submit» והן בתור אצלי. כשתגידי לי "תריץ את ההערות", אעבור על כולן ואתקן. לסימון עם העט: הפעילי «עט», סמני על המסך, צלמי מסך (screenshot) ושלחי לי את התמונה.</div>`:'';
   document.getElementById('prNotesPanel').innerHTML='<div class="section-label" style="margin-top:0">ההערות שלי</div>'+list+extra;
 }
 function prDeleteNote(id){setPNotes(getPNotes().filter(n=>n.id!==id));prRenderNotesPanel();prUpdateNoteCount();}
@@ -1832,6 +1832,14 @@ function prShare(){
     prCopyExport();
     alert('הדפדפן לא תומך בשיתוף ישיר — ההערות הועתקו במקום. הדביקי אותן ל-Claude.');
   }
+}
+function prSendToClaude(){
+  const notes=getPNotes();
+  if(!notes.length){alert('אין עדיין הערות לשליחה.');return;}
+  const title='הערות הורה — '+new Date().toLocaleDateString('he-IL');
+  const url='https://github.com/uchimata99/lab/issues/new?labels=parent-note&title='+encodeURIComponent(title)+'&body='+encodeURIComponent(prExportText());
+  window.open(url,'_blank','noopener');
+  alert('נפתח עמוד GitHub עם כל ההערות. לחצי «Submit new issue» כדי לשלוח אותן — וזהו.\nאחרי השליחה אפשר ללחוץ «מחק הכול» כאן ולהתחיל מקבץ חדש.');
 }
 /* ---- שכבת עט/סטיילוס ---- */
 let prPenOn=false,prPenReady=false,prCtx=null,prDrawing=false,prLast=null;
