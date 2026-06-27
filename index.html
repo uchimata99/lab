@@ -169,14 +169,14 @@
   .ptable-wrap{width:100vw;position:relative;left:50%;right:50%;margin-left:-50vw;margin-right:-50vw;overflow:visible;padding:0 12px 6px}
   .ptable{display:grid;direction:ltr;grid-template-columns:repeat(18,minmax(0,1fr));gap:clamp(3px,.55vw,6px);margin:0 auto;width:100%;max-width:1160px}
   .pt{aspect-ratio:1;border:1px solid var(--line);border-radius:clamp(4px,1vw,9px);background:var(--bg2);position:relative;
-    display:flex;flex-direction:column;align-items:center;justify-content:center;cursor:pointer;transition:.16s;
+    display:grid;grid-template-rows:auto 1fr auto;align-items:center;padding:2px 4px;cursor:pointer;transition:.16s;overflow:hidden;
     border-bottom:clamp(2px,.6vw,4px) solid var(--cat,var(--line))}
   .pt:hover{transform:scale(1.12);box-shadow:0 5px 16px rgba(0,0,0,.4);z-index:3}
   .pt.dimmed{opacity:.22}
   .pt.lit{box-shadow:0 0 0 2px var(--cat),0 4px 14px rgba(0,0,0,.4)}
-  .pt .z{font-family:'IBM Plex Mono';font-size:clamp(7px,1.25vw,13px);color:#ff9aa6;opacity:.9;position:absolute;top:2px;right:4px;line-height:1}
-  .pt .nn{font-family:'IBM Plex Mono';font-size:clamp(6px,1.05vw,12px);color:#9fb2cc;opacity:.75;position:absolute;bottom:2px;right:4px;line-height:1}
-  .pt .sym{font-family:'IBM Plex Mono';font-weight:600;font-size:clamp(11px,2.5vw,27px);color:var(--ink);line-height:1}
+  .pt .z{font-family:'IBM Plex Mono';font-size:clamp(7px,1.2vw,13px);color:#ff9aa6;opacity:.9;justify-self:end;line-height:1}
+  .pt .nn{font-family:'IBM Plex Mono';font-size:clamp(6px,1.05vw,12px);color:#9fb2cc;opacity:.75;justify-self:end;line-height:1}
+  .pt .sym{font-family:'IBM Plex Mono';font-weight:600;font-size:clamp(11px,2.3vw,24px);color:var(--ink);line-height:1;align-self:center;justify-self:center}
   .pt-key{display:flex;justify-content:center;gap:16px;flex-wrap:wrap;margin:10px 2px 0;font-size:13px;color:var(--muted)}
   .pt-key b{font-family:'IBM Plex Mono'}
   .pt-key .pk-p{color:#ff9aa6} .pt-key .pk-n{color:#9fb2cc}
@@ -343,8 +343,8 @@
   .feedback{font-size:17px}
   .qcount{font-size:15px}
   .numpad-input input{font-size:24px}
-  .pt .sym{font-size:clamp(13px,2.8vw,30px)}
-  .pt .z{font-size:clamp(8px,1.4vw,14px)}
+  .pt .sym{font-size:clamp(12px,2.5vw,26px)}
+  .pt .z{font-size:clamp(8px,1.35vw,14px)}
   .done-card h3{font-size:25px}
   .done-card p{font-size:18px}
   .hitem .h-title{font-size:18px}
@@ -731,7 +731,12 @@ const CURRICULUM=[
       {h:'שלושה חלקיקים בפנים',t:'אם נוכל לפתוח אטום ולהציץ פנימה, נגלה שגם הוא בנוי מחלקיקים קטנים עוד יותר, משלושה סוגים: פרוטונים, נייטרונים ואלקטרונים. כל אחד יושב במקום אחר וממלא תפקיד אחר, ממש כמו שחקנים שונים באותה קבוצה. בשיעורים הקרובים נכיר כל אחד מהם מקרוב.'},
       {h:'למה כדאי להבין את זה',t:'כשנבין איך בנוי אטום, ייפתח לנו סוד גדול על העולם: למה הזהב מבריק ושונה מהברזל, למה דווקא את החמצן אנחנו נושמים, ולמה כל חומר מתנהג כמו שהוא מתנהג. כל הכימיה מתחילה כאן, מהלבנה הקטנה ביותר — ואת עומדת בדיוק בנקודת ההתחלה.'},
       {h:'מפת היסודות — הטבלה המחזורית',t:'את כל סוגי האטומים סידרו המדענים בטבלה אחת גדולה ומסודרת — הטבלה המחזורית. כל משבצת בה היא יסוד אחד, ובתוכה כתוב סמלו (אות או שתיים, כמו H למימן או O לחמצן) ומספר הפרוטונים שלו. היסודות מסודרים לפי מספר הפרוטונים: המימן, עם פרוטון אחד, פותח את הטבלה בפינה השמאלית-העליונה, ומשם המספר גדל משבצת אחר משבצת. גם השורות וגם הטורים מספרים סיפור — יסודות שמתנהגים דומה יושבים יחד באותו טור. ממש עכשיו, בטבלה שלמטה, תכירי אותה בעצמך.'}
-    ],interactive:{kind:'find',instruct:'בואי נפגוש את האטום הראשון. בטבלה שלמטה, לחצי על המימן — היסוד הקל והפשוט ביותר, שמסומן באות H ויש לו פרוטון אחד בלבד.',match:{z:1},reveal:'זה מימן! האטום הקטן והקל ביותר ביקום. ממנו עשויים השמש והכוכבים.'},questions:[
+    ],interactive:{kind:'tour',reveal:'מצוין! עכשיו את מכירה את הטבלה — בשאלות הבאות תשתמשי בה.',steps:[
+      {t:'הנה <b>הטבלה המחזורית</b> — מפה של כל היסודות שבעולם. כל משבצת היא יסוד אחד, ו<b>המספר הקטן שלמעלה</b> במשבצת הוא מספר הפרוטונים שלו.'},
+      {t:'כל יסוד מסומן באות אחת או שתיים. לחצי על <b>המימן</b> — המשבצת בפינה <b>השמאלית-העליונה</b>, עם האות H. זה היסוד הקל והפשוט ביותר, עם פרוטון אחד בלבד.',click:{z:1}},
+      {t:'יפה! עכשיו לחצי על <b>החמצן</b> — הגז שאנחנו נושמים. סמלו O והמספר שלו 8 (בשורה השנייה).',click:{z:8}},
+      {t:'שמת לב לצבעים? כל צבע הוא <b>משפחה</b> — יסודות שמתנהגים דומה יושבים יחד. ככל שמתקדמים בטבלה, מספר הפרוטונים גדל. עכשיו את מכירה את הטבלה, ותמיד אפשר לחקור אותה לעומק ב«מעבדת האטום».'}
+    ]},questions:[
       {type:'mc',q:'ממה עשוי כל דבר שמסביבנו — אוויר, מים, וגם אנחנו?',opts:['מאטומים','מצבעים','ממים בלבד','מאוויר בלבד'],a:0,ex:'כל החומר בעולם בנוי מחלקיקים זעירים שנקראים אטומים.'},
       {type:'mc',q:'בערך כמה סוגים שונים של אטומים קיימים?',opts:['בערך עשרה','בערך מאה','בערך מיליון','אינסוף'],a:1,ex:'יש בערך מאה סוגי אטומים, ומהם מורכבים כל החומרים.'},
       {type:'mc',q:'מי קטן יותר?',opts:['אטום בודד','גרגר חול','טיפת מים','גרגר אורז'],a:0,ex:'אטום קטן בטירוף — בגרגר חול יחיד יש מיליוני מיליונים של אטומים.'},
@@ -1485,6 +1490,7 @@ function renderInteractive(){
   else if(inter.kind==='track')inner=`<div class="inter-instruct">${inter.instruct}</div>`+trackMarkup();
   else if(inter.kind==='fraction')inner=`<div class="inter-instruct">${inter.instruct}</div>`+fractionMarkup(inter.parts);
   else if(inter.kind==='balance')inner=`<div class="inter-instruct">${inter.instruct}</div>`+balanceMarkup(inter);
+  else if(inter.kind==='tour')inner=`<div class="inter-instruct" id="tourText"></div>`+ptableGrid('tourClick')+`<div class="qnav" style="margin-top:8px"><span></span><button class="btn btn-primary" id="tourNext">הבא ›</button></div>`;
   document.getElementById('pracBody').innerHTML=`<div class="inter-box">${inner}</div>
     <div class="feedback" id="interFb"></div>
     <div class="qnav"><span></span>
@@ -1492,6 +1498,30 @@ function renderInteractive(){
   if(inter.kind==='track')initInterTrack(inter);
   if(inter.kind==='fraction')initInterFraction(inter);
   if(inter.kind==='balance')initInterBalance(inter);
+  if(inter.kind==='tour')initInterTour(inter);
+}
+/* טיול מודרך על הטבלה המחזורית — שלבי הסבר, חלקם דורשים לחיצה על יסוד */
+let tourState={i:0,done:{}};
+function initInterTour(inter){tourState={i:0,done:{}};renderTourStep(inter);
+  document.getElementById('tourNext').onclick=function(){
+    if(tourState.i>=inter.steps.length-1){interSolved(inter.reveal||'מצוין! עכשיו את מכירה את הטבלה.');return;}
+    tourState.i++;renderTourStep(inter);};
+}
+function renderTourStep(inter){
+  const s=inter.steps[tourState.i];
+  document.getElementById('tourText').innerHTML=s.t;
+  const next=document.getElementById('tourNext');
+  next.textContent=tourState.i>=inter.steps.length-1?'סיום ›':'הבא ›';
+  const need=s.click&&!tourState.done[tourState.i];
+  next.disabled=!!need;next.style.opacity=need?'.45':'1';
+}
+function tourClick(z){
+  const inter=prac.cfg.lesson.interactive,s=inter.steps[tourState.i];
+  if(!s||!s.click)return;
+  if(z===s.click.z){tourState.done[tourState.i]=true;
+    const cell=document.querySelector('#pracBody .pt[data-z="'+z+'"]');if(cell)cell.classList.add('lit');
+    interFb(true,'יפה!');renderTourStep(inter);}
+  else interFb(false,'נסי שוב — חפשי את היסוד שבהוראה.');
 }
 function interSolved(text){interFb(true,text);document.getElementById('interNext').style.display='inline-flex';}
 function interFb(ok,text){const fb=document.getElementById('interFb');fb.className='feedback show '+(ok?'ok':'no');fb.innerHTML=(ok?'✓ ':'')+text;}
@@ -1769,8 +1799,10 @@ function renderParentReview(){
       +`<div class="qnav">${PR.page>0?'<button class="btn btn-ghost" onclick="prReadNav(-1)">‹ הקודם</button>':'<span></span>'}`
       +`${PR.page<pages.length-1?'<button class="btn btn-primary" onclick="prReadNav(1)">הבא ›</button>':'<span></span>'}</div>`;
   }else if(PR.view==='interactive'){
-    const inter=cfg.lesson.interactive;let inner=`<div class="inter-instruct">${inter.instruct}</div>`;
+    const inter=cfg.lesson.interactive;
+    let inner=`<div class="inter-instruct">${inter.kind==='tour'?'טיול מודרך על הטבלה המחזורית:':inter.instruct}</div>`;
     if(inter.kind==='find')inner+=ptableGrid('prNoop');
+    else if(inter.kind==='tour')inner+=ptableGrid('prNoop')+'<ol style="margin:10px 4px;padding-inline-start:20px;line-height:1.7;color:var(--read)">'+inter.steps.map(s=>'<li>'+s.t+'</li>').join('')+'</ol>';
     else if(inter.kind==='track')inner+=trackMarkup();
     else if(inter.kind==='fraction')inner+=fractionMarkup(inter.parts);
     else if(inter.kind==='balance')inner+=balanceMarkup(inter);
