@@ -482,6 +482,8 @@
     .bchip{font-size:14px}
   }
   @media(max-width:420px){.stations{grid-template-columns:1fr}}
+  .lviz{margin:16px 0 4px;display:flex;justify-content:center}
+  .viz-svg{width:100%;max-width:380px;height:auto;display:block;background:var(--bg2);border:1px solid var(--line);border-radius:14px;padding:6px}
   @media(prefers-reduced-motion:reduce){*{animation-duration:.01ms!important;transition-duration:.05ms!important}}
 
   /* ===== מצב סקירת הורה ===== */
@@ -647,7 +649,8 @@
       <div class="badge" id="pracBadge">✎</div>
       <div><div class="crumb" id="pracTag"></div><h2 id="pracTitle"></h2></div>
     </div>
-    <div class="qnav" style="justify-content:flex-start;margin-bottom:6px">
+    <div class="qnav" style="justify-content:flex-start;margin-bottom:6px;gap:8px">
+      <button class="btn btn-ghost" id="pracBackBtn" style="display:none" onclick="backToLesson()">↩ לשיעור</button>
       <button class="btn btn-ghost" id="pracToolBtn">📖 כלי הלימוד</button>
     </div>
     <div class="panel" id="pracBody"></div>
@@ -726,7 +729,7 @@ const CURRICULUM=[
   {id:'atom',subject:'chemistry',title:'מבנה האטום',concept:{id:'atom',name:'מבנה האטום',sub:'אטום · גרעין · אלקטרונים',disp:'⚛︎'},lessons:[
     {title:'מה זה אטום',read:[
       {h:'הכול עשוי מאטומים',t:'תחשבי על הדברים שמסביבך עכשיו: הכיסא שאת יושבת עליו, כוס המים, האוויר שאת נושמת, ואפילו כף ידך. הם נראים שונים לגמרי — קשה, נוזלי, אוורירי, חי — ובכל זאת כולם בנויים מאותו דבר בדיוק: לבנים זעירות שנקראות אטומים. כמו שמאותן קוביות לגו אפשר לבנות גם מגדל, גם מכונית וגם דינוזאור, כך מאותם אטומים נבנה כל מה שקיים בעולם.'},
-      {h:'קטן שאי אפשר לתפוס',t:'אטום כל כך קטן שאי אפשר לראות אותו אפילו במיקרוסקופ של בית הספר. כמה קטן? בתוך נקודה אחת בקצה העיפרון מסתתרים יותר אטומים מכל האנשים שחיים על כדור הארץ. ואם היינו מגדילים אטום אחד לגודל של תפוח, תפוח רגיל היה גדל אז לגודל של כדור הארץ כולו. זה קטן מעבר לכל דמיון — ובכל זאת ממנו עשוי הכול.'},
+      {h:'קטן שאי אפשר לתפוס',t:'אטום כל כך קטן שאי אפשר לראות אותו אפילו במיקרוסקופ של בית הספר. כמה קטן? בתוך נקודה אחת בקצה העיפרון מסתתרים יותר אטומים מכל האנשים שחיים על כדור הארץ. ואם היינו מגדילים אטום אחד לגודל של תפוח, תפוח רגיל היה גדל אז לגודל של כדור הארץ כולו. זה קטן מעבר לכל דמיון — ובכל זאת ממנו עשוי הכול.',viz:'atomScale'},
       {h:'מעט סוגים, אינסוף שילובים',t:'מפתיע, אבל אין הרבה סוגים של אטומים — בערך מאה בלבד. זה דומה לאלפבית: עם עשרים ושתיים אותיות אפשר לכתוב אינסוף מילים וסיפורים. כך גם כאן: ממאה סוגי אטומים מצטרפים כל החומרים שבעולם — המים, הזהב, הסוכר והאוויר. אותם אטומים, מסודרים אחרת, נותנים חומרים שונים לחלוטין.'},
       {h:'שלושה חלקיקים בפנים',t:'אם נוכל לפתוח אטום ולהציץ פנימה, נגלה שגם הוא בנוי מחלקיקים קטנים עוד יותר, משלושה סוגים: פרוטונים, נייטרונים ואלקטרונים. כל אחד יושב במקום אחר וממלא תפקיד אחר, ממש כמו שחקנים שונים באותה קבוצה. בשיעורים הקרובים נכיר כל אחד מהם מקרוב.'},
       {h:'למה כדאי להבין את זה',t:'כשנבין איך בנוי אטום, ייפתח לנו סוד גדול על העולם: למה הזהב מבריק ושונה מהברזל, למה דווקא את החמצן אנחנו נושמים, ולמה כל חומר מתנהג כמו שהוא מתנהג. כל הכימיה מתחילה כאן, מהלבנה הקטנה ביותר — ואת עומדת בדיוק בנקודת ההתחלה.'},
@@ -747,7 +750,7 @@ const CURRICULUM=[
       {h:'פרוטונים — מטען חיובי',t:'בתוך הגרעין יושבים פרוטונים. לכל פרוטון יש מטען חשמלי חיובי, שמסמנים בפלוס קטן. תחשבי על המטען כמו על הקצה של מגנט: יש לו כוח משיכה ודחייה. הפרוטונים הם גם הכי חשובים לזהות של האטום, וכבר בשיעור הבא נבין בדיוק למה.'},
       {h:'נייטרונים — בלי מטען',t:'לצד הפרוטונים יושבים בגרעין גם נייטרונים. הם בערך באותו גודל של הפרוטונים, אבל אין להם מטען כלל — לא פלוס ולא מינוס, הם נייטרליים לגמרי. תפקידם להוסיף לאטום משקל וליצוק בגרעין יציבות, כמו משקולות איזון בתוך סירה.'},
       {h:'צפופים יחד',t:'הפרוטונים והנייטרונים נדחסים יחד בגרעין צמודים מאוד, כמו אשכול ענבים קטן ומהודק. ככל שיש יותר פרוטונים ונייטרונים בגרעין, כך הוא כבד יותר, ולכן גם האטום כולו כבד יותר. בגלל זה אטום של זהב כבד בהרבה מאטום של מימן.'},
-      {h:'הגרעין זעיר מהאטום',t:'והנה דבר שמדהים כמעט כל מי ששומע אותו: הגרעין קטן בטירוף ביחס לאטום כולו. אילו האטום היה בגודל אצטדיון כדורגל שלם, הגרעין היה רק נמלה קטנה במרכז המגרש. כל שאר המקום, הענק והריק כמעט, שמור לאלקטרונים שדוהרים שם — ואותם נפגוש בשיעור הבא.'}
+      {h:'הגרעין זעיר מהאטום',t:'והנה דבר שמדהים כמעט כל מי ששומע אותו: הגרעין קטן בטירוף ביחס לאטום כולו. אילו האטום היה בגודל אצטדיון כדורגל שלם, הגרעין היה רק נמלה קטנה במרכז המגרש. כל שאר המקום, הענק והריק כמעט, שמור לאלקטרונים שדוהרים שם — ואותם נפגוש בשיעור הבא.',viz:'nucleusStadium'}
     ],interactive:{kind:'find',instruct:'לחצי על הפחמן — היסוד שיש לו שישה פרוטונים בגרעין (המספר הקטן 6 בפינת המשבצת).',match:{z:6},reveal:'יפה! לפחמן שישה פרוטונים. הפחמן הוא הבסיס של כל היצורים החיים.'},questions:[
       {type:'mc',q:'מה נמצא במרכז האטום?',opts:['הגרעין','אלקטרון בודד','חלל ריק','אוויר'],a:0,ex:'במרכז האטום יש גרעין צפוף, ובו הפרוטונים והנייטרונים.'},
       {type:'mc',q:'מה המטען של הפרוטון?',opts:['חיובי (+)','שלילי (−)','אין מטען','משתנה'],a:0,ex:'לפרוטון מטען חיובי, שמסומן בפלוס.'},
@@ -755,7 +758,7 @@ const CURRICULUM=[
       {type:'num',q:'בגרעין יש 6 פרוטונים ו־6 נייטרונים. כמה חלקיקים יש בגרעין בסך הכול?',a:12,unit:'חלקיקים',ex:'בגרעין יושבים פרוטונים ונייטרונים יחד: 6 ועוד 6 הם 12 חלקיקים.'}
     ]},
     {title:'האלקטרונים סביב הגרעין',read:[
-      {h:'דוהרים מסביב',t:'במרחב הריק שמקיף את הגרעין דוהרים האלקטרונים. הם חלקיקים זעירים וקלילים מאוד — קלים פי אלפיים מפרוטון — והם נעים מהר בטירוף סביב הגרעין, בערך כמו כוכבי לכת שמקיפים את השמש בלי הפסקה.'},
+      {h:'דוהרים מסביב',t:'במרחב הריק שמקיף את הגרעין דוהרים האלקטרונים. הם חלקיקים זעירים וקלילים מאוד — קלים פי אלפיים מפרוטון — והם נעים מהר בטירוף סביב הגרעין, בערך כמו כוכבי לכת שמקיפים את השמש בלי הפסקה.',viz:'electronsPlanets'},
       {h:'מטען שלילי',t:'לכל אלקטרון יש מטען חשמלי שלילי, שמסמנים במינוס. וכאן קורה משהו יפה: המינוס של האלקטרונים נמשך אל הפלוס של הפרוטונים, בדיוק כמו ששני קצוות מגנט נמשכים זה לזה. המשיכה הזאת היא מה שמחזיק את האלקטרונים קרוב לגרעין, כך שהם לא בורחים.'},
       {h:'מעטפות',t:'האלקטרונים לא מתרוצצים באקראי — הם מסתדרים בשכבות מסביב לגרעין, שנקראות מעטפות, כמו טבעות סביב כוכב הלכת שבתאי. המעטפת הקרובה לגרעין מתמלאת ראשונה, עד שני אלקטרונים, ורק כשהיא מלאה מתחילה להתמלא המעטפת הבאה אחריה.'},
       {h:'אטום מאוזן',t:'באטום רגיל ושקט יש בדיוק אותו מספר אלקטרונים ופרוטונים. מספר המינוסים שווה למספר הפלוסים, אז הם מתאזנים זה את זה — בדיוק כמו מאזניים ששני צדדיהם שווים. לכן אטום רגיל יוצא נייטרלי, בלי מטען כולל.'},
@@ -1311,7 +1314,8 @@ function openAtom(z){
     <div class="fun">${el.fun}</div>
     <div class="desc">בלב האטום יש <b class="num">${z}</b> פרוטונים, ולכן גם <b class="num">${z}</b> אלקטרונים שדוהרים סביבו ב־${sh.length} מעטפות. המספר הזה — <b class="num">${z}</b> — הוא מה שהופך אותו דווקא ל${el.n}.</div>
     <div class="legend"><div class="l"><span class="dot" style="background:#5aa9ff"></span>אלקטרון (e) · מטען −1</div></div>
-    <div class="hint">👆 לחצי על הגרעין הזוהר במרכז כדי להיכנס פנימה</div></div>`;
+    <div class="hint">👆 לחצי על הגרעין הזוהר במרכז כדי להיכנס פנימה</div>
+    <div class="qnav" style="justify-content:center;margin-top:14px"><button class="btn btn-ghost" onclick="renderPeriodic()">↩ חזרה לטבלה</button></div></div>`;
 }
 function openNucleus(){
   const el=atomState.el;atomState.level=2;
@@ -1326,7 +1330,8 @@ function openNucleus(){
     <div class="atom-info"><div class="big">הגרעין של ${el.n}</div>
     <div class="desc"><b class="num">${el.z}</b> פרוטונים (אדומים, מטען +) ו־<b class="num">${el.neu}</b> נייטרונים (אפורים, בלי מטען) צפופים יחד.</div>
     <div class="legend"><div class="l"><span class="dot" style="background:#ff7a8a"></span>פרוטון · מטען +1</div><div class="l"><span class="dot" style="background:#8aa0c0"></span>נייטרון · מטען 0</div></div>
-    <div class="hint">👆 לחצי על פרוטון או על נייטרון כדי לגלות מאיזה קווארקים הוא בנוי</div></div>`;
+    <div class="hint">👆 לחצי על פרוטון או על נייטרון כדי לגלות מאיזה קווארקים הוא בנוי</div>
+    <div class="qnav" style="justify-content:center;margin-top:14px"><button class="btn btn-ghost" onclick="openAtom(${el.z})">↩ חזרה לאטום</button></div></div>`;
 }
 function openProton(isProton){
   const el=atomState.el;atomState.level=3;
@@ -1347,7 +1352,7 @@ function openProton(isProton){
     <div class="desc">${isProton?'פרוטון בנוי משני קווארקים מסוג <b>עליון</b> (u) ואחד <b>תחתון</b> (d). חיבור המטענים נותן יחד <b>1+</b>.':'נייטרון בנוי מקווארק <b>עליון</b> אחד (u) ושני קווארקים <b>תחתונים</b> (d). חיבור המטענים נותן יחד <b>0</b>.'}</div>
     <div class="desc" style="color:var(--matter)">המטען הכולל: <b class="num">${sum}</b> ✓</div>
     <div class="hint">הגעת לקצה התחתון של החומר. קווארקים, ככל הידוע, כבר לא בנויים מכלום קטן יותר.</div>
-    <div class="qnav" style="justify-content:center;margin-top:16px"><button class="btn btn-ghost" onclick="renderPeriodic()">↩ חזרה לטבלה</button></div></div>`;
+    <div class="qnav" style="justify-content:center;margin-top:16px"><button class="btn btn-ghost" onclick="openNucleus()">↩ חזרה לגרעין</button></div></div>`;
 }
 
 /* ============ PHYSICS: formula bank + live track ============ */
@@ -1433,6 +1438,7 @@ function startReview(){
   document.getElementById('pracTag').textContent='תרגול חזרה';
   document.getElementById('pracTitle').textContent='חזרה על מה שכבר למדת';
   document.getElementById('pracToolBtn').style.display='none';
+  document.getElementById('pracBackBtn').style.display='none';
   go('practice');
   drawQuestion();
 }
@@ -1458,22 +1464,68 @@ function startPractice(cfg){
   go('practice');
   renderStage();
 }
+function syncPracBack(){
+  const bb=document.getElementById('pracBackBtn');if(!bb)return;
+  bb.style.display=(prac&&prac.mode!=='review'&&prac.stage&&prac.stage!=='read'&&prac.cfg.lesson&&prac.cfg.lesson.read)?'':'none';
+}
 function renderStage(){
   if(prac.stage==='read')renderReadPage();
   else if(prac.stage==='interactive')renderInteractive();
   else drawQuestion();
 }
+function backToLesson(){
+  if(!prac.cfg.lesson||!prac.cfg.lesson.read)return;
+  prac.stage='read';prac.page=0;renderStage();
+}
 
+/* ---- הדמיות לדימויים (SVG מובנה; מכבד prefers-reduced-motion) ---- */
+const RM=matchMedia('(prefers-reduced-motion:reduce)').matches;
+function spin(dur,cx,cy){return RM?'':`<animateTransform attributeName="transform" type="rotate" from="0 ${cx} ${cy}" to="360 ${cx} ${cy}" dur="${dur}s" repeatCount="indefinite"/>`;}
+function vpulse(a,b,dur){return RM?'':`<animate attributeName="r" values="${a};${b};${a}" dur="${dur}s" repeatCount="indefinite"/>`;}
+const VIZ={
+  nucleusStadium:function(){return `<svg viewBox="0 0 320 205" class="viz-svg" role="img" aria-label="הגרעין זעיר ביחס לאטום">
+    <ellipse cx="115" cy="100" rx="100" ry="80" fill="none" stroke="rgba(63,217,198,.35)" stroke-width="2"/>
+    <ellipse cx="115" cy="100" rx="76" ry="60" fill="rgba(63,217,198,.05)" stroke="rgba(63,217,198,.16)" stroke-width="1"/>
+    <g>${spin(9,115,100)}<circle cx="215" cy="100" r="5" fill="#5aa9ff"/></g>
+    <g>${spin(13,115,100)}<circle cx="39" cy="100" r="5" fill="#5aa9ff"/></g>
+    <circle cx="115" cy="100" r="2.6" fill="#ff7a8a">${vpulse(2,3.4,2)}</circle>
+    <line x1="118" y1="98" x2="250" y2="44" stroke="rgba(245,239,249,.28)" stroke-width="1" stroke-dasharray="3 3"/>
+    <circle cx="280" cy="42" r="30" fill="#15111e" stroke="rgba(255,122,138,.55)" stroke-width="1.5"/>
+    <text x="280" y="51" text-anchor="middle" font-size="26">🐜</text>
+    <text x="160" y="197" text-anchor="middle" fill="#c4b6d6" font-family="Heebo,sans-serif" font-size="11.5">האטום = אצטדיון · הגרעין במרכז = נמלה זעירה</text>
+  </svg>`;},
+  electronsPlanets:function(){return `<svg viewBox="0 0 320 200" class="viz-svg" role="img" aria-label="אלקטרונים סביב הגרעין כמו כוכבי לכת">
+    <ellipse cx="160" cy="95" rx="58" ry="58" fill="none" stroke="rgba(90,169,255,.22)" stroke-width="1"/>
+    <ellipse cx="160" cy="95" rx="90" ry="90" fill="none" stroke="rgba(90,169,255,.16)" stroke-width="1"/>
+    <circle cx="160" cy="95" r="17" fill="#ffb454"/><text x="160" y="101" text-anchor="middle" font-size="14" font-family="IBM Plex Mono" fill="#3a0d12" font-weight="700">+</text>
+    <g>${spin(6,160,95)}<circle cx="218" cy="95" r="6" fill="#5aa9ff"/></g>
+    <g>${spin(11,160,95)}<circle cx="250" cy="95" r="6" fill="#5aa9ff"/></g>
+    <g>${spin(8,160,95)}<circle cx="70" cy="95" r="6" fill="#5aa9ff"/></g>
+    <text x="160" y="190" text-anchor="middle" fill="#c4b6d6" font-family="Heebo,sans-serif" font-size="11.5">האלקטרונים מקיפים את הגרעין — כמו כוכבי לכת סביב שמש</text>
+  </svg>`;},
+  atomScale:function(){let dots='';for(let r=0;r<5;r++){for(let c=0;c<8;c++){dots+=`<circle cx="${206+c*12}" cy="${68+r*14}" r="3.4" fill="#3fd9c6" opacity="${0.5+((r+c)%3)*0.15}"/>`;}}
+    return `<svg viewBox="0 0 320 200" class="viz-svg" role="img" aria-label="בתוך גרגר חול אינספור אטומים">
+    <circle cx="78" cy="100" r="34" fill="#d9b48a" opacity=".45" stroke="#d9b48a" stroke-width="1.5"/>
+    <text x="78" y="152" text-anchor="middle" fill="#c4b6d6" font-size="11.5" font-family="Heebo,sans-serif">גרגר חול</text>
+    <line x1="110" y1="86" x2="198" y2="60" stroke="rgba(245,239,249,.28)" stroke-width="1" stroke-dasharray="3 3"/>
+    <line x1="110" y1="116" x2="198" y2="140" stroke="rgba(245,239,249,.28)" stroke-width="1" stroke-dasharray="3 3"/>
+    <rect x="198" y="52" width="108" height="100" rx="10" fill="#15111e" stroke="rgba(63,217,198,.4)" stroke-width="1.5"/>
+    ${dots}
+    <text x="252" y="190" text-anchor="middle" fill="#c4b6d6" font-size="11.5" font-family="Heebo,sans-serif">בתוך גרגר אחד — מיליוני אטומים</text>
+  </svg>`;}
+};
 /* ---- stage 1: reading (5–8 min) ---- */
 function renderReadPage(){
+  syncPracBack();
   const pages=prac.cfg.lesson.read,p=pages[prac.page],last=prac.page>=pages.length-1;
   const dots=pages.map((_,k)=>`<span class="ldot ${k===prac.page?'on':''}"></span>`).join('');
   const box=p.box?`<div class="read"><div class="formula-box">${p.box}</div></div>`:'';
+  const viz=p.viz?`<div class="lviz">${VIZ[p.viz]?VIZ[p.viz]():p.viz}</div>`:'';
   const hasInter=!!prac.cfg.lesson.interactive;
   const nextLabel=last?(hasInter?'לתרגול האינטראקטיבי ›':'לשאלות ›'):'הבא ›';
   const nextAct=last?(hasInter?'goInteractive()':'beginQuestions()'):'readNav(1)';
   document.getElementById('pracBody').innerHTML=`<div class="lpage"><div class="lp-step">📖 קריאה · דף ${prac.page+1} מתוך ${pages.length}</div>
-    <h3>${p.h}</h3><p>${p.t}</p>${box}</div>
+    <h3>${p.h}</h3><p>${p.t}</p>${box}${viz}</div>
     <div class="ldots">${dots}</div>
     <div class="qnav">${prac.page>0?'<button class="btn btn-ghost" onclick="readNav(-1)">‹ הקודם</button>':'<span></span>'}
       <button class="btn btn-primary" onclick="${nextAct}">${nextLabel}</button></div>`;
@@ -1483,6 +1535,7 @@ function readNav(d){prac.page+=d;renderReadPage();}
 /* ---- stage 2: interactive (must reach the goal to proceed) ---- */
 function goInteractive(){prac.stage='interactive';renderInteractive();}
 function renderInteractive(){
+  syncPracBack();
   const inter=prac.cfg.lesson.interactive;
   if(!inter){beginQuestions();return;}
   let inner='';
@@ -1625,6 +1678,7 @@ function beginQuestions(){
   drawQuestion();
 }
 function drawQuestion(){
+  syncPracBack();
   const qs=curQ(),body=document.getElementById('pracBody');
   const review=prac.mode==='review';
   if(prac.i>=qs.length){review?completeReview(qs.length):completeLesson(qs.length);return;}
@@ -1793,8 +1847,9 @@ function renderParentReview(){
     const pages=cfg.lesson.read||[];if(PR.page>=pages.length)PR.page=0;
     const p=pages[PR.page]||{h:'',t:''};
     const box=p.box?`<div class="read"><div class="formula-box">${p.box}</div></div>`:'';
+    const viz=p.viz?`<div class="lviz">${VIZ[p.viz]?VIZ[p.viz]():p.viz}</div>`:'';
     const dots=pages.map((_,k)=>`<span class="ldot ${k===PR.page?'on':''}"></span>`).join('');
-    html=`<div class="lpage"><div class="lp-step">📖 קריאה · דף ${PR.page+1} מתוך ${pages.length}</div><h3>${p.h}</h3><p>${p.t}</p>${box}</div>`
+    html=`<div class="lpage"><div class="lp-step">📖 קריאה · דף ${PR.page+1} מתוך ${pages.length}</div><h3>${p.h}</h3><p>${p.t}</p>${box}${viz}</div>`
       +`<div class="ldots">${dots}</div>`
       +`<div class="qnav">${PR.page>0?'<button class="btn btn-ghost" onclick="prReadNav(-1)">‹ הקודם</button>':'<span></span>'}`
       +`${PR.page<pages.length-1?'<button class="btn btn-primary" onclick="prReadNav(1)">הבא ›</button>':'<span></span>'}</div>`;
