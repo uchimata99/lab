@@ -2042,8 +2042,26 @@ function renderParent(){
   const tools='<div class="section-label">כלי הורה</div><div class="p-tools">'
     +'<button class="btn btn-primary" onclick="openParentReview()">✎ מצב סקירת הורה</button>'
     +'<button class="btn btn-ghost" onclick="resetProgress()">↺ אפס התקדמות (חזרה לשיעור הראשון)</button></div>';
-  el.innerHTML=overview+tools+mapSec+bysub+ach+recent;
+  const selStyle="width:100%;padding:11px 12px;border-radius:12px;background:var(--bg2);color:var(--ink);border:1px solid var(--line);font-family:'Heebo';font-size:15px";
+  const stageOpts=LESSON_SEQ.map((s,i)=>`<option value="${i}" ${i===step?'selected':''}>${i+1}. ${PR_SUBJ[s.subject]} · ${s.topicTitle} · שיעור ${s.lessonIndex+1}: ${s.lesson.title}</option>`).join('')
+    +`<option value="${LESSON_SEQ.length}" ${step>=LESSON_SEQ.length?'selected':''}>✓ סיימה את כל השיעורים</option>`;
+  const stageJump='<div class="section-label">מעבר לשלב — לשים את אילה בכל נקודה</div>'
+    +'<div class="p-tools" style="flex-direction:column;align-items:stretch;gap:10px">'
+    +`<select id="stageSel" style="${selStyle}">${stageOpts}</select>`
+    +'<button class="btn btn-primary" onclick="jumpToStage()">שים את אילה בשלב הזה ›</button>'
+    +'<div style="color:var(--faint);font-size:13px;line-height:1.5">כל השיעורים שלפני השלב הנבחר ייחשבו כהושלמו, והשלב הנבחר יהיה השיעור הנוכחי שאילה תמשיך ממנו.</div>'
+    +'</div>';
+  el.innerHTML=overview+tools+stageJump+mapSec+bysub+ach+recent;
   renderLessonMap();
+}
+
+function jumpToStage(){
+  const sel=document.getElementById('stageSel');if(!sel)return;
+  const i=Math.max(0,Math.min(LESSON_SEQ.length,+sel.value));
+  setStep(i);
+  renderParent();
+  if(typeof renderMission==='function')renderMission();
+  if(typeof renderStations==='function')renderStations();
 }
 
 /* ============ PARENT REVIEW (מבודד מההתקדמות) ============ */
