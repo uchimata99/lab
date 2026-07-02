@@ -533,8 +533,8 @@
       </div>
     </div>
 
-    <div class="section-label">המשימה שלך</div>
-    <div class="mission" id="missionCard"></div>
+    <div class="section-label">מסלולי הלימוד — כל תחום בקצב שלו</div>
+    <div id="missionCard"></div>
 
     <div class="section-label">המאגר שלך</div>
     <div id="bankView"></div>
@@ -1017,6 +1017,17 @@ function currentCfg(step){
     concept:s.concept,lessonIndex:s.lessonIndex,lessonCount:s.lessonCount,isLast:s.isLast,
     lesson:s.lesson,stepIndex:step});
 }
+/* ---- per-subject progression tracks (each subject advances on its own) ---- */
+const SUBJ_ORDER=['chemistry','physics','math'];
+const SUBJ_SEQ={chemistry:[],physics:[],math:[]};
+LESSON_SEQ.forEach((s,gi)=>{ (SUBJ_SEQ[s.subject]||(SUBJ_SEQ[s.subject]=[])).push(gi); });
+function getSteps(){const st=store.get('steps',null);return st&&typeof st==='object'?st:{chemistry:0,physics:0,math:0};}
+function getSubjStep(subj){return getSteps()[subj]||0;}
+function setSubjStep(subj,n){const st=getSteps();st[subj]=Math.max(0,Math.min(SUBJ_SEQ[subj].length,n|0));store.set('steps',st);}
+function subjTotal(subj){return SUBJ_SEQ[subj].length;}
+function subjDone(subj){return Math.min(getSubjStep(subj),subjTotal(subj));}
+function subjCurrentCfg(subj){const pos=getSubjStep(subj);if(pos>=SUBJ_SEQ[subj].length)return null;return currentCfg(SUBJ_SEQ[subj][pos]);}
+function doneTotal(){return SUBJ_ORDER.reduce((n,s)=>n+subjDone(s),0);}
 function getBanks(){return store.get('banks',{chemistry:[],physics:[],math:[]});}
 function addToBank(subject,concept){
   const b=getBanks();if(!b[subject])b[subject]=[];
@@ -1038,11 +1049,11 @@ const ACHIEVEMENTS=[
 ];
 function topicCount(subject){return CURRICULUM.filter(t=>t.subject===subject).length;}
 function unlockedAch(){
-  const step=getStep(),b=getBanks();
+  const done=doneTotal(),b=getBanks();
   const have={chemistry:(b.chemistry||[]).length,physics:(b.physics||[]).length,math:(b.math||[]).length};
   const banked=have.chemistry+have.physics+have.math;
   const maxSk=Math.max(getSkill('chemistry'),getSkill('physics'),getSkill('math'));
-  return {first:step>=1,topic1:banked>=1,ten:step>=10,
+  return {first:done>=1,topic1:banked>=1,ten:done>=10,
     chem:have.chemistry>=topicCount('chemistry'),phys:have.physics>=topicCount('physics'),mathx:have.math>=topicCount('math'),
     challenge:maxSk>=4,champion:maxSk>=5,all:banked>=CURRICULUM.length};
 }
@@ -1100,7 +1111,7 @@ function renderStations(){
       <div class="glow"></div>
       <div class="ico" style="color:${s.accent}">${s.icon}</div>
       <div><h4>${s.label}</h4><div class="sub">${s.sub}</div>
-      <div class="progressbar"><i style="width:${progress[s.id]||0}%"></i></div></div>
+      <div class="progressbar"><i style="width:${subjTotal(s.id)?Math.round(subjDone(s.id)/subjTotal(s.id)*100):0}%"></i></div></div>
     </div>`;
   }).join('');
 }
@@ -1125,30 +1136,38 @@ function topicArt(subject){
   return `<svg viewBox="0 0 160 100" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linejoin="round" stroke-linecap="round">
     <circle cx="44" cy="52" r="19"/><rect x="73" y="33" width="38" height="38" rx="6"/><path d="M119 70 L137 33 L155 70 Z"/></svg>`;
 }
-function renderMission(){
-  const step=getStep();const card=document.getElementById('missionCard');
-  if(step>=LESSON_SEQ.length){
-    card.innerHTML=`<div class="mission-body"><span class="tag">תכנית הלימוד</span>
-      <h3>כל הכבוד — סיימת את כל הנושאים שיש כרגע!</h3>
-      <p>כל מה שלמדת נמצא במאגר שלמטה. אפשר לחזור על שיעורים קודמים מההיסטוריה, או לשחק בכלים החופשיים.</p>
-      <div class="qnav" style="justify-content:flex-start"><button class="btn btn-primary" onclick="go('history')">🕘 להיסטוריה</button></div></div>`;
-    return;
+const SUBJ_HE={chemistry:'כימיה',physics:'פיזיקה',math:'מתמטיקה'};
+function toolBtnFor(subj){const t=TOPICS[subj];return subj==='math'
+  ?`<button class="btn btn-ghost" onclick="openMath()">📖 ${t.toolLabel}</button>`
+  :`<button class="btn btn-ghost" onclick="go('${t.tool}')">📖 ${t.toolLabel}</button>`;}
+function subjMissionCard(subj){
+  const t=TOPICS[subj],total=subjTotal(subj),done=subjDone(subj),cfg=subjCurrentCfg(subj);
+  const bar=`<div class="progressbar" style="margin-top:10px"><i style="width:${total?Math.round(done/total*100):0}%"></i></div>`;
+  if(!cfg){
+    return `<div class="mission" style="--accent:${t.accent}">
+      <div class="mission-art" style="--accent:${t.accent}">${topicArt(subj)}</div>
+      <div class="mission-body"><span class="tag">${t.tag}</span>
+      <h3>סיימת את כל ה${SUBJ_HE[subj]}! 🎉</h3>
+      <p class="m-tagline">${done}/${total} שיעורים הושלמו. אפשר לחזור על שיעורים מההיסטוריה, או לשחק בכלי.</p>${bar}
+      <div class="qnav" style="justify-content:flex-start">${toolBtnFor(subj)}<button class="btn btn-ghost" onclick="go('history')">🕘 היסטוריה</button></div></div></div>`;
   }
-  const cfg=currentCfg(step),t=TOPICS[cfg.subject];
-  const toolBtn = cfg.subject==='math'
-    ? `<button class="btn btn-ghost" onclick="openMath()">📖 ${t.toolLabel}</button>`
-    : `<button class="btn btn-ghost" onclick="go('${t.tool}')">📖 לכלי הלימוד</button>`;
-  card.innerHTML=`<div class="mission-art" style="--accent:${t.accent}">${topicArt(cfg.subject)}<span class="ma-glyph">${cfg.concept.disp}</span></div>
+  const gi=SUBJ_SEQ[subj][getSubjStep(subj)];
+  return `<div class="mission" style="--accent:${t.accent}">
+    <div class="mission-art" style="--accent:${t.accent}">${topicArt(subj)}<span class="ma-glyph">${cfg.concept.disp}</span></div>
     <div class="mission-body">
     <span class="tag">${t.tag} · נושא: ${cfg.topicTitle}</span>
     <h3>${cfg.title}</h3>
     <p class="m-tagline">${cfg.concept.sub}</p>
-    <div class="mission-meta"><div>שיעור <b>${cfg.lessonIndex+1}</b> מתוך <b>${cfg.lessonCount}</b></div><div>קריאה · תרגול · שאלות</div></div>
+    <div class="mission-meta"><div>שיעור <b>${done+1}</b> מתוך <b>${total}</b></div><div>קריאה · תרגול · שאלות</div></div>${bar}
     <div class="qnav" style="justify-content:flex-start">
-      <button class="btn btn-primary" onclick="startPractice(currentCfg(${step}))">להתחיל את השיעור ›</button>
-      ${toolBtn}
-      <button class="btn btn-ghost" onclick="go('history')">🕘 היסטוריה</button>
-    </div></div>`;
+      <button class="btn btn-primary" onclick="startPractice(currentCfg(${gi}))">${done>0?'להמשיך':'להתחיל'} ›</button>
+      ${toolBtnFor(subj)}
+    </div></div></div>`;
+}
+function renderMission(){
+  const wrap=document.getElementById('missionCard');if(!wrap)return;
+  wrap.className='missions';wrap.style.display='grid';wrap.style.gap='14px';
+  wrap.innerHTML=SUBJ_ORDER.map(subjMissionCard).join('');
 }
 
 /* ============ knowledge bank (completed concepts) ============ */
@@ -1176,14 +1195,15 @@ function renderBanks(){
 /* ============ lesson map (topics, locked progression) ============ */
 function renderLessonMap(){
   const el=document.getElementById('lessonMap');if(!el)return;
-  const step=getStep();
+  const posMap={};SUBJ_ORDER.forEach(subj=>SUBJ_SEQ[subj].forEach((g,q)=>posMap[g]={subj,q}));
   let html='<div class="lmap">',gi=0;
   CURRICULUM.forEach(topic=>{
-    const t=TOPICS[topic.subject];
-    const topicDone=(gi+topic.lessons.length-1)<step;
+    const t=TOPICS[topic.subject],cur=getSubjStep(topic.subject);
+    const lastP=posMap[gi+topic.lessons.length-1];
+    const topicDone=lastP&&lastP.q<cur;
     html+=`<div class="ltopiclabel" style="--accent:${t.accent}">${t.tag} · ${topic.title}${topicDone?' · ✓ במאגר':''}</div>`;
     topic.lessons.forEach((lesson,li)=>{
-      const idx=gi,state=idx<step?'done':(idx===step?'current':'locked');
+      const idx=gi,P=posMap[idx],state=P.q<cur?'done':(P.q===cur?'current':'locked');
       const icon=state==='done'?'✓':(state==='current'?'◆':'🔒');
       const note=state==='done'?'הושלם · אפשר לחזור':(state==='current'?'השיעור הנוכחי':'נפתח אחרי הקודם');
       const click=state==='locked'?'':`onclick="startPractice(currentCfg(${idx}))"`;
@@ -1985,9 +2005,12 @@ function completeLesson(total){
   const before=getSkill(cfg.subject);bumpSkill(cfg.subject,pct);const after=getSkill(cfg.subject);
   saveHistory(prac.score,total);
   let banked=false;
-  if(cfg.stepIndex!=null && cfg.stepIndex===getStep()){
-    setStep(getStep()+1);
-    if(cfg.isLast)banked=addToBank(cfg.subject,cfg.concept);
+  if(cfg.stepIndex!=null){
+    const subj=cfg.subject,pos=SUBJ_SEQ[subj].indexOf(cfg.stepIndex);
+    if(pos>=0 && pos===getSubjStep(subj)){
+      setSubjStep(subj,pos+1);
+      if(cfg.isLast)banked=addToBank(cfg.subject,cfg.concept);
+    }
   }
   const banner=banked?`<div class="bank-banner">🏅 הנושא «${cfg.concept.name}» הושלם — ונכנס למאגר ${subjLabel(cfg.subject)} שלך!</div>`:'';
   const skillMsg=after>before?`<div class="skill-up">⬆ רמת האתגר ב${subjLabel(cfg.subject)} עלתה ל-<span class="num">${'✦'.repeat(after)}</span></div>`
@@ -2024,14 +2047,13 @@ function redo(step){if(typeof step==='number'&&step>=0&&step<LESSON_SEQ.length)s
 /* ============ PARENT screen ============ */
 function renderParent(){
   const el=document.getElementById('parentBody');if(!el)return;
-  const step=getStep(),b=getBanks(),u=unlockedAch();
+  const b=getBanks(),u=unlockedAch();
   const subs=[['chemistry','כימיה','var(--matter)'],['physics','פיזיקה','var(--motion)'],['math','מתמטיקה','var(--numbers)']];
   // overall
-  const doneLessons=Math.min(step,LESSON_SEQ.length);
+  const doneLessons=doneTotal();
   const totalTopics=CURRICULUM.length,bankedTopics=subs.reduce((n,s)=>n+((b[s[0]]||[]).length),0);
-  let cur='';
-  if(step<LESSON_SEQ.length){const c=currentCfg(step);cur=`<div class="p-cur">כרגע לומדת: <b>${c.topicTitle} · ${c.title}</b> (שיעור ${c.lessonIndex+1} מתוך ${c.lessonCount})</div>`;}
-  else cur=`<div class="p-cur">אילה סיימה את כל הנושאים הקיימים. אפשר לחזור ולתרגל מההיסטוריה.</div>`;
+  const cur=SUBJ_ORDER.map(subj=>{const c=subjCurrentCfg(subj);
+    return `<div class="p-cur"><b>${SUBJ_HE[subj]}:</b> ${c?('שיעור '+(subjDone(subj)+1)+' מתוך '+subjTotal(subj)+' — '+c.title):('סיימה את הכול ✓ ('+subjDone(subj)+'/'+subjTotal(subj)+')')}</div>`;}).join('');
   const overview=`<div class="p-overview">
     <div class="p-stat"><div class="p-num">${doneLessons}<span class="p-den"> / ${LESSON_SEQ.length}</span></div><div class="p-lab">שיעורים הושלמו</div></div>
     <div class="p-stat"><div class="p-num">${bankedTopics}<span class="p-den"> / ${totalTopics}</span></div><div class="p-lab">נושאים במאגר</div></div>
@@ -2061,22 +2083,23 @@ function renderParent(){
     +'<button class="btn btn-primary" onclick="openParentReview()">✎ מצב סקירת הורה</button>'
     +'<button class="btn btn-ghost" onclick="resetProgress()">↺ אפס התקדמות (חזרה לשיעור הראשון)</button></div>';
   const selStyle="width:100%;padding:11px 12px;border-radius:12px;background:var(--bg2);color:var(--ink);border:1px solid var(--line);font-family:'Heebo';font-size:15px";
-  const stageOpts=LESSON_SEQ.map((s,i)=>`<option value="${i}" ${i===step?'selected':''}>${i+1}. ${PR_SUBJ[s.subject]} · ${s.topicTitle} · שיעור ${s.lessonIndex+1}: ${s.lesson.title}</option>`).join('')
-    +`<option value="${LESSON_SEQ.length}" ${step>=LESSON_SEQ.length?'selected':''}>✓ סיימה את כל השיעורים</option>`;
-  const stageJump='<div class="section-label">מעבר לשלב — לשים את אילה בכל נקודה</div>'
-    +'<div class="p-tools" style="flex-direction:column;align-items:stretch;gap:10px">'
-    +`<select id="stageSel" style="${selStyle}">${stageOpts}</select>`
-    +'<button class="btn btn-primary" onclick="jumpToStage()">שים את אילה בשלב הזה ›</button>'
-    +'<div style="color:var(--faint);font-size:13px;line-height:1.5">כל השיעורים שלפני השלב הנבחר ייחשבו כהושלמו, והשלב הנבחר יהיה השיעור הנוכחי שאילה תמשיך ממנו.</div>'
-    +'</div>';
+  const stageJump='<div class="section-label">מעבר לשלב — לכל מסלול בנפרד</div>'
+    +'<div style="color:var(--faint);font-size:13px;line-height:1.5;margin-bottom:10px">בחרי מסלול ושלב — כל השיעורים שלפניו באותו מסלול ייחשבו כהושלמו, והשלב הנבחר יהיה הנוכחי.</div>'
+    +SUBJ_ORDER.map(subj=>{
+      const seq=SUBJ_SEQ[subj],cur2=getSubjStep(subj),acc=TOPICS[subj].accent;
+      const opts=seq.map((g,pos)=>{const s=LESSON_SEQ[g];return `<option value="${pos}" ${pos===cur2?'selected':''}>${pos+1}. ${s.topicTitle} · שיעור ${s.lessonIndex+1}: ${s.lesson.title}</option>`;}).join('')
+        +`<option value="${seq.length}" ${cur2>=seq.length?'selected':''}>✓ סיום ${SUBJ_HE[subj]}</option>`;
+      return `<div class="p-sub" style="--accent:${acc};margin-bottom:10px"><div class="p-sub-head"><span class="p-sub-name">${SUBJ_HE[subj]}</span></div>`
+        +`<div class="p-tools" style="flex-direction:column;align-items:stretch;gap:8px"><select id="stageSel_${subj}" style="${selStyle}">${opts}</select>`
+        +`<button class="btn btn-primary" onclick="jumpToStage('${subj}')">שים את אילה כאן ›</button></div></div>`;
+    }).join('');
   el.innerHTML=overview+tools+stageJump+mapSec+bysub+ach+recent;
   renderLessonMap();
 }
 
-function jumpToStage(){
-  const sel=document.getElementById('stageSel');if(!sel)return;
-  const i=Math.max(0,Math.min(LESSON_SEQ.length,+sel.value));
-  setStep(i);
+function jumpToStage(subj){
+  const sel=document.getElementById('stageSel_'+subj);if(!sel)return;
+  setSubjStep(subj,+sel.value);
   renderParent();
   if(typeof renderMission==='function')renderMission();
   if(typeof renderStations==='function')renderStations();
@@ -2226,7 +2249,7 @@ function prPenClear(){if(prCtx)prCtx.clearRect(0,0,innerWidth+10,innerHeight+10)
 /* ---- איפוס התקדמות (שומר את הערות ההורה) ---- */
 function resetProgress(){
   if(!confirm('לאפס את ההתקדמות ולהחזיר את הילדה לתחילת השיעור הראשון?\n\nההערות שלך יישמרו.'))return;
-  ['step','progress','history','banks','skill','ach','review'].forEach(k=>{try{localStorage.removeItem('lab_'+k);}catch(e){}});
+  ['step','steps','progress','history','banks','skill','ach','review'].forEach(k=>{try{localStorage.removeItem('lab_'+k);}catch(e){}});
   progress.chemistry=0;progress.physics=0;progress.math=0;
   renderMission&&renderMission();renderStations&&renderStations();renderBanks&&renderBanks();renderLessonMap&&renderLessonMap();
   alert('ההתקדמות אופסה. הילדה תתחיל מהשיעור הראשון.');
