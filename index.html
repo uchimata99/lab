@@ -301,9 +301,9 @@
     box-shadow:0 6px 22px color-mix(in srgb,var(--accent) 20%,transparent)}
   .lrow.done .lr-mark{background:color-mix(in srgb,var(--good) 16%,transparent);border-color:color-mix(in srgb,var(--good) 40%,transparent);color:var(--good)}
   .lrow.done:hover,.lrow.current:hover{transform:translateX(-4px);border-color:var(--accent)}
-  .lrow.locked{cursor:default;opacity:.55}
+  .lrow.locked{cursor:pointer;opacity:.7}
   .lrow.locked .lr-mark{background:rgba(255,255,255,.05);border-color:var(--line);color:var(--faint)}
-  .lrow.locked:hover{transform:none}
+  .lrow.locked:hover{transform:translateX(-4px);border-color:var(--accent);opacity:1}
 
   /* ===== readability scale-up (proportional, overrides above) ===== */
   body{font-size:19px}
@@ -1196,7 +1196,7 @@ function renderBanks(){
 function renderLessonMap(){
   const el=document.getElementById('lessonMap');if(!el)return;
   const posMap={};SUBJ_ORDER.forEach(subj=>SUBJ_SEQ[subj].forEach((g,q)=>posMap[g]={subj,q}));
-  let html='<div class="lmap">',gi=0;
+  let html='<div style="color:var(--faint);font-size:13px;line-height:1.5;margin-bottom:8px">לחצי על כל שיעור כדי לשחק אותו בעצמך — התנסות אמיתית, כולל שיעורים נעולים. משחק כאן לא משנה את ההתקדמות של אילה.</div><div class="lmap">',gi=0;
   CURRICULUM.forEach(topic=>{
     const t=TOPICS[topic.subject],cur=getSubjStep(topic.subject);
     const lastP=posMap[gi+topic.lessons.length-1];
@@ -1205,12 +1205,11 @@ function renderLessonMap(){
     topic.lessons.forEach((lesson,li)=>{
       const idx=gi,P=posMap[idx],state=P.q<cur?'done':(P.q===cur?'current':'locked');
       const icon=state==='done'?'✓':(state==='current'?'◆':'🔒');
-      const note=state==='done'?'הושלם · אפשר לחזור':(state==='current'?'השיעור הנוכחי':'נפתח אחרי הקודם');
-      const click=state==='locked'?'':`onclick="startPractice(currentCfg(${idx}))"`;
-      html+=`<div class="lrow ${state}" style="--accent:${t.accent}" ${click}>
+      const note=state==='done'?'הושלם · שחקי שוב':(state==='current'?'השיעור הנוכחי · שחקי':'נעול לאילה · נסי בעצמך');
+      html+=`<div class="lrow ${state}" style="--accent:${t.accent}" onclick="startPractice(currentCfg(${idx}))">
         <div class="lr-mark">${icon}</div>
         <div class="lr-body"><div class="lr-title">${lesson.title}</div><div class="lr-note">שיעור ${li+1} מתוך ${topic.lessons.length} · ${note}</div></div>
-        <div class="lr-go">${state==='locked'?'':'›'}</div></div>`;
+        <div class="lr-go">▶</div></div>`;
       gi++;
     });
   });
@@ -2170,11 +2169,13 @@ function renderParentReview(){
     else if(inter.kind==='track')inner+=trackMarkup();
     else if(inter.kind==='fraction')inner+=fractionMarkup(inter.parts);
     else if(inter.kind==='balance')inner+=balanceMarkup(inter);
+    else if(inter.kind==='journey')inner+='<div style="color:var(--read);line-height:1.7">התנסות מודרכת אינטראקטיבית — בוחרים משפחה, אז אטום, עונים «מה זה ואיפה בחיים» ו«כמה פרוטונים», וצוללים פנימה עד השדה. לחצי «נסי את השיעור» למעלה כדי לשחק אותה באמת.</div>';
     html=`<div class="inter-box">${inner}</div>`;
   }else{
     html=prQuestionsHTML(cfg.lesson.questions);
   }
-  document.getElementById('prBody').innerHTML=html;
+  const playBar=`<div class="qnav" style="justify-content:flex-start;margin-bottom:12px;gap:8px;flex-wrap:wrap"><button class="btn btn-primary" onclick="startPractice(currentCfg(${PR.i}))">▶ נסי את השיעור הזה באמת</button><span style="color:var(--faint);font-size:13px;align-self:center">משחק כאן לא משנה את ההתקדמות של אילה</span></div>`;
+  document.getElementById('prBody').innerHTML=playBar+html;
   if(PR.view==='interactive'){
     const inter=cfg.lesson.interactive;
     if(inter.kind==='track')initInterTrack(null);
