@@ -862,6 +862,19 @@ const CURRICULUM=[
     ]}
   ]},
 
+  /* ===================== כימיה · נושא: מסע בין המשפחות (שיעור חקר) ===================== */
+  {id:'families',subject:'chemistry',title:'מסע בין המשפחות',concept:{id:'families',name:'משפחות היסודות',sub:'קבוצות · חקר עד המקור',disp:'⚛︎'},lessons:[
+    {title:'מסע חקר אל תוך החומר',read:[
+      {h:'משפחות של יסודות',t:'הטבלה המחזורית לא רק מסדרת את היסודות לפי מספר — היא גם מקבצת אותם ל<span class="key">משפחות</span>. כל טור בטבלה הוא משפחה אחת, וכל בני המשפחה מתנהגים בצורה דומה: המתכות האלקליות רכות ומגיבות בעוצמה, הגזים האצילים רגועים וכמעט לא מגיבים, וההלוגנים פעילים מאוד. במסע הזה נכיר משפחה, נבחר ממנה אטום, ונגלה מי הוא — עד עומק עומקו.',viz:'atomLego'},
+      {h:'איך חוקרים אטום — עד המקור',t:'בכל אטום שנבחר נעצור לשאול: מה החומר הזה, ואיפה פוגשים אותו בחיים? כמה פרוטונים יש לו (וזה גם מספר האלקטרונים)? ואז נצלול פנימה — אל הגרעין, אל הפרוטונים והקווארקים, ועד ל<span class="key">שדה</span>, המקור שממנו עשוי כל החומר. תמיד אפשר לחזור למקור ולבחור אטום נוסף. מוכנה? קדימה למסע.'}
+    ],interactive:{kind:'journey',instruct:'בחרי משפחה, ואז אטום. גלי מה הוא ואיפה הוא בחיים, כמה פרוטונים יש לו, ואז צללי פנימה — גרעין, קווארקים, ועד השדה. אחרי שני אטומים ייפתח הכפתור «לשאלות».',reveal:'מדהים! חקרת אטומים אמיתיים והגעת עד השדה — המקור של כל החומר.'},questions:[
+      {type:'mc',q:'יסודות שנמצאים באותה משפחה (טור) בטבלה...',opts:['מתנהגים בצורה דומה','שוקלים בדיוק אותו דבר','הם אותו יסוד','תמיד באותו צבע'],a:0,ex:'בני אותה משפחה חולקים תכונות דומות.'},
+      {type:'num',q:'לחמצן יש 8 פרוטונים בגרעין. כמה אלקטרונים דוהרים סביבו באטום ניטרלי?',a:8,unit:'אלקטרונים',ex:'באטום ניטרלי מספר האלקטרונים שווה למספר הפרוטונים — 8.'},
+      {type:'find',q:'לחצי על אחד הגזים האצילים — המשפחה הרגועה שכמעט לא מגיבה (בצבע ורוד).',match:{cat:'noble'},ex:'הגזים האצילים יושבים בטור האחרון ומעטפתם כבר מלאה.'},
+      {type:'mc',q:'הכי עמוק שאפשר לצלול בחומר — כל חלקיק הוא בעצם...',opts:['אדווה (גל) בתוך שדה','כדור קטן וקשה','חלל ריק','טיפת מים'],a:0,ex:'לפי הפיזיקה, כל חלקיק הוא אדווה — גל — בתוך שדה. זה המקור.'}
+    ]}
+  ]},
+
   /* ===================== פיזיקה · נושא: תאוצה (2 שיעורים) ===================== */
   {id:'accel',subject:'physics',title:'תאוצה',concept:{id:'accel',name:'תאוצה',sub:'שינוי המהירות',disp:'a'},lessons:[
     {title:'מה זאת תאוצה',read:[
@@ -1058,7 +1071,7 @@ function stage(mod,id){
   document.getElementById(id).classList.add('show');
   let tab=id; if(id==='pPlay')tab='pBank';
   sec.querySelectorAll('.step').forEach(s=>s.classList.toggle('active',s.dataset.stage===tab));
-  if(id==='cLab')startJourney();
+  if(id==='cLab'){AV='atomView';AC='atomCrumb';journey=null;renderPeriodic();}
   if(id==='pBank')renderFormulaBank();
   if(id==='pPlay')initPhysics();
   window.scrollTo({top:0,behavior:'smooth'});
@@ -1271,12 +1284,13 @@ function catOf(z){
 const PTABLE=[];
 Object.keys(ROWS).forEach(r=>ROWS[r].forEach((z,i)=>{if(z)PTABLE.push({z,s:SYM[z-1],r:+r,c:i+1,cat:catOf(z)});}));
 
-let atomState={level:0,el:null},selCat=null,selEl=null,journey=null;
+let atomState={level:0,el:null},selCat=null,selEl=null,journey=null,AV='atomView',AC='atomCrumb';
 function shells(z){const cap=[2,8,8,2];const out=[];let left=z;for(const c of cap){if(left<=0)break;out.push(Math.min(c,left));left-=c;}return out;}
 function resetAtom(){atomState={level:0,el:null};selCat=null;selEl=null;}
 function renderPeriodic(){
+  if(journey&&journey.lesson){resumeJourney();return;}
   atomState={level:0,el:null};if(journey)journey.active=false;
-  document.getElementById('atomCrumb').innerHTML='<span>לחצי על יסוד או על משפחת צבע</span>';
+  document.getElementById(AC).innerHTML='<span>לחצי על יסוד או על משפחת צבע</span>';
   const present=[...new Set(PTABLE.map(e=>e.cat))];
   const legend='<div class="cat-legend">'+present.map(k=>`<div class="cat-chip ${selCat===k?'on':''}" style="${selCat===k?'background:'+CATS[k].col+';border-color:'+CATS[k].col:''}" onclick="selectCat('${k}')"><span class="dot" style="background:${CATS[k].col}"></span>${CATS[k].name}</div>`).join('')+'</div>';
   let explainHTML='';
@@ -1289,12 +1303,12 @@ function renderPeriodic(){
     const dim=selCat&&e.cat!==selCat,lit=selEl===e.z||(selCat&&e.cat===selCat&&!selEl);
     return `<div class="pt ${dim?'dimmed':''} ${lit?'lit':''}" style="grid-column:${e.c};grid-row:${e.r};--cat:${CATS[e.cat].col}" onclick="pickElement(${e.z})"><div class="z num">${e.z}</div><div class="sym">${e.s}</div><div class="nn num">${NEU[e.z-1]}</div></div>`;
   }).join('')+'</div></div>';
-  document.getElementById('atomView').innerHTML='<div class="pt-instruct">לחצי על יסוד כדי לראות לאיזו משפחה הוא שייך, ולהיכנס אל תוך האטום — או על משפחה במקרא</div>'+legend+explain+grid+'<div class="pt-key"><span><b class="pk-p">●</b> מספר עליון = פרוטונים</span><span><b class="pk-n">●</b> מספר תחתון = נייטרונים</span></div>';
+  document.getElementById(AV).innerHTML='<div class="pt-instruct">לחצי על יסוד כדי לראות לאיזו משפחה הוא שייך, ולהיכנס אל תוך האטום — או על משפחה במקרא</div>'+legend+explain+grid+'<div class="pt-key"><span><b class="pk-p">●</b> מספר עליון = פרוטונים</span><span><b class="pk-n">●</b> מספר תחתון = נייטרונים</span></div>';
 }
 function pickElement(z){selEl=z;selCat=catOf(z);renderPeriodic();}
 function selectCat(k){selCat=(selCat===k)?null:k;selEl=null;renderPeriodic();}
 function crumb(parts){
-  document.getElementById('atomCrumb').innerHTML=parts.map((p,i)=>
+  document.getElementById(AC).innerHTML=parts.map((p,i)=>
     i<parts.length-1?`<span class="c" onclick="${p.act}">${p.t}</span><span>›</span>`:`<span>${p.t}</span>`).join('');
 }
 /* ===== מסע מודרך בין משפחות היסודות (שיעור חקר) ===== */
@@ -1322,7 +1336,8 @@ function journeyBar(){
   if(!journey||!journey.active)return '';
   return `<div style="background:rgba(63,217,198,.12);border:1px solid var(--matter);border-radius:12px;padding:9px 13px;margin-bottom:12px;display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap"><span style="color:var(--matter);font-weight:700">🔎 את במסע חקר — צללי לעומק, וכשתסיימי:</span><button class="btn btn-primary" style="padding:8px 16px" onclick="resumeJourney()">↩ חזרה למסע</button></div>`;
 }
-function startJourney(){journey={gi:0,explored:[],z:null,phase:'intro',active:false};renderJourney();}
+function startJourney(lesson){journey={gi:0,explored:[],z:null,phase:'intro',active:false,lesson:!!lesson};renderJourney();}
+function jLessonReveal(){if(journey&&journey.lesson&&typeof interSolved==='function'){const inter=prac&&prac.cfg&&prac.cfg.lesson&&prac.cfg.lesson.interactive;interSolved((inter&&inter.reveal)||'כל הכבוד! חקרת אטומים עד המקור.');}}
 function jPhase(p){journey.phase=p;renderJourney();}
 function jPick(z){journey.z=z;journey.phase='what';renderJourney();}
 function jPeek(){journey.active=true;openAtom(journey.z);}
@@ -1338,7 +1353,7 @@ function jProtons(pick,z){
   if(pick===z){journey.phase='protonsR';renderJourney();}
   else{const f=document.getElementById('jFeed');if(f)f.textContent='כמעט! נסי שוב — הסתכלי על המספר הקטן בפינת המשבצת.';}
 }
-function jCrumb(txt){document.getElementById('atomCrumb').innerHTML='<span class="c" onclick="startJourney()">מסע בין המשפחות</span>'+(txt?'<span>›</span><span>'+txt+'</span>':'');}
+function jCrumb(txt){document.getElementById(AC).innerHTML='<span class="c" onclick="startJourney()">מסע בין המשפחות</span>'+(txt?'<span>›</span><span>'+txt+'</span>':'');}
 function renderJourney(){
   const g=JOURNEY_GROUPS[journey.gi],C=g?CATS[g.cat]:null;let html='';
   if(journey.phase==='intro'){
@@ -1389,7 +1404,7 @@ function renderJourney(){
     if(n>=2){
       const more=journey.explored.length<g.zs.length?`<button class="btn btn-primary" onclick="jPhase('choose')" style="background:${C.col};color:#06122a">עוד אטום מהקבוצה ›</button>`:'';
       html=`<div class="atom-info"><div class="big" style="color:${C.col}">חקרת ${n} אטומים מקבוצת ${C.name}! 🎉</div>
-        <div class="desc">כל הכבוד — בכל אחד הגעת עד השדה, המקור של הכול. רוצה לחקור עוד אטום מהקבוצה, או לעבור לקבוצה חדשה?</div>
+        <div class="desc">כל הכבוד — בכל אחד הגעת עד השדה, המקור של הכול. ${journey.lesson?'אפשר להמשיך לחקור עוד, או ללחוץ «לשאלות ›» שלמטה.':'רוצה לחקור עוד אטום מהקבוצה, או לעבור לקבוצה חדשה?'}</div>
         <div class="qnav" style="justify-content:center;gap:10px;margin-top:16px;flex-wrap:wrap">${more}<button class="btn btn-primary" onclick="jNextGroup()">לקבוצה חדשה ›</button></div></div>`;
     } else {
       html=`<div class="atom-info"><div class="big" style="color:${C.col}">גילית את ${d.n}! ✓</div>
@@ -1397,12 +1412,13 @@ function renderJourney(){
         <div class="qnav" style="justify-content:center;margin-top:14px"><button class="btn btn-primary" onclick="jPhase('choose')" style="background:${C.col};color:#06122a">לאטום הבא ›</button></div></div>`;
     }
   } else if(journey.phase==='done'){
-    document.getElementById('atomCrumb').innerHTML='<span>מסע בין המשפחות</span>';
+    document.getElementById(AC).innerHTML='<span>מסע בין המשפחות</span>';
     html=`<div class="atom-info"><div class="big" style="color:var(--matter)">מסע מרהיב! 🌌</div>
       <div class="desc">חקרת אטומים ממשפחות שונות, וצללת בכל אחד עד השדה — המקור של כל החומר ביקום.</div>
       <div class="qnav" style="justify-content:center;gap:10px;margin-top:16px;flex-wrap:wrap"><button class="btn btn-primary" onclick="startJourney()">מסע חדש ↻</button><button class="btn btn-ghost" onclick="renderPeriodic()">לחקור לבד בטבלה ›</button></div></div>`;
   }
-  document.getElementById('atomView').innerHTML=html;
+  document.getElementById(AV).innerHTML=html;
+  if((journey.phase==='afterAtom'&&journey.explored.length>=2)||journey.phase==='done')jLessonReveal();
   window.scrollTo({top:0,behavior:'smooth'});
 }
 function openAtom(z){
@@ -1417,7 +1433,7 @@ function openAtom(z){
     <circle cx="${cx}" cy="${cy}" r="34" fill="rgba(63,217,198,.18)" stroke="var(--matter)" stroke-width="1.5"/>
     <circle cx="${cx}" cy="${cy}" r="34" fill="none" stroke="var(--matter)" stroke-width="1.5"><animate attributeName="r" values="34;37;34" dur="2.4s" repeatCount="indefinite"/><animate attributeName="opacity" values="1;.3;1" dur="2.4s" repeatCount="indefinite"/></circle>
     <text x="${cx}" y="${cy+7}" text-anchor="middle" fill="var(--matter)" font-family="IBM Plex Mono" font-size="22" font-weight="700">${el.s}</text></g></svg>`;
-  document.getElementById('atomView').innerHTML=`<div class="stage-canvas">${svg}</div>
+  document.getElementById(AV).innerHTML=`<div class="stage-canvas">${svg}</div>
     <div class="atom-info">${journeyBar()}<div class="big">${el.n} · ${el.s}</div>
     <div class="fun">${el.fun}</div>
     <div class="desc">בלב האטום יש <b class="num">${z}</b> פרוטונים, ולכן גם <b class="num">${z}</b> אלקטרונים שדוהרים סביבו ב־${sh.length} מעטפות. המספר הזה — <b class="num">${z}</b> — הוא מה שהופך אותו דווקא ל${el.n}.</div>
@@ -1434,7 +1450,7 @@ function openNucleus(){
     if(isP){pShown++;svg+=`<g style="cursor:pointer" onclick="openProton(true)"><circle cx="${x}" cy="${y}" r="16" fill="#ff7a8a" stroke="#fff3" stroke-width="1.5"/><text x="${x}" y="${y+5}" text-anchor="middle" fill="#3a0d12" font-family="IBM Plex Mono" font-size="15" font-weight="700" style="pointer-events:none">p</text><text x="${x+12}" y="${y-8}" text-anchor="middle" fill="#3a0d12" font-size="12" font-weight="700" style="pointer-events:none">+</text></g>`;}
     else{svg+=`<g style="cursor:pointer" onclick="openProton(false)"><circle cx="${x}" cy="${y}" r="16" fill="#8aa0c0" stroke="#fff3" stroke-width="1.5"/><text x="${x}" y="${y+5}" text-anchor="middle" fill="#16202f" font-family="IBM Plex Mono" font-size="15" font-weight="700" style="pointer-events:none">n</text><text x="${x+12}" y="${y-8}" text-anchor="middle" fill="#16202f" font-size="12" font-weight="700" style="pointer-events:none">0</text></g>`;}}
   svg+=`</svg>`;
-  document.getElementById('atomView').innerHTML=`<div class="stage-canvas">${svg}</div>
+  document.getElementById(AV).innerHTML=`<div class="stage-canvas">${svg}</div>
     <div class="atom-info">${journeyBar()}<div class="big">הגרעין של ${el.n}</div>
     <div class="desc"><b class="num">${el.z}</b> פרוטונים (אדומים, מטען +) ו־<b class="num">${el.neu}</b> נייטרונים (אפורים, בלי מטען) צפופים יחד.</div>
     <div class="legend"><div class="l"><span class="dot" style="background:#ff7a8a"></span>פרוטון · מטען +1</div><div class="l"><span class="dot" style="background:#8aa0c0"></span>נייטרון · מטען 0</div></div>
@@ -1455,7 +1471,7 @@ function openProton(isProton){
     svg+=`<g style="cursor:pointer" onclick="openQuark('${fl}',${isProton})"><circle cx="${x}" cy="${y}" r="26" fill="${q.col}" opacity=".9"/><text x="${x}" y="${y+2}" text-anchor="middle" fill="#06122a" font-family="IBM Plex Mono" font-size="20" font-weight="700" style="pointer-events:none">${q.t}</text><text x="${x}" y="${y+18}" text-anchor="middle" fill="#06122a" font-size="11" font-weight="600" style="pointer-events:none">${q.c}</text></g>`;});
   svg+=`</svg>`;
   const sum=isProton?'+1 (חיובי)':'0 (ניטרלי)';
-  document.getElementById('atomView').innerHTML=`<div class="stage-canvas" style="max-width:380px">${svg}</div>
+  document.getElementById(AV).innerHTML=`<div class="stage-canvas" style="max-width:380px">${svg}</div>
     <div class="atom-info">${journeyBar()}<div class="big">${isProton?'פרוטון':'נייטרון'} = שלושה קווארקים</div>
     <div class="desc">${isProton?'פרוטון בנוי משני קווארקים מסוג <b>עליון</b> (u) ואחד <b>תחתון</b> (d). חיבור המטענים נותן יחד <b>1+</b>.':'נייטרון בנוי מקווארק <b>עליון</b> אחד (u) ושני קווארקים <b>תחתונים</b> (d). חיבור המטענים נותן יחד <b>0</b>.'}</div>
     <div class="desc" style="color:var(--matter)">המטען הכולל: <b class="num">${sum}</b> ✓</div>
@@ -1472,7 +1488,7 @@ function openElectrons(z){
     for(let k=0;k<cnt;k++){const ang=(k/cnt)*Math.PI*2+i*0.6;const ex=cx+Math.cos(ang)*rad,ey=cy+Math.sin(ang)*rad;
       svg+=`<g style="cursor:pointer" onclick="openLepton()"><animateTransform attributeName="transform" type="rotate" from="0 ${cx} ${cy}" to="360 ${cx} ${cy}" dur="${12+i*6}s" repeatCount="indefinite"/><circle cx="${ex}" cy="${ey}" r="13" fill="#5aa9ff"/><text x="${ex}" y="${ey+5}" text-anchor="middle" font-family="IBM Plex Mono" font-size="14" font-weight="700" fill="#06122a" style="pointer-events:none">e</text><text x="${ex+11}" y="${ey-7}" text-anchor="middle" font-size="13" font-weight="700" fill="#bfe0ff" style="pointer-events:none">−</text></g>`;}});
   svg+=`</svg>`;
-  document.getElementById('atomView').innerHTML=`<div class="stage-canvas">${svg}</div>
+  document.getElementById(AV).innerHTML=`<div class="stage-canvas">${svg}</div>
     <div class="atom-info"><div class="big" style="color:#5aa9ff">האלקטרונים של ${el.n}</div>
     <div class="desc">ל${el.n} יש <b class="num">${z}</b> אלקטרונים שדוהרים סביב הגרעין ב־${sh.length} מעטפות. כל אלקטרון קטן וקל מאוד, וטעון מטען שלילי (−) שמושך אותו אל הפרוטונים החיוביים שבגרעין.</div>
     <div class="desc">האלקטרון הוא חלקיק יסודי — הוא לא בנוי מקווארקים ולא משום דבר קטן יותר. ובכל זאת, אם צוללים עמוק ממש — גם בו מסתתר סוד.</div>
@@ -1486,7 +1502,7 @@ function openLepton(){
   const cx=190,cy=170;let svg=`<svg viewBox="0 0 380 340">`;
   svg+=`<circle cx="${cx}" cy="${cy}" r="60" fill="#5aa9ff" opacity=".9"/><circle cx="${cx}" cy="${cy}" r="60" fill="none" stroke="#bfe0ff" stroke-width="1.5"><animate attributeName="r" values="60;66;60" dur="2.6s" repeatCount="indefinite"/><animate attributeName="opacity" values=".8;.2;.8" dur="2.6s" repeatCount="indefinite"/></circle>`;
   svg+=`<text x="${cx}" y="${cy+16}" text-anchor="middle" fill="#06122a" font-family="IBM Plex Mono" font-size="54" font-weight="700">−</text></svg>`;
-  document.getElementById('atomView').innerHTML=`<div class="stage-canvas" style="max-width:360px">${svg}</div>
+  document.getElementById(AV).innerHTML=`<div class="stage-canvas" style="max-width:360px">${svg}</div>
     <div class="atom-info"><div class="big" style="color:#5aa9ff">אלקטרון · חלקיק יסודי</div>
     <div class="desc">האלקטרון שייך למשפחת ה<b>לפטונים</b>. בניגוד לפרוטון ולנייטרון, הוא <b>לא</b> בנוי מקווארקים — הוא אחת מאבני הבניין הכי בסיסיות שאנחנו מכירים.</div>
     <div class="desc" style="color:var(--numbers)">אבל באמת-באמת פנימה, גם אלקטרון הוא בעצם אדווה — גל זעיר — בתוך שדה. וזה כבר המקור.</div>
@@ -1498,7 +1514,7 @@ function openQuark(flavor,isProton){
   crumb([{t:'הטבלה',act:"renderPeriodic()"},{t:el.n,act:`openAtom(${el.z})`},{t:'הגרעין',act:'openNucleus()'},{t:isProton?'פרוטון':'נייטרון',act:`openProton(${isProton})`},{t:up?'קווארק u':'קווארק d',act:''}]);
   const c=up?'#ffb454':'#5aa9ff';const cx=190,cy=170;
   let svg=`<svg viewBox="0 0 380 340"><circle cx="${cx}" cy="${cy}" r="66" fill="${c}" opacity=".9"/><circle cx="${cx}" cy="${cy}" r="66" fill="none" stroke="#fff6" stroke-width="1.5"><animate attributeName="r" values="66;72;66" dur="2.6s" repeatCount="indefinite"/><animate attributeName="opacity" values=".7;.2;.7" dur="2.6s" repeatCount="indefinite"/></circle><text x="${cx}" y="${cy+2}" text-anchor="middle" fill="#06122a" font-family="IBM Plex Mono" font-size="44" font-weight="700">${up?'u':'d'}</text><text x="${cx}" y="${cy+34}" text-anchor="middle" fill="#06122a" font-size="18" font-weight="700">${up?'+⅔':'−⅓'}</text></svg>`;
-  document.getElementById('atomView').innerHTML=`<div class="stage-canvas" style="max-width:360px">${svg}</div>
+  document.getElementById(AV).innerHTML=`<div class="stage-canvas" style="max-width:360px">${svg}</div>
     <div class="atom-info"><div class="big" style="color:${c}">קווארק ${up?'עליון (u)':'תחתון (d)'}</div>
     <div class="desc">מטען: <b class="num">${up?'+⅔':'−⅓'}</b>. הקווארק הוא חלקיק יסודי — הכי קטן שאנחנו מכירים — והוא אף פעם לא לבד, תמיד בקבוצה של שלושה בתוך פרוטון או נייטרון.</div>
     <div class="desc" style="color:var(--numbers)">ובאמת-באמת פנימה? גם קווארק הוא אדווה — גל זעיר — בתוך שדה. הגענו כמעט למקור.</div>
@@ -1515,7 +1531,7 @@ function openForce(isProton){
   qs.forEach((t,i)=>{const a=-Math.PI/2+i*(Math.PI*2/3),x=cx+Math.cos(a)*R,y=cy+Math.sin(a)*R;
     svg+=`<circle cx="${x}" cy="${y}" r="22" fill="${t==='u'?'#ffb454':'#5aa9ff'}"/><text x="${x}" y="${y+6}" text-anchor="middle" fill="#06122a" font-family="IBM Plex Mono" font-size="18" font-weight="700">${t}</text>`;});
   svg+=`</svg>`;
-  document.getElementById('atomView').innerHTML=`<div class="stage-canvas" style="max-width:360px">${svg}</div>
+  document.getElementById(AV).innerHTML=`<div class="stage-canvas" style="max-width:360px">${svg}</div>
     <div class="atom-info"><div class="big" style="color:#c08bff">הכוח החזק</div>
     <div class="desc">מה מחזיק את שלושת הקווארקים צמודים יחד? <b>הכוח החזק</b> — הכי חזק בטבע. הוא כל כך חזק שכמעט אי אפשר להפריד קווארק מחבריו.</div>
     <div class="desc">הוא פועל בעזרת חלקיקים בשם <b>גלואונים</b> (מלשון «דבק» באנגלית), שקופצים בין הקווארקים בלי הפסקה.</div>
@@ -1528,7 +1544,7 @@ function openField(){
   const cx=210;let svg=`<svg viewBox="0 0 420 420">`;
   for(let r=0;r<5;r++){const yy=150+r*30;svg+=`<path d="M14 ${yy} Q 65 ${yy-30} 116 ${yy} T 218 ${yy} T 320 ${yy} T 420 ${yy}" fill="none" stroke="var(--numbers)" stroke-width="2.5" opacity="${(0.25+r*0.13).toFixed(2)}"><animate attributeName="d" values="M14 ${yy} Q 65 ${yy-30} 116 ${yy} T 218 ${yy} T 320 ${yy} T 420 ${yy};M14 ${yy} Q 65 ${yy+30} 116 ${yy} T 218 ${yy} T 320 ${yy} T 420 ${yy};M14 ${yy} Q 65 ${yy-30} 116 ${yy} T 218 ${yy} T 320 ${yy} T 420 ${yy}" dur="${(3+r*0.4).toFixed(1)}s" repeatCount="indefinite"/></path>`;}
   svg+=`<circle cx="${cx}" cy="210" r="10" fill="var(--numbers)"><animate attributeName="cy" values="210;198;210" dur="3s" repeatCount="indefinite"/></circle></svg>`;
-  document.getElementById('atomView').innerHTML=`<div class="stage-canvas">${svg}</div>
+  document.getElementById(AV).innerHTML=`<div class="stage-canvas">${svg}</div>
     <div class="atom-info"><div class="big" style="color:var(--numbers)">שדה — המקור ✨</div>
     <div class="desc">הגענו למקור! לפי הפיזיקה המודרנית, <b>הכול</b> בעולם עשוי משדות — משהו בלתי-נראה שממלא את כל המרחב.</div>
     <div class="desc">כל חלקיק — אלקטרון, קווארק, ואפילו האור — הוא בעצם <b>אדווה</b>, גל זעיר, בתוך שדה. משדות נבנה כל החומר ביקום.</div>
@@ -1783,6 +1799,7 @@ function renderInteractive(){
   else if(inter.kind==='fraction')inner=`<div class="inter-instruct">${inter.instruct}</div>`+fractionMarkup(inter.parts);
   else if(inter.kind==='balance')inner=`<div class="inter-instruct">${inter.instruct}</div>`+balanceMarkup(inter);
   else if(inter.kind==='tour')inner=`<div class="inter-instruct" id="tourText"></div>`+ptableGrid('tourClick')+`<div class="qnav" style="margin-top:8px"><span></span><button class="btn btn-primary" id="tourNext">הבא ›</button></div>`;
+  else if(inter.kind==='journey')inner=`<div class="inter-instruct">${inter.instruct||'בחרי משפחה ואטום, וצללי פנימה — אחרי שתחקרי שני אטומים לפחות, ייפתח הכפתור «לשאלות».'}</div><div class="breadcrumb" id="jlCrumb"></div><div id="jlView"></div>`;
   document.getElementById('pracBody').innerHTML=`<div class="inter-box">${inner}</div>
     <div class="feedback" id="interFb"></div>
     <div class="qnav"><span></span>
@@ -1791,6 +1808,7 @@ function renderInteractive(){
   if(inter.kind==='fraction')initInterFraction(inter);
   if(inter.kind==='balance')initInterBalance(inter);
   if(inter.kind==='tour')initInterTour(inter);
+  if(inter.kind==='journey'){AV='jlView';AC='jlCrumb';startJourney(true);}
 }
 /* טיול מודרך על הטבלה המחזורית — שלבי הסבר, חלקם דורשים לחיצה על יסוד */
 let tourState={i:0,done:{}};
