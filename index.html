@@ -2082,24 +2082,35 @@ function renderParent(){
   const tools='<div class="section-label">כלי הורה</div><div class="p-tools">'
     +'<button class="btn btn-primary" onclick="openParentReview()">✎ מצב סקירת הורה</button>'
     +'<button class="btn btn-ghost" onclick="resetProgress()">↺ אפס התקדמות (חזרה לשיעור הראשון)</button></div>';
-  const selStyle="width:100%;padding:11px 12px;border-radius:12px;background:var(--bg2);color:var(--ink);border:1px solid var(--line);font-family:'Heebo';font-size:15px";
-  const stageJump='<div class="section-label">מעבר לשלב — לכל מסלול בנפרד</div>'
-    +'<div style="color:var(--faint);font-size:13px;line-height:1.5;margin-bottom:10px">בחרי מסלול ושלב — כל השיעורים שלפניו באותו מסלול ייחשבו כהושלמו, והשלב הנבחר יהיה הנוכחי.</div>'
+  const selStyle="flex:1;min-width:150px;padding:9px 10px;border-radius:10px;background:var(--bg2);color:var(--ink);border:1px solid var(--line);font-family:'Heebo';font-size:14px";
+  const stageJump='<div class="section-label">מעבר לשלב — בחרי נושא ושיעור</div>'
+    +'<div style="color:var(--faint);font-size:13px;line-height:1.5;margin-bottom:10px">בכל נושא בחרי את השיעור שממנו אילה תתחיל, ולחצי «שים כאן». כל השיעורים שלפניו באותו תחום ייחשבו כהושלמו.</div>'
     +SUBJ_ORDER.map(subj=>{
-      const seq=SUBJ_SEQ[subj],cur2=getSubjStep(subj),acc=TOPICS[subj].accent;
-      const opts=seq.map((g,pos)=>{const s=LESSON_SEQ[g];return `<option value="${pos}" ${pos===cur2?'selected':''}>${pos+1}. ${s.topicTitle} · שיעור ${s.lessonIndex+1}: ${s.lesson.title}</option>`;}).join('')
-        +`<option value="${seq.length}" ${cur2>=seq.length?'selected':''}>✓ סיום ${SUBJ_HE[subj]}</option>`;
-      return `<div class="p-sub" style="--accent:${acc};margin-bottom:10px"><div class="p-sub-head"><span class="p-sub-name">${SUBJ_HE[subj]}</span></div>`
-        +`<div class="p-tools" style="flex-direction:column;align-items:stretch;gap:8px"><select id="stageSel_${subj}" style="${selStyle}">${opts}</select>`
-        +`<button class="btn btn-primary" onclick="jumpToStage('${subj}')">שים את אילה כאן ›</button></div></div>`;
+      const acc=TOPICS[subj].accent,curGlobal=SUBJ_SEQ[subj][getSubjStep(subj)];
+      const rows=CURRICULUM.filter(t=>t.subject===subj).map(topic=>{
+        const opts=topic.lessons.map((ls,li)=>{const gi=LESSON_SEQ.findIndex(s=>s.topicId===topic.id&&s.lessonIndex===li);
+          return `<option value="${gi}" ${gi===curGlobal?'selected':''}>שיעור ${li+1}: ${ls.title}</option>`;}).join('');
+        return `<div style="display:flex;gap:8px;align-items:center;margin:7px 0;flex-wrap:wrap">
+          <span style="min-width:118px;font-weight:700;font-size:14px">${topic.title}</span>
+          <select id="ts_${topic.id}" style="${selStyle}">${opts}</select>
+          <button class="btn btn-primary" style="padding:8px 14px;font-size:14px" onclick="jumpToTopic('${subj}','${topic.id}')">שים כאן</button></div>`;
+      }).join('');
+      return `<div class="p-sub" style="--accent:${acc};margin-bottom:12px"><div class="p-sub-head"><span class="p-sub-name">${SUBJ_HE[subj]}</span>`
+        +`<button class="btn btn-ghost" style="padding:6px 12px;font-size:13px" onclick="finishSubject('${subj}')">סמני «${SUBJ_HE[subj]}» כהושלם ✓</button></div>${rows}</div>`;
     }).join('');
   el.innerHTML=overview+tools+stageJump+mapSec+bysub+ach+recent;
   renderLessonMap();
 }
 
-function jumpToStage(subj){
-  const sel=document.getElementById('stageSel_'+subj);if(!sel)return;
-  setSubjStep(subj,+sel.value);
+function jumpToTopic(subj,topicId){
+  const sel=document.getElementById('ts_'+topicId);if(!sel)return;
+  const gi=+sel.value,pos=SUBJ_SEQ[subj].indexOf(gi);
+  if(pos<0)return;
+  setSubjStep(subj,pos);
+  afterJump();
+}
+function finishSubject(subj){setSubjStep(subj,SUBJ_SEQ[subj].length);afterJump();}
+function afterJump(){
   renderParent();
   if(typeof renderMission==='function')renderMission();
   if(typeof renderStations==='function')renderStations();
