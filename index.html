@@ -1356,6 +1356,22 @@ function journeyBar(){
   if(!journey||!journey.active)return '';
   return `<div style="background:rgba(63,217,198,.12);border:1px solid var(--matter);border-radius:12px;padding:9px 13px;margin-bottom:12px;display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap"><span style="color:var(--matter);font-weight:700">🔎 את במסע חקר — צללי לעומק, וכשתסיימי:</span><button class="btn btn-primary" style="padding:8px 16px" onclick="resumeJourney()">↩ חזרה למסע</button></div>`;
 }
+const EL_WHERE={
+  2:'בבלונים פורחים',3:'בסוללת הטלפון',4:'בטלסקופים ובחלליות',5:'בזכוכית עמידה לחום',
+  6:'בעיפרון, ביהלום ובכל היצורים החיים',7:'ברוב האוויר שאנחנו נושמים',8:'באוויר שאנחנו נושמים',
+  9:'במשחת השיניים',10:'בשלטים זוהרים בלילה',11:'במלח השולחן',12:'בזיקוקים ובמטוסים קלים',
+  14:'בשבבים של מחשבים וטלפונים',15:'בגפרורים ובעצמות',16:'ליד הרי געש',17:'במי הבריכה',
+  18:'בתוך נורות',19:'בבננות',20:'בחלב ובעצמות',
+};
+function jWhereOptions(z){
+  const correct=EL_WHERE[z];
+  const pool=Object.keys(EL_WHERE).filter(k=>(+k)!==z).map(k=>EL_WHERE[k]).filter(w=>w!==correct);
+  shuffle(pool);
+  const opts=[correct,pool[0],pool[1]];shuffle(opts);return opts;
+}
+function jWhere(picked){journey.whereRight=(picked===EL_WHERE[journey.z]);journey.phase='whatR';renderJourney();}
+function jWhereDunno(){journey.whereRight=null;journey.phase='whatR';renderJourney();}
+function elLong(z){return (DETAIL[z]?DETAIL[z].fun:'')+(JEXTRA[z]?(' '+JEXTRA[z]):'');}
 function startJourney(lesson){journey={gi:0,explored:[],z:null,phase:'intro',active:false,lesson:!!lesson};renderJourney();}
 function jLessonReveal(){if(journey&&journey.lesson&&typeof interSolved==='function'){const inter=prac&&prac.cfg&&prac.cfg.lesson&&prac.cfg.lesson.interactive;interSolved((inter&&inter.reveal)||'כל הכבוד! חקרת אטומים עד המקור.');}}
 function jPhase(p){journey.phase=p;renderJourney();}
@@ -1385,23 +1401,27 @@ function renderJourney(){
   } else if(journey.phase==='choose'){
     jCrumb(C.name+' · בחירת אטום');
     const chips=g.zs.map(z=>{const d=elData(z);const ex=journey.explored.indexOf(z)>=0;
-      return `<button class="btn" onclick="jPick(${z})" style="flex-direction:column;gap:2px;min-width:96px;background:${ex?'rgba(63,217,198,.15)':'var(--bg2)'};border:1.5px solid ${C.col};color:var(--ink);padding:12px 14px"><span style="font-family:'IBM Plex Mono';font-size:24px;font-weight:700;color:${C.col}">${d.s}</span><span style="font-size:14px">${d.n}${ex?' ✓':''}</span></button>`;}).join('');
+      return `<button class="btn" onclick="jPick(${z})" style="flex-direction:column;gap:1px;min-width:96px;background:${ex?'rgba(63,217,198,.15)':'var(--bg2)'};border:1.5px solid ${C.col};color:var(--ink);padding:10px 14px"><span style="font-family:'IBM Plex Mono';font-size:12px;font-weight:700;color:var(--faint);align-self:flex-start">${z}</span><span style="font-family:'IBM Plex Mono';font-size:24px;font-weight:700;color:${C.col};line-height:1.1">${d.s}</span><span style="font-size:14px">${d.n}${ex?' ✓':''}</span></button>`;}).join('');
     const msg=journey.explored.length===0?'בחרי את האטום הראשון שנחקור:':(journey.explored.length===1?'יופי! עכשיו בחרי אטום שני מהקבוצה:':'בחרי אטום נוסף לחקור:');
     html=`<div class="atom-info"><div class="big" style="color:${C.col}">${C.name}</div><div class="desc">${msg}</div>
       <div style="display:flex;flex-wrap:wrap;gap:10px;justify-content:center;margin-top:14px">${chips}</div></div>`;
   } else if(journey.phase==='what'){
     const d=elData(journey.z);
     jCrumb(d.n);
+    const opts=jWhereOptions(journey.z).map(o=>`<button class="btn btn-ghost" style="text-align:center;padding:12px 16px;font-size:16px" onclick="jWhere('${o}')">${o}</button>`).join('');
     html=`<div class="atom-info"><div class="big" style="color:${C.col}">${d.n} · ${d.s}</div>
-      <div class="desc">בחרת ב${d.n}. מה את חושבת — מה החומר הזה, ואיפה פוגשים אותו בחיים שלנו?</div>
-      <div class="qnav" style="justify-content:center;gap:10px;margin-top:16px;flex-wrap:wrap"><button class="btn btn-primary" onclick="jPhase('whatR')">אני יודעת! 💡</button><button class="btn btn-ghost" onclick="jPhase('whatR')">עזרו לי לגלות 🤔</button></div></div>`;
+      <div class="desc">איפה הכי סביר לפגוש את ${d.n} בחיים שלנו?</div>
+      <div style="display:grid;gap:10px;max-width:440px;margin:16px auto 0">${opts}
+        <button class="btn" style="background:var(--bg2);border:1px dashed var(--line);color:var(--faint);padding:11px" onclick="jWhereDunno()">עדיין לא יודעת 🤔</button></div></div>`;
   } else if(journey.phase==='whatR'){
-    const d=elData(journey.z);const extra=journey.explored.length>=2?(JEXTRA[journey.z]||'כל אטום הוא עולם שלם — וככל שנחקור עוד, נגלה שהכול בנוי מאותם חלקיקים קטנטנים.'):'';
+    const d=elData(journey.z),z=journey.z,right=journey.whereRight;
+    const fb=right===true?'כל הכבוד, צדקת! ✓':(right===false?'כמעט — הנה התשובה הנכונה:':'בואי נגלה יחד:');
     jCrumb(d.n);
-    html=`<div class="atom-info"><div class="big" style="color:${C.col}">${d.n}</div>
-      <div class="desc" style="color:var(--matter)">${d.fun}</div>
-      ${extra?`<div class="desc" style="color:${C.col}">${extra}</div>`:''}
-      <div class="hint">עכשיו כשאנחנו יודעות מה זה — בואי נבדוק ממה הוא בנוי.</div>
+    html=`<div class="atom-info"><div class="big" style="color:${C.col}">${d.n} · ${d.s}</div>
+      <div class="desc" style="color:${right===true?'var(--good)':'var(--matter)'};font-weight:700">${fb}</div>
+      <div class="desc">פוגשים את ${d.n} <b>${EL_WHERE[z]}</b>.</div>
+      <div class="desc">${elLong(z)}</div>
+      <div class="hint">עכשיו נבדוק ממה הוא בנוי — כמה פרוטונים יש לו?</div>
       <div class="qnav" style="justify-content:center;margin-top:14px"><button class="btn btn-primary" onclick="jPhase('protons')">שאלה על הפרוטונים ›</button></div></div>`;
   } else if(journey.phase==='protons'){
     const d=elData(journey.z),z=journey.z;
@@ -1414,8 +1434,9 @@ function renderJourney(){
   } else if(journey.phase==='protonsR'){
     const d=elData(journey.z),z=journey.z;
     jCrumb(d.n);
-    html=`<div class="atom-info"><div class="big" style="color:${C.col}">נכון! ${z} פרוטונים ✓</div>
+    html=`<div class="atom-info"><div class="big" style="color:${C.col}">נכון! ${d.n} — ${z} פרוטונים ✓</div>
       <div class="desc">ל${d.n} יש <b class="num">${z}</b> פרוטונים בגרעין, ולכן גם <b class="num">${z}</b> אלקטרונים דוהרים סביבו — כי באטום ניטרלי הפלוסים והמינוסים מתאזנים.</div>
+      <div class="desc" style="color:var(--matter)">${d.n} — פוגשים אותו ${EL_WHERE[z]||'בטבע'}. ${DETAIL[z]?DETAIL[z].fun:''}</div>
       <div class="hint">מוכנה? נציץ אל תוך האטום עצמו — ונצלול עמוק עד המקור.</div>
       <div class="qnav" style="justify-content:center;margin-top:14px"><button class="btn btn-primary" onclick="jPeek()">בואי נציץ פנימה — אל האטום ›</button></div></div>`;
   } else if(journey.phase==='afterAtom'){
