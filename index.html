@@ -1075,6 +1075,7 @@ function go(view){
   if(view==='physics'){stage('physics','pRead');}
   if(view==='history')renderHistory();
   if(view==='parent')renderParent();
+  if(typeof ensurePlayNote==='function')ensurePlayNote();
 }
 function stage(mod,id){
   const sec=document.getElementById(mod);
@@ -1206,7 +1207,7 @@ function renderLessonMap(){
       const idx=gi,P=posMap[idx],state=P.q<cur?'done':(P.q===cur?'current':'locked');
       const icon=state==='done'?'✓':(state==='current'?'◆':'🔒');
       const note=state==='done'?'הושלם · שחקי שוב':(state==='current'?'השיעור הנוכחי · שחקי':'נעול לאילה · נסי בעצמך');
-      html+=`<div class="lrow ${state}" style="--accent:${t.accent}" onclick="startPractice(currentCfg(${idx}))">
+      html+=`<div class="lrow ${state}" style="--accent:${t.accent}" onclick="startPractice(currentCfg(${idx}),1)">
         <div class="lr-mark">${icon}</div>
         <div class="lr-body"><div class="lr-title">${lesson.title}</div><div class="lr-note">שיעור ${li+1} מתוך ${topic.lessons.length} · ${note}</div></div>
         <div class="lr-go">▶</div></div>`;
@@ -1669,7 +1670,9 @@ function completeReview(total){
 }
 
 let prac=null;
-function startPractice(cfg){
+let parentPlay=false;
+function startPractice(cfg,fromParent){
+  parentPlay=!!fromParent;
   prac={cfg,stage:'read',page:0,i:0,score:0,answered:false};
   const pv=document.getElementById('practice');pv.style.setProperty('--accent',cfg.accent);
   document.getElementById('pracBadge').textContent=cfg.badge;
@@ -1680,6 +1683,27 @@ function startPractice(cfg){
   go('practice');
   renderStage();
 }
+/* כפתור «הערה כאן» צף — מופיע רק כשההורה משחק שיעור מתוך מסך ההורה */
+function playLoc(){
+  const cfg=prac&&prac.cfg;if(!cfg)return '';
+  const where=prac.stage==='read'?('קריאה · דף '+((prac.page||0)+1)):(prac.stage==='interactive'?'התנסות':'שאלות');
+  return (PR_SUBJ[cfg.subject]||cfg.subject)+' · '+cfg.topicTitle+' · '+cfg.title+' · '+where;
+}
+function addPlayNote(){
+  const text=(prompt('מה לתקן כאן? כתבי הערה תוך כדי ההתנסות:\n\n'+playLoc())||'').trim();
+  if(!text)return;
+  const notes=getPNotes();notes.push({id:'n'+Date.now()+Math.floor(Math.random()*1000),loc:playLoc(),text:text});setPNotes(notes);
+  alert('ההערה נשמרה ✓\nתמצאי אותה במסך הורה ← «מצב סקירת הורה» ← 🗒️ הערות.');
+}
+function ensurePlayNote(){
+  let btn=document.getElementById('ppNote');
+  if(!btn){btn=document.createElement('button');btn.id='ppNote';btn.className='btn btn-primary';
+    btn.innerHTML='✎ הערה כאן';
+    btn.style.cssText='position:fixed;bottom:18px;inset-inline-start:18px;z-index:140;box-shadow:0 10px 26px rgba(2,6,23,.5)';
+    btn.onclick=addPlayNote;document.body.appendChild(btn);}
+  const active=document.getElementById('practice').classList.contains('active');
+  btn.style.display=(parentPlay&&active)?'inline-flex':'none';
+}
 function syncPracBack(){
   const bb=document.getElementById('pracBackBtn');if(!bb)return;
   bb.style.display=(prac&&prac.mode!=='review'&&prac.stage&&prac.stage!=='read'&&prac.cfg.lesson&&prac.cfg.lesson.read)?'':'none';
@@ -1688,6 +1712,7 @@ function renderStage(){
   if(prac.stage==='read')renderReadPage();
   else if(prac.stage==='interactive')renderInteractive();
   else drawQuestion();
+  ensurePlayNote();
 }
 function backToLesson(){
   if(!prac.cfg.lesson||!prac.cfg.lesson.read)return;
@@ -1818,7 +1843,7 @@ function renderInteractive(){
   else if(inter.kind==='fraction')inner=`<div class="inter-instruct">${inter.instruct}</div>`+fractionMarkup(inter.parts);
   else if(inter.kind==='balance')inner=`<div class="inter-instruct">${inter.instruct}</div>`+balanceMarkup(inter);
   else if(inter.kind==='tour')inner=`<div class="inter-instruct" id="tourText"></div>`+ptableGrid('tourClick')+`<div class="qnav" style="margin-top:8px"><span></span><button class="btn btn-primary" id="tourNext">הבא ›</button></div>`;
-  else if(inter.kind==='journey')inner=`<div class="inter-instruct">${inter.instruct||'בחרי משפחה ואטום, וצללי פנימה — אחרי שתחקרי שני אטומים לפחות, ייפתח הכפתור «לשאלות».'}</div><div class="breadcrumb" id="jlCrumb"></div><div id="jlView"></div>`;
+  else if(inter.kind==='journey')inner=`<div class="breadcrumb" id="jlCrumb"></div><div id="jlView"></div>`;
   document.getElementById('pracBody').innerHTML=`<div class="inter-box">${inner}</div>
     <div class="feedback" id="interFb"></div>
     <div class="qnav"><span></span>
@@ -2125,7 +2150,18 @@ function openParentReview(){
 }
 function prBuildSelector(){
   const sel=document.getElementById('prLessonSel');
-  sel.innerHTML=LESSON_SEQ.map((s,i)=>`<option value="${i}">${PR_SUBJ[s.subject]} · ${s.topicTitle} · שיעור ${s.lessonIndex+1}: ${s.lesson.title}</option>`).join('');
+  let html='';
+  SUBJ_ORDER.forEach(subj=>{
+    html+=`<optgroup label="${PR_SUBJ[subj]}">`;
+    CURRICULUM.filter(t=>t.subject===subj).forEach(topic=>{
+      topic.lessons.forEach((ls,li)=>{
+        const gi=LESSON_SEQ.findIndex(s=>s.topicId===topic.id&&s.lessonIndex===li);
+        html+=`<option value="${gi}">${topic.title} · שיעור ${li+1}: ${ls.title}</option>`;
+      });
+    });
+    html+='</optgroup>';
+  });
+  sel.innerHTML=html;
   sel.value=PR.i;
 }
 function prSelectLesson(i){PR.i=i;PR.view='read';PR.page=0;renderParentReview();}
@@ -2174,7 +2210,7 @@ function renderParentReview(){
   }else{
     html=prQuestionsHTML(cfg.lesson.questions);
   }
-  const playBar=`<div class="qnav" style="justify-content:flex-start;margin-bottom:12px;gap:8px;flex-wrap:wrap"><button class="btn btn-primary" onclick="startPractice(currentCfg(${PR.i}))">▶ נסי את השיעור הזה באמת</button><span style="color:var(--faint);font-size:13px;align-self:center">משחק כאן לא משנה את ההתקדמות של אילה</span></div>`;
+  const playBar=`<div class="qnav" style="justify-content:flex-start;margin-bottom:12px;gap:8px;flex-wrap:wrap"><button class="btn btn-primary" onclick="startPractice(currentCfg(${PR.i}),1)">▶ נסי את השיעור הזה באמת</button><span style="color:var(--faint);font-size:13px;align-self:center">אפשר להוסיף הערות תוך כדי · לא משנה את ההתקדמות של אילה</span></div>`;
   document.getElementById('prBody').innerHTML=playBar+html;
   if(PR.view==='interactive'){
     const inter=cfg.lesson.interactive;
