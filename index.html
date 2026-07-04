@@ -1116,6 +1116,10 @@ function renderStations(){
     </div>`;
   }).join('');
 }
+function openMathCourse(courseId){
+  if(!MATH_URL){alert('כתובת מחברת המתמטיקה עדיין לא הוגדרה.');return;}
+  window.open(MATH_URL+(MATH_URL.indexOf('?')>=0?'&':'?')+'course='+encodeURIComponent(courseId),'_blank');
+}
 function openMath(){
   if(!MATH_URL){alert('כתובת מחברת המתמטיקה עדיין לא הוגדרה.');return;}
   window.open(MATH_URL,'_blank');
@@ -1446,7 +1450,7 @@ function renderJourney(){
       const more=journey.explored.length<g.zs.length?`<button class="btn btn-primary" onclick="jPhase('choose')" style="background:${C.col};color:#06122a">עוד אטום מהקבוצה ›</button>`:'';
       html=`<div class="atom-info"><div class="big" style="color:${C.col}">חקרת ${n} אטומים מקבוצת ${C.name}! 🎉</div>
         <div class="desc">כל הכבוד — בכל אחד הגעת עד השדה, המקור של הכול. ${journey.lesson?'אפשר להמשיך לחקור עוד, או ללחוץ «לשאלות ›» שלמטה.':'רוצה לחקור עוד אטום מהקבוצה, או לעבור לקבוצה חדשה?'}</div>
-        <div class="qnav" style="justify-content:center;gap:10px;margin-top:16px;flex-wrap:wrap">${more}<button class="btn btn-primary" onclick="jNextGroup()">לקבוצה חדשה ›</button></div></div>`;
+        <div class="qnav" style="justify-content:center;gap:10px;margin-top:16px;flex-wrap:wrap">${more}<button class="btn btn-primary" onclick="jNextGroup()">לקבוצה חדשה ›</button><button class="btn btn-ghost" onclick="openMathCourse('particles')">🧮 לתרגול: עולם החלקיקים ↗</button></div></div>`;
     } else {
       html=`<div class="atom-info"><div class="big" style="color:${C.col}">גילית את ${d.n}! ✓</div>
         <div class="desc">חקרת אטום אחד מקבוצת ${C.name}, וצללת בו עד המקור. בואי נחקור עוד אחד מהקבוצה.</div>
@@ -1590,7 +1594,7 @@ function openField(){
     <div class="desc">הגענו למקור! לפי הפיזיקה המודרנית, <b>הכול</b> בעולם עשוי משדות — משהו בלתי-נראה שממלא את כל המרחב.</div>
     <div class="desc">כל חלקיק — אלקטרון, קווארק, ואפילו האור — הוא בעצם <b>אדווה</b>, גל זעיר, בתוך שדה. משדות נבנה כל החומר ביקום.</div>
     <div class="desc" style="color:var(--matter)">מהאטום ועד השדה — צללת עד הקצה. עכשיו אפשר לחזור למקור ולהתחיל מסע חדש.</div>
-    <div class="qnav" style="justify-content:center;margin-top:18px"><button class="btn btn-primary" onclick="renderPeriodic()">⟲ חזרה למקור — לטבלה</button></div></div>`;
+    <div class="qnav" style="justify-content:center;gap:10px;margin-top:18px;flex-wrap:wrap"><button class="btn btn-primary" onclick="renderPeriodic()">⟲ חזרה למקור — לטבלה</button><button class="btn btn-ghost" onclick="openMathCourse('particles')">🧮 לתרגול: עולם החלקיקים ↗</button></div></div>`;
 }
 
 /* ============ PHYSICS: formula bank + live track ============ */
