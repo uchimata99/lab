@@ -248,6 +248,20 @@ button:focus-visible,input:focus-visible{outline:3px solid var(--ink);outline-of
 .askrow input{font-family:var(--font);min-height:var(--touch-min);border-radius:var(--radius-sm);border-color:var(--line);background:var(--surface-100)}
 .icon-btn.rec{background:var(--primary);border-color:var(--primary)}
 .helpbtn{min-height:var(--touch-min);border-color:var(--line);background:var(--surface-100);border-radius:var(--radius-md);font-family:var(--font);font-size:16px;padding:var(--space-2) var(--space-4)}
+.pt-scroll{overflow-x:auto;padding-bottom:4px}
+.pt{display:grid;grid-template-columns:repeat(18,minmax(36px,1fr));gap:3px;min-width:700px}
+.pt button,.pt .ph{aspect-ratio:1;border:1.5px solid color-mix(in srgb,var(--line) 60%,transparent);border-radius:6px;padding:2px 0 0;display:flex;flex-direction:column;align-items:center;justify-content:center;line-height:1;color:var(--ink);font-family:var(--font)}
+.pt button{cursor:pointer;background:var(--k)}
+.pt button small{font-size:9px;font-weight:500}
+.pt button b{font-size:15px;font-weight:700}
+.pt button:hover{border-color:var(--ink)}
+.pt button[aria-pressed="true"]{outline:3px solid var(--primary);outline-offset:1px;border-color:var(--ink)}
+.pt .ph{font-size:9px;border-style:dashed;background:transparent;color:var(--ink-muted)}
+.pt .gap{grid-column:1/-1;height:6px}
+.pt-info{margin:0;font-size:17px;line-height:26px;min-height:52px}
+.pt-legend{display:flex;flex-wrap:wrap;gap:6px 14px;font-size:14px;color:var(--ink-muted)}
+.pt-legend span{display:inline-flex;align-items:center;gap:6px}
+.pt-legend i{width:14px;height:14px;border-radius:4px;border:1px solid var(--line)}
 #fx{position:fixed;inset:0;width:100%;height:100%;pointer-events:none;z-index:50}
 @media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
 [hidden]{display:none!important}img{max-width:100%}body{margin:0}:root{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
@@ -391,6 +405,14 @@ button:focus-visible,input:focus-visible{outline:3px solid var(--ink);outline-of
         </ul>
       </div>
     </div>
+  </section>
+
+  <!-- PERIODIC TABLE -->
+  <section class="card" id="ptable">
+    <div class="lhead"><h2>הטבלה המחזורית</h2><p class="small">לחצי על יסוד כדי לראות את האטום שלו</p></div>
+    <div class="pt-scroll" dir="ltr"><div class="pt" id="ptGrid"></div></div>
+    <p class="pt-info" id="ptInfo">כל משבצת היא יסוד אחר. המספר הקטן הוא המספר האטומי: כמה פרוטונים יש בגרעין.</p>
+    <div class="pt-legend" id="ptLegend"></div>
   </section>
 </div>
 
@@ -861,8 +883,8 @@ function emoji(c,s,x,y,size){c.font=`${size}px sans-serif`;c.textAlign='center';
 function wmol(c,x,y,ang,r){r=r||1;for(const sg of[-1,1]){const a=ang+Math.PI/2+sg*.92;ball(c,x+Math.cos(a)*12*r,y+Math.sin(a)*12*r,6.5*r,'#f1f1ee');}ball(c,x,y,10.5*r,C.p);}
 function nucleus(c,x,y,z,n,t,r){const arr=[];for(let i=0;i<Math.max(z,n);i++){if(i<z)arr.push('p');if(i<n)arr.push('n');}
   arr.forEach((k,i)=>{const rr_=i?(r||8)*Math.sqrt(i):0,a=i*2.39996;ball(c,x+Math.cos(a)*rr_+Math.sin(t*.1+i)*.6,y+Math.sin(a)*rr_,(r||8)+1,k==='p'?C.p:C.n,k==='p'?'+':'','#fff');});}
-function orbit(c,x,y,rad,k,t,sp){c.setLineDash([4,6]);c.strokeStyle=C.line;c.lineWidth=2;c.beginPath();c.arc(x,y,rad,0,PI2);c.stroke();c.setLineDash([]);
-  for(let i=0;i<k;i++){const a=i/k*PI2+t*(sp||.02);ball(c,x+Math.cos(a)*rad,y+Math.sin(a)*rad,7,C.e,'−','#fff');}}
+function orbit(c,x,y,rad,k,t,sp,er){er=er||7;c.setLineDash([4,6]);c.strokeStyle=C.line;c.lineWidth=2;c.beginPath();c.arc(x,y,rad,0,PI2);c.stroke();c.setLineDash([]);
+  for(let i=0;i<k;i++){const a=i/k*PI2+t*(sp||.02);ball(c,x+Math.cos(a)*rad,y+Math.sin(a)*rad,er,C.e,er>=5?'−':'','#fff');}}
 function arrowLbl(c,x1,y1,x2,y2,s){c.strokeStyle=C.ink;c.lineWidth=2;c.beginPath();c.moveTo(x1,y1);c.lineTo(x2,y2);c.stroke();text(c,s,x1,y1+(y1<y2?-12:12),15,C.ink,700);}
 function makeSim(mode,n){const ps=[];for(let i=0;i<(n||14);i++){const c=i%5,r=Math.floor(i/5);ps.push({x:80+Math.random()*260,y:60+Math.random()*180,vx:0,vy:0,ang:Math.random()*6,lx:130+c*40,ly:230-r*40});}
   return(c,t)=>{rr(c,40,24,340,250,16);c.strokeStyle=C.muted;c.lineWidth=3;c.stroke();
@@ -884,9 +906,7 @@ const LES={
   {t:'האלקטרונים',x:'מסביב לגרעין מסתובבים <b style="color:var(--e)">אלקטרונים</b> קטנים ומהירים, עם מטען שלילי (−). הם נעים במסלולים. במסלול הראשון יש מקום רק לשניים, ובשני עד שמונה.',
    a:(c,t)=>{nucleus(c,210,150,3,4,t,8);orbit(c,210,150,55,2,t,.04);orbit(c,210,150,100,1,t,.025);arrowLbl(c,360,40,305,135,'אלקטרון (−)');}},
   {t:'הפרוטונים הם תעודת הזהות',x:'מה שקובע איזה <b>יסוד</b> זה הוא מספר הפרוטונים. פרוטון אחד: מימן. שניים: הליום. שישה: פחמן. המספר הזה נקרא <b>המספר האטומי</b>, והוא כתוב על כל יסוד בטבלה של הכימאים.',
-   a:(c,t)=>{const z=1+Math.floor(t/110)%6,nn=[0,0,2,4,5,5,6][z];nucleus(c,150,150,z,nn,t,8);orbit(c,150,150,55,Math.min(z,2),t,.04);if(z>2)orbit(c,150,150,95,z-2,t,.025);
-    rr(c,272,82,110,128,12);c.fillStyle=C.paper;c.fill();c.strokeStyle=C.ink;c.lineWidth=3;c.stroke();text(c,String(z),360,102,20,C.lab,700);
-    c.fillStyle=C.ink;c.font='700 46px Rubik,sans-serif';c.textAlign='center';c.direction='ltr';c.fillText(ENAMES[z][0],327,150);text(c,ENAMES[z][1],327,190,17,C.ink,700);}},
+   a:(c,t)=>{const z=PZ||1+Math.floor(t/110)%6;drawElementAtom(c,z,t);}},
   {t:'אטום מאוזן',x:'באטום רגיל יש <b>אותו מספר</b> של פרוטונים ואלקטרונים. כל פלוס מתאזן עם מינוס אחד, ולכן האטום כולו מאוזן. עכשיו את יודעת מספיק כדי לבנות אטומים בעצמך!',
    a:(c,t)=>{const k=1+Math.floor(t/40)%4;for(let i=0;i<3;i++){const y=80+i*70,on=i<k;ball(c,130,y,16,C.p,'+','#fff');ball(c,290,y,13,C.e,'−','#fff');if(on){c.strokeStyle=C.good;c.lineWidth=4;c.beginPath();c.moveTo(150,y);c.lineTo(274,y);c.stroke();}}
     text(c,k>3?'3 פלוס ו־3 מינוס: מאוזן! ✓':'מחברים זוגות...',210,282,17,k>3?C.good:C.muted,700);}}],
@@ -936,10 +956,50 @@ const LES={
     emoji(c,T<=0?'🧊':T<100?'💧':'☁️',330,150,70);text(c,T<=0?'קרח':T<100?'מים':'אדים',330,215,20,C.lab,700);}}],
   chips:['למה קרח צף על המים?','לאן נעלמים המים כשהם מתאדים?','למה כשחם אני מזיעה?']}
 };
+/* ---------- periodic table ---------- */
+const PSYM='H He Li Be B C N O F Ne Na Mg Al Si P S Cl Ar K Ca Sc Ti V Cr Mn Fe Co Ni Cu Zn Ga Ge As Se Br Kr Rb Sr Y Zr Nb Mo Tc Ru Rh Pd Ag Cd In Sn Sb Te I Xe Cs Ba La Ce Pr Nd Pm Sm Eu Gd Tb Dy Ho Er Tm Yb Lu Hf Ta W Re Os Ir Pt Au Hg Tl Pb Bi Po At Rn Fr Ra Ac Th Pa U Np Pu Am Cm Bk Cf Es Fm Md No Lr Rf Db Sg Bh Hs Mt Ds Rg Cn Nh Fl Mc Lv Ts Og'.split(' ');
+const PNAME='מימן הליום ליתיום בריליום בור פחמן חנקן חמצן פלואור ניאון נתרן מגנזיום אלומיניום צורן זרחן גופרית כלור ארגון אשלגן סידן סקנדיום טיטניום ונדיום כרום מנגן ברזל קובלט ניקל נחושת אבץ גליום גרמניום ארסן סלניום ברום קריפטון רובידיום סטרונציום איטריום זירקוניום ניוביום מוליבדן טכנציום רותניום רודיום פלדיום כסף קדמיום אינדיום בדיל אנטימון טלוריום יוד קסנון צזיום בריום לנתן צריום פרסאודימיום נאודימיום פרומתיום סמריום אירופיום גדוליניום טרביום דיספרוזיום הולמיום ארביום תוליום איטרביום לוטציום הפניום טנטלום טונגסטן רניום אוסמיום אירידיום פלטינה זהב כספית תליום עופרת ביסמוט פולוניום אסטטין ראדון פרנציום רדיום אקטיניום תוריום פרוטקטיניום אורניום נפטוניום פלוטוניום אמריציום קיריום ברקליום קליפורניום איינשטייניום פרמיום מנדלביום נובליום לורנסיום רתרפורדיום דובניום סיבורגיום בוהריום הסיום מייטנריום דרמשטטיום רנטגניום קופרניקיום ניהוניום פלרוביום מוסקוביום ליברמוריום טנסין אוגנסון'.split(' ');
+// מספר מסה מעוגל (פרוטונים + נייטרונים), ליסודות מלאכותיים: האיזוטופ היציב ביותר
+const PMASS=[1,4,7,9,11,12,14,16,19,20,23,24,27,28,31,32,35,40,39,40,45,48,51,52,55,56,59,59,64,65,70,73,75,79,80,84,85,88,89,91,93,96,98,101,103,106,108,112,115,119,122,128,127,131,133,137,139,140,141,144,145,150,152,157,159,163,165,167,169,173,175,178,181,184,186,190,192,195,197,201,204,207,209,209,210,222,223,226,227,232,231,238,237,244,243,247,247,251,252,257,258,259,262,267,268,269,270,269,278,281,282,285,286,289,290,293,294,294];
+const PCAT=[['alk','מתכות אלקליות','#f7c4bd',[3,11,19,37,55,87]],['ear','מתכות אלקליות עפרוריות','#fcd9ae',[4,12,20,38,56,88]],
+  ['tr','מתכות מעבר','#f4e7a8',[[21,30],[39,48],[72,80],[104,112]]],['pt','מתכות אחרות','#d3e6c3',[13,31,49,50,81,82,83,84,113,114,115,116]],
+  ['md','מטלואידים','#bfe5da',[5,14,32,33,51,52]],['nm','אל־מתכות','#c9dcf7',[1,6,7,8,15,16,34]],['hal','הלוגנים','#dcd0f6',[9,17,35,53,85,117]],
+  ['nob','גזים אצילים','#f6cde8',[2,10,18,36,54,86,118]],['lan','לנתנידים','#e9d9c4',[[57,71]]],['act','אקטינידים','#e3c9b6',[[89,103]]]];
+function catOf(z){return PCAT.find(k=>k[3].some(v=>Array.isArray(v)?z>=v[0]&&z<=v[1]:v===z));}
+function cellOf(z){if(z===1)return[1,1];if(z===2)return[1,18];
+  const ps=[[3,10,2],[11,18,3],[19,36,4],[37,54,5],[55,86,6],[87,118,7]];const[s,,p]=ps.find(r=>z>=r[0]&&z<=r[1]);const i=z-s;
+  if(p<=3)return[p,i<2?i+1:i+11];if(p<=5)return[p,i+1];if(i<2)return[p,i+1];if(i<17)return[p+3,i+1];return[p,i-13];}
+// מספר האלקטרונים בכל מסלול, לפי סדר המילוי, עם החריגים שבהם אלקטרון עובר מסלול
+const ORB_FILL=[[1,2],[2,2],[2,6],[3,2],[3,6],[4,2],[3,10],[4,6],[5,2],[4,10],[5,6],[6,2],[4,14],[5,10],[6,6],[7,2],[5,14],[6,10],[7,6]];
+const SHIFT={24:[4,3,1],29:[4,3,1],41:[5,4,1],42:[5,4,1],44:[5,4,1],45:[5,4,1],46:[5,4,2],47:[5,4,1],78:[6,5,1],79:[6,5,1],57:[4,5,1],58:[4,5,1],64:[4,5,1],89:[5,6,1],90:[5,6,2],91:[5,6,1],92:[5,6,1],93:[5,6,1],96:[5,6,1]};
+function shellsOf(z){const sh=[0,0,0,0,0,0,0];let left=z;for(const[n,cap]of ORB_FILL){const k=Math.min(cap,left);sh[n-1]+=k;left-=k;if(!left)break;}
+  const s=SHIFT[z];if(s){sh[s[0]-1]-=s[2];sh[s[1]-1]+=s[2];}while(sh.length&&!sh[sh.length-1])sh.pop();return sh;}
+let PZ=0;
+function drawElementAtom(c,z,t){const nn=PMASS[z-1]-z,sh=shellsOf(z),N=z+nn,br=Math.min(8,24/Math.sqrt(N));
+  nucleus(c,150,150,z,nn,t,br);const r0=sh.length<=2?55:br*Math.sqrt(N)+22,step=sh.length<=2?40:(112-r0)/(sh.length-1);
+  sh.forEach((k,i)=>{const rad=r0+i*step;orbit(c,150,150,rad,k,t,.04/(1+i*.5),clamp(PI2*rad/k*.3,2.5,7));});
+  rr(c,272,82,110,128,12);c.fillStyle=C.paper;c.fill();c.strokeStyle=C.ink;c.lineWidth=3;c.stroke();text(c,String(z),360,102,20,C.lab,700);
+  c.fillStyle=C.ink;c.font='700 46px Rubik,sans-serif';c.textAlign='center';c.direction='ltr';c.fillText(PSYM[z-1],327,150);
+  const nm=PNAME[z-1];text(c,nm,327,190,nm.length>9?13:nm.length>6?15:17,C.ink,700);}
+function ptInfo(z){if(!z){$('ptInfo').innerHTML='כל משבצת היא יסוד אחר. המספר הקטן הוא המספר האטומי: כמה פרוטונים יש בגרעין.';return;}
+  const nn=PMASS[z-1]-z,sh=shellsOf(z);
+  $('ptInfo').innerHTML=`<b>${PNAME[z-1]}</b> (${PSYM[z-1]}), מספר אטומי ${z}: <b style="color:var(--p)">${z} פרוטונים</b>, <b style="color:var(--n)">${nn} נייטרונים</b> ו־<b style="color:var(--e)">${z} אלקטרונים</b> ב־${sh.length} ${sh.length===1?'מסלול':'מסלולים'} (<bdi dir="ltr">${sh.join(', ')}</bdi>). הקבוצה: ${catOf(z)[1]}.`;}
+function pickElement(z){PZ=PZ===z?0:z;
+  document.querySelectorAll('#ptGrid button').forEach(b=>b.setAttribute('aria-pressed',+b.dataset.z===PZ));ptInfo(PZ);beep(500+PZ*4,.07,'sine',.05);
+  if(PZ&&!(mode==='lesson'&&L.st==='atom'&&L.i===3)){active='atom';document.querySelectorAll('nav button').forEach(x=>x.setAttribute('aria-selected',x.dataset.st==='atom'));openLesson('atom',3);
+    $('lesson').scrollIntoView({behavior:reduce?'auto':'smooth',block:'start'});}}
+(function buildPT(){const g=$('ptGrid');
+  for(let z=1;z<=118;z++){const[r,col]=cellOf(z),k=catOf(z),b=document.createElement('button');b.type='button';b.dataset.z=z;
+    b.style.gridRow=r>7?r+1:r;b.style.gridColumn=col;b.style.setProperty('--k',k[2]);b.setAttribute('aria-pressed','false');
+    b.setAttribute('aria-label',`${PNAME[z-1]}, מספר אטומי ${z}`);b.title=PNAME[z-1];b.innerHTML=`<small>${z}</small><b>${PSYM[z-1]}</b>`;b.onclick=()=>pickElement(z);g.appendChild(b);}
+  [[6,'57–71'],[7,'89–103']].forEach(([r,s])=>{const d=document.createElement('div');d.className='ph';d.style.gridRow=r;d.style.gridColumn=3;d.textContent=s;g.appendChild(d);});
+  const gap=document.createElement('div');gap.className='gap';gap.style.gridRow=8;g.appendChild(gap);
+  $('ptLegend').innerHTML=PCAT.map(k=>`<span><i style="background:${k[2]}"></i>${k[1]}</span>`).join('');})();
+
 let seen={};try{seen=JSON.parse(localStorage.getItem('chemLessons')||'{}')||{};}catch(e){}
 const L={st:null,i:0,t:0,sim:null};
 let active='atom',mode='lesson';
-function setView(){ $('lesson').hidden=mode!=='lesson';['atom','mol','acid','heat'].forEach(k=>$('st-'+k).hidden=(mode==='lesson'||k!==active)); }
+function setView(){ $('lesson').hidden=mode!=='lesson';['atom','mol','acid','heat'].forEach(k=>$('st-'+k).hidden=(mode==='lesson'||k!==active));$('ptable').hidden=active!=='atom'; }
 function openLesson(st,i){stopSpeak();L.st=st;L.i=i||0;mode='lesson';renderSlide();renderChat();setView();}
 function renderSlide(){const les=LES[L.st],s=les.slides[L.i];L.t=0;L.sim=s.sim?makeSim(s.sim,s.sim==='solid'?15:14):null;
   $('lTitle').textContent=les.name+': '+s.t;const tx=$('lText');tx.innerHTML=s.x;tx.classList.remove('pop');void tx.offsetWidth;tx.classList.add('pop');
