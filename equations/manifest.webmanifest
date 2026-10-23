@@ -1,0 +1,17 @@
+{
+  "name": "מאזני המשוואות",
+  "short_name": "מאזני המשוואות",
+  "description": "משחק משוואות בנעלמים על מאזניים",
+  "lang": "he",
+  "dir": "rtl",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "any",
+  "background_color": "#fbf7ef",
+  "theme_color": "#0e6e66",
+  "icons": [
+    {"src": "icon-192.png", "sizes": "192x192", "type": "image/png"},
+    {"src": "icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any maskable"}
+  ]
+}

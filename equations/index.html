@@ -1,0 +1,767 @@
+<!doctype html>
+<html lang="he" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#0e6e66">
+<meta name="description" content="משחק משוואות בנעלמים על מאזניים, לפי רמות">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="icon-192.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="מאזני המשוואות">
+<title>מאזני המשוואות</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Rubik:wght@400;500;600;700&display=swap">
+<style>
+/* Layout: one balance per screen — equation above, balance canvas beside the step list, operation tiles below */
+:root{
+  /* מערכת העיצוב "משחקי לימוד 9–12" — ערכה בהירה אחת */
+  --surface-100:#fbf7ef; --surface-200:#f1eadb; --ink:#1f2a30; --ink-muted:#4f5b62; --line:#8a7f6c;
+  --primary:#0e6e66; --on-primary:#ffffff; --accent:#e07a1f; --correct:#1e7a46; --retry:#f2b33d;
+  --font:"Rubik","Heebo",system-ui,sans-serif;
+  --space-2:8px; --space-4:16px; --space-6:24px; --space-8:32px;
+  --radius-sm:8px; --radius-md:14px; --radius-pill:999px; --touch-min:48px; --answer-tile:72px;
+  /* נגזרות */
+  --hair:color-mix(in srgb,var(--line) 35%,var(--surface-200));
+  --primary-soft:color-mix(in srgb,var(--primary) 12%,var(--surface-100));
+  --accent-soft:color-mix(in srgb,var(--accent) 24%,var(--surface-100));
+  --retry-soft:color-mix(in srgb,var(--retry) 32%,var(--surface-100));
+  --correct-soft:color-mix(in srgb,var(--correct) 10%,var(--surface-100));
+  --yvar:#6a4c93;
+  color-scheme:light;
+}
+html{direction:rtl}
+*{box-sizing:border-box}
+body{margin:0;background:var(--surface-100);color:var(--ink);font-family:var(--font);font-size:18px;line-height:28px;
+  padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:var(--space-6) var(--space-8)}
+.wrap{max-width:980px;margin:0 auto;display:flex;flex-direction:column;gap:var(--space-6)}
+header{display:flex;align-items:center;justify-content:space-between;gap:var(--space-2);flex-wrap:wrap}
+h1{font-size:32px;line-height:40px;font-weight:700;margin:0;text-wrap:balance}
+h1 span{color:var(--primary)}
+h2{font-size:24px;line-height:32px;font-weight:700;margin:0;text-wrap:balance}
+.hud{display:flex;gap:var(--space-2);align-items:center}
+.stars{display:flex;align-items:center;gap:6px;min-height:var(--touch-min);padding:0 var(--space-4);border-radius:var(--radius-pill);background:var(--surface-200);font-weight:700;font-size:20px;font-variant-numeric:tabular-nums}
+.stars b{color:var(--accent);font-size:22px;display:inline-block}
+.stars b.bump{animation:bump .5s}
+@keyframes bump{40%{transform:scale(1.6) rotate(20deg)}}
+.icon-btn{width:var(--touch-min);height:var(--touch-min);border-radius:50%;border:2px solid var(--line);background:var(--surface-200);font-size:20px;cursor:pointer;color:var(--ink)}
+button{font-family:var(--font);color:var(--ink)}
+button:focus-visible,input:focus-visible{outline:3px solid var(--ink);outline-offset:2px}
+.tracks{display:grid;grid-template-columns:1fr 1fr;gap:var(--space-2)}
+.tracks button{min-height:var(--answer-tile);border:2px solid var(--line);background:var(--surface-200);border-radius:var(--radius-md);font-size:18px;font-weight:600;cursor:pointer;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:var(--space-2)}
+.tracks button small{font-size:16px;font-weight:400;color:var(--ink-muted)}
+.tracks button[aria-selected="true"]{border-color:var(--primary);background:var(--primary-soft)}
+.levels{display:flex;gap:var(--space-2);flex-wrap:wrap}
+.levels button{min-height:var(--touch-min);min-width:96px;border:2px solid var(--line);background:var(--surface-100);border-radius:var(--radius-md);font-size:18px;font-weight:600;cursor:pointer;padding:0 var(--space-4);display:flex;align-items:center;gap:var(--space-2)}
+.levels button small{font-size:16px;font-weight:500;color:var(--ink-muted);font-variant-numeric:tabular-nums}
+.levels button[aria-selected="true"]{border-color:var(--primary);background:var(--primary-soft)}
+.card{background:var(--surface-200);border-radius:var(--radius-md);padding:var(--space-4);display:flex;flex-direction:column;gap:var(--space-6)}
+@media (min-width:720px){.card{padding:var(--space-8)}}
+.stage{display:grid;grid-template-columns:minmax(0,1.15fr) minmax(0,1fr);gap:var(--space-6);align-items:start}
+@media (max-width:760px){.stage{grid-template-columns:1fr}}
+.stage>*{min-width:0}
+.side{display:flex;flex-direction:column;gap:var(--space-4)}
+canvas.cv{width:100%;height:auto;display:block;background:var(--surface-100);border:2px solid var(--hair);border-radius:var(--radius-md);user-select:none;-webkit-user-select:none}
+.coach{display:flex;gap:var(--space-2);align-items:flex-start;flex-wrap:wrap}
+.avatar{width:var(--touch-min);height:var(--touch-min);flex:none;border-radius:50%;background:var(--primary-soft);border:2px solid var(--primary);display:grid;place-items:center;font-size:26px}
+.bubble{flex:1 1 240px;min-width:0;background:var(--primary-soft);border-radius:4px var(--radius-md) var(--radius-md) var(--radius-md);padding:var(--space-2) var(--space-4)}
+.bubble b{font-weight:700}
+.bubble.ok{background:var(--correct);color:var(--on-primary)}
+.bubble.retry{background:var(--retry);color:var(--ink)}
+.bubble.pop{animation:pop .4s ease-out}
+@keyframes pop{0%{transform:scale(.96);opacity:.4}60%{transform:scale(1.02)}}
+.fbsym{display:inline-grid;place-items:center;width:28px;height:28px;border-radius:50%;font-weight:700;margin-inline-end:var(--space-2);vertical-align:-6px}
+.bubble.ok .fbsym{background:var(--on-primary);color:var(--correct)}
+.bubble.retry .fbsym{background:var(--ink);color:var(--retry)}
+.helpbtn{flex:none;min-height:var(--touch-min);border:2px solid var(--line);background:var(--surface-100);border-radius:var(--radius-md);font-size:16px;font-weight:600;padding:var(--space-2) var(--space-4);cursor:pointer}
+.go{min-height:var(--touch-min);border:none;border-radius:var(--radius-pill);background:var(--primary);color:var(--on-primary);font-size:18px;line-height:24px;font-weight:600;padding:var(--space-2) var(--space-6);cursor:pointer}
+.go.alt{border-radius:var(--radius-md);border:2px solid var(--line);background:transparent;color:var(--ink)}
+.go.glow{animation:glow 1.2s ease-in-out infinite}
+@keyframes glow{50%{box-shadow:0 0 0 6px var(--primary-soft)}}
+.row{display:flex;gap:var(--space-2);flex-wrap:wrap;align-items:center}
+.progress{display:flex;gap:6px;flex-wrap:wrap;align-items:center}
+.progress span{width:16px;height:16px;border-radius:50%;background:var(--hair)}
+.progress span.done{background:var(--accent)}
+.progress span.miss{background:var(--surface-100);border:2px solid var(--line)}
+.progress span.now{outline:2px solid var(--ink);outline-offset:2px}
+.small{font-size:16px;line-height:24px;color:var(--ink-muted);margin:0}
+.names{display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:var(--space-2)}
+.names button{min-height:var(--answer-tile);border:2px solid var(--line);background:var(--surface-100);border-radius:var(--radius-md);font-size:20px;font-weight:700;cursor:pointer;display:flex;flex-direction:column;align-items:center;justify-content:center}
+.names button small{font-size:16px;font-weight:500;color:var(--ink-muted)}
+.legend{background:var(--surface-100);border-radius:var(--radius-sm);padding:var(--space-2) var(--space-4)}
+/* math */
+.math{direction:ltr;unicode-bidi:isolate;display:inline-block;text-align:center;word-spacing:.12em}
+.op{color:var(--primary);font-weight:700}
+.frac{display:inline-flex;flex-direction:column;align-items:center;vertical-align:middle;direction:ltr;line-height:1;margin:0 .12em}
+.frac .fn{padding:0 .2em .12em;border-bottom:.08em solid currentColor}
+.frac .fd{padding:.12em .2em 0}
+.vx{font-style:italic}
+.tm{display:inline-block;white-space:nowrap}
+.eqbox{background:var(--surface-100);border-radius:var(--radius-md);padding:var(--space-4);display:flex;flex-direction:column;align-items:center;gap:var(--space-2);min-height:120px;justify-content:center}
+.eqmain{font-size:44px;line-height:56px;font-weight:700}
+@media (max-width:480px){.eqmain{font-size:34px;line-height:46px}}
+.eqmain .ln{display:flex;align-items:center;gap:var(--space-2)}
+.eqmain .tag{font-size:16px;font-weight:600;color:var(--ink-muted);min-width:1.6em;text-align:center}
+.slot{display:inline-grid;place-items:center;min-width:1.6em;height:1.25em;padding:0 .2em;border-radius:var(--radius-sm);background:var(--accent-soft);border:3px dashed var(--accent);color:var(--ink)}
+.slot:not(#slot){opacity:.45;border-style:dotted}
+.slot.filled{border-style:solid;background:var(--correct-soft);border-color:var(--correct)}
+.slot.bad{background:var(--retry-soft);border-color:var(--retry);animation:shake .4s}
+@keyframes shake{20%,60%{transform:translateX(-6px)}40%,80%{transform:translateX(6px)}}
+.steps{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:4px;font-size:22px;line-height:32px;color:var(--ink-muted)}
+.steps li{display:flex;align-items:center;gap:var(--space-2);flex-wrap:wrap}
+.steps .how{font-size:16px;color:var(--ink-muted)}
+.ops{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:var(--space-2)}
+.ops button{min-height:var(--answer-tile);border:2px solid var(--line);background:var(--surface-100);border-radius:var(--radius-md);font-size:18px;line-height:24px;font-weight:600;cursor:pointer;padding:var(--space-2) var(--space-4)}
+.ops button:hover{border-color:var(--primary)}
+.ops button.retry{border-color:var(--retry);background:var(--retry-soft)}
+.pad{display:grid;grid-template-columns:repeat(3,1fr);gap:var(--space-2);max-width:360px;width:100%;align-self:center;direction:ltr}
+.pad button{min-height:60px;border:2px solid var(--line);background:var(--surface-100);border-radius:var(--radius-md);font-size:26px;font-weight:700;cursor:pointer}
+.pad button.ok{grid-column:1/-1;border:none;border-radius:var(--radius-pill);background:var(--primary);color:var(--on-primary);font-size:20px;min-height:var(--touch-min)}
+.done-box{display:flex;flex-direction:column;gap:var(--space-4);align-items:center;text-align:center}
+.bigstat{font-size:48px;line-height:56px;font-weight:700;font-variant-numeric:tabular-nums}
+/* lesson */
+.lhead{display:flex;align-items:center;justify-content:space-between;gap:var(--space-2);flex-wrap:wrap}
+.lstep{display:flex;gap:6px}
+.lstep span{width:28px;height:8px;border-radius:var(--radius-pill);background:var(--hair)}
+.lstep span.on{background:var(--accent)}
+.ltext{min-height:7em}
+.ltext .math{font-size:22px;font-weight:600;margin:4px 0}
+.ltext.pop{animation:pop .4s ease-out}
+.ask{border-top:2px solid var(--hair);padding-top:var(--space-6);display:flex;flex-direction:column;gap:var(--space-4)}
+.ask h3{font-size:20px;line-height:28px;font-weight:600;margin:0}
+.chips{display:flex;flex-wrap:wrap;gap:var(--space-2)}
+.chips button{min-height:var(--touch-min);border:2px solid var(--line);background:var(--surface-100);border-radius:var(--radius-md);font-size:16px;font-weight:600;padding:var(--space-2) var(--space-4);cursor:pointer}
+.chat{display:flex;flex-direction:column;gap:var(--space-2)}
+.msg{max-width:88%;padding:var(--space-2) var(--space-4)}
+.msg.me{align-self:flex-start;background:var(--accent-soft);border-radius:var(--radius-md) 4px var(--radius-md) var(--radius-md)}
+.msg.bot{align-self:flex-end;background:var(--primary-soft);border-radius:4px var(--radius-md) var(--radius-md) var(--radius-md)}
+.msg.retry{background:var(--retry)}
+.askrow{display:flex;gap:var(--space-2);align-items:center}
+.askrow input{flex:1;min-width:0;min-height:var(--touch-min);font-family:var(--font);font-size:18px;padding:var(--space-2) var(--space-4);border-radius:var(--radius-sm);border:2px solid var(--line);background:var(--surface-100);color:var(--ink)}
+.icon-btn.rec{background:var(--primary);border-color:var(--primary)}
+#fx{position:fixed;inset:0;width:100%;height:100%;pointer-events:none;z-index:50}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+[hidden]{display:none!important}img{max-width:100%}:root{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+</style>
+</head>
+<body>
+
+<canvas id="fx" aria-hidden="true"></canvas>
+<div class="wrap">
+  <header>
+    <h1>מאזני <span>המשוואות</span></h1>
+    <div class="hud">
+      <button class="helpbtn" id="userBtn" hidden>👤 <span id="userName"></span></button>
+      <button class="icon-btn" id="sound" aria-label="השתקה">🔊</button>
+      <div class="stars" aria-live="polite"><b id="starIcon">★</b><span id="starCount">0</span></div>
+    </div>
+  </header>
+
+  <section class="card" id="who" hidden>
+    <h2>מי משחק עכשיו?</h2>
+    <p class="small">כל משתתף מקבל התקדמות וכוכבים משלו. ההתקדמות נשמרת במכשיר הזה.</p>
+    <div class="names" id="names"></div>
+    <form class="askrow" id="nameForm">
+      <input id="nameIn" maxlength="16" autocomplete="off" placeholder="שם חדש">
+      <button class="go" id="nameAdd">הוספה</button>
+    </form>
+    <p class="small" id="nameNote"></p>
+  </section>
+  <div id="gameNav" class="side">
+  <div class="tracks" role="tablist">
+    <button role="tab" id="tr1" aria-selected="true" data-tr="one">⚖️ נעלם אחד<small>רמות 1 עד 5</small></button>
+    <button role="tab" id="tr2" aria-selected="false" data-tr="two">⚖️⚖️ שני נעלמים<small>רמות 1 עד 4</small></button>
+  </div>
+  <div class="levels" id="levels" role="tablist"></div>
+  </div>
+
+  <!-- LESSON -->
+  <section class="card" id="lesson" hidden>
+    <div class="lhead"><h2 id="lTitle"></h2><div class="lstep" id="lStep"></div></div>
+    <div class="stage">
+      <canvas class="cv" id="lCv" aria-label="הדגמה על מאזניים"></canvas>
+      <div class="side">
+        <div class="ltext" id="lText"></div>
+        <div class="row">
+          <button class="go alt" id="lPrev">→ הקודם</button>
+          <button class="go" id="lNext">הבא ←</button>
+        </div>
+        <button class="go alt" id="lSkip">דילוג ישר לתרגול</button>
+      </div>
+    </div>
+    <div class="ask" id="ask" hidden>
+      <h3>יש לך שאלה? 🙋‍♀️ המדריכה עונה</h3>
+      <div class="chips" id="chips"></div>
+      <div class="chat" id="chat" aria-live="polite"></div>
+      <form class="askrow" id="askForm">
+        <input id="askIn" autocomplete="off" placeholder="כתבי או אמרי את השאלה שלך...">
+        <button type="button" class="icon-btn" id="mic" aria-label="שאלה בדיבור">🎤</button>
+        <button class="go alt" id="askBtn">שאלה</button>
+      </form>
+      <p class="small" id="askNote"></p>
+    </div>
+  </section>
+
+  <!-- PRACTICE -->
+  <section class="card" id="practice" hidden>
+    <div class="coach"><div class="avatar">👩‍🏫</div><div class="bubble" id="say"></div><button class="helpbtn" id="helpBtn">📖 הסבר ושאלות</button></div>
+    <div class="row" style="justify-content:space-between"><div class="progress" id="prog"></div><span class="small" id="levelName"></span></div>
+    <div class="eqbox"><div class="eqmain" id="eq"></div></div>
+    <div class="stage">
+      <canvas class="cv" id="bCv" aria-label="המאזניים של המשוואה"></canvas>
+      <div class="side">
+        <p class="small legend">🟩 קופסה היא נעלם · ⬛ משקולת היא מספר חיובי, שמושך למטה · 🎈 בלון הוא מספר שלילי, שמושך למעלה</p>
+        <p class="small" id="stepsLbl" hidden>הדרך עד עכשיו</p>
+        <ul class="steps" id="steps"></ul>
+      </div>
+    </div>
+    <div id="opsWrap" class="side"><p class="small" id="opsLabel">מה עושים עכשיו לשני הצדדים?</p><div class="ops" id="ops"></div></div>
+    <div class="pad" id="pad" hidden>
+      <button data-k="7">7</button><button data-k="8">8</button><button data-k="9">9</button>
+      <button data-k="4">4</button><button data-k="5">5</button><button data-k="6">6</button>
+      <button data-k="1">1</button><button data-k="2">2</button><button data-k="3">3</button>
+      <button data-k="-" aria-label="מינוס">−</button><button data-k="0">0</button><button data-k="del" aria-label="מחיקה">⌫</button>
+      <button class="ok" data-k="ok">בדיקה</button>
+    </div>
+    <div class="done-box" id="doneBox" hidden></div>
+  </section>
+</div>
+
+<script>
+(function(){
+const $=id=>document.getElementById(id);
+const PI2=Math.PI*2,lerp=(a,b,t)=>a+(b-a)*t,clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
+const reduce=matchMedia('(prefers-reduced-motion: reduce)').matches;
+const MINUS='−';
+const rnd=(a,b)=>a+Math.floor(Math.random()*(b-a+1));
+const pick=a=>a[Math.floor(Math.random()*a.length)];
+const shuffle=a=>{for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]];}return a;};
+const gcd=(a,b)=>{a=Math.abs(a);b=Math.abs(b);while(b){[a,b]=[b,a%b];}return a||1;};
+const lcm=(a,b)=>Math.abs(a*b)/gcd(a,b);
+
+/* ---------- fractions ---------- */
+function F(n,d){d=d||1;if(d<0){n=-n;d=-d;}const g=gcd(n,d);return{n:n/g,d:d/g};}
+const fz=F(0),fo=F(1);
+const fadd=(a,b)=>F(a.n*b.d+b.n*a.d,a.d*b.d),fsub=(a,b)=>F(a.n*b.d-b.n*a.d,a.d*b.d),fmul=(a,b)=>F(a.n*b.n,a.d*b.d),fdiv=(a,b)=>F(a.n*b.d,a.d*b.n);
+const fint=a=>a.d===1,feq=(a,b)=>a.n===b.n&&a.d===b.d,fnum=a=>a.n/a.d,fF=x=>typeof x==='number'?F(x):x;
+
+/* ---------- equation model ----------
+   side: {t:'p',a,b}  =  a·v + b          (a,b fractions)
+         {t:'g',k,a,b} = k·(a·v + b)       (k fraction, a,b ints) */
+const P=(a,b)=>({t:'p',a:fF(a),b:fF(b)});
+const G=(k,a,b)=>({t:'g',k:fF(k),a,b});
+const lin=s=>s.t==='p'?{a:s.a,b:s.b}:{a:fmul(s.k,F(s.a)),b:fmul(s.k,F(s.b))};
+const evalSide=(s,x)=>{const l=lin(s);return fadd(fmul(l.a,x),l.b);};
+const hasX=s=>lin(s).a.n!==0;
+
+/* ---------- HTML for math ---------- */
+const num=n=>(n<0?MINUS:'')+Math.abs(n);
+const fracH=(top,bot)=>`<span class="frac"><span class="fn">${top}</span><span class="fd">${bot}</span></span>`;
+const opH=s=>`<span class="op">${s}</span>`;
+const vH=v=>`<span class="vx">${v}</span>`;
+function termH(a,v){a=fF(a);const w=h=>`<span class="tm">${h}</span>`;if(fint(a)){if(a.n===1)return w(vH(v));if(a.n===-1)return w(MINUS+vH(v));return w(num(a.n)+vH(v));}
+  return w((a.n<0?MINUS:'')+fracH((Math.abs(a.n)===1?'':Math.abs(a.n))+vH(v),a.d));}
+function constPart(b,first,slot){ // b fraction
+  const val=slot?slot:(fint(b)?String(Math.abs(b.n)):fracH(Math.abs(b.n),b.d));
+  if(first)return slot?slot:(b.n<0?MINUS:'')+val;
+  return opH(b.n<0&&!slot?MINUS:'+')+' '+val;}
+function innerH(a,b,v,slot){let s=termH(a,v);if(b!==0||slot)s+=' '+(slot?opH(b<0?MINUS:'+')+' '+slot:opH(b<0?MINUS:'+')+' '+Math.abs(b));return s;}
+function sideH(s,v,sl){sl=sl||{};
+  if(s.t==='g'){const inner=innerH(s.a,s.b,v,null);if(fint(s.k))return (s.k.n===1?'':num(s.k.n))+'('+inner+')';return fracH(inner,s.k.d);}
+  const ha=s.a.n!==0||sl.a,hb=s.b.n!==0||sl.b;
+  if(!ha&&!hb)return '0';
+  let out='';if(ha)out+=sl.a?`<span class="tm">${sl.a}${vH(v)}</span>`:termH(s.a,v);
+  if(hb){if(!ha)out+=sl.b?sl.b:constPart(s.b,true);else out+=' '+(sl.b?opH('+')+' '+sl.b:constPart(s.b,false));}
+  return out;}
+function eqH(st,slots){slots=slots||{};const v=st.v||'x';return `<span class="math">${sideH(st.L,v,slots.L)} ${opH('=')} ${sideH(st.R,v,slots.R)}</span>`;}
+function sysLineH(e,sl){sl=sl||{};let s='';const parts=[];if(e.a||sl.a)parts.push(['a','x']);if(e.b||sl.b)parts.push(['b','y']);
+  parts.forEach(([f,v],i)=>{const c=e[f];if(sl[f]){s+=(i?' '+opH('+')+' ':'')+`<span class="tm">${sl[f]}${vH(v)}</span>`;}
+    else if(i===0)s+=termH(c,v);else s+=' '+opH(c<0?MINUS:'+')+' '+termH(Math.abs(c),v);});
+  return `<span class="math">${s} ${opH('=')} ${sl.c?sl.c:num(e.c)}</span>`;}
+const plainText=h=>h.replace(/<span class="frac"><span class="fn">(.*?)<\/span><span class="fd">(.*?)<\/span><\/span>/g,'($1)/$2').replace(/<[^>]+>/g,'');
+
+/* ---------- canvas helpers & colors ---------- */
+const C={};
+function readColors(){const s=getComputedStyle(document.documentElement);['surface-100','surface-200','ink','ink-muted','line','primary','accent','correct','retry','yvar'].forEach(k=>C[k]=s.getPropertyValue('--'+k).trim()||'#888');}
+readColors();
+const DPR=Math.min(2,window.devicePixelRatio||1);
+function setup(cv,W,H){cv.width=W*DPR;cv.height=H*DPR;const c=cv.getContext('2d');c.setTransform(DPR,0,0,DPR,0,0);return c;}
+function rr(c,x,y,w,h,r){c.beginPath();c.moveTo(x+r,y);c.arcTo(x+w,y,x+w,y+h,r);c.arcTo(x+w,y+h,x,y+h,r);c.arcTo(x,y+h,x,y,r);c.arcTo(x,y,x+w,y,r);c.closePath();}
+function txt(c,s,x,y,size,col,w,dir){c.fillStyle=col;c.font=`${w||600} ${size}px Rubik, sans-serif`;c.textAlign='center';c.textBaseline='middle';c.direction=dir||'ltr';c.fillText(s,x,y);}
+function cfrac(c,top,bot,x,y,size,col){txt(c,top,x,y-size*.55,size,col,700);txt(c,bot,x,y+size*.6,size,col,700);c.font=`700 ${size}px Rubik, sans-serif`;const w=Math.max(c.measureText(top).width,c.measureText(bot).width)+6;c.strokeStyle=col;c.lineWidth=2;c.beginPath();c.moveTo(x-w/2,y+1);c.lineTo(x+w/2,y+1);c.stroke();}
+const sideText=(s,v)=>plainText(sideH(s,v));
+
+/* ---------- balance renderer ---------- */
+function itemsFor(s,v,scale){
+  v=v||'x';const it=[];
+  if(s.t==='g'){it.push({k:'bag',s,v});return it;}
+  const a=s.a,b=s.b;
+  if(a.n!==0){if(fint(a)&&a.n>=1&&a.n<=5)for(let i=0;i<a.n;i++)it.push({k:'box',v,label:v});
+    else if(fint(a))it.push({k:'box',v,label:num(a.n)+v,wide:true});
+    else it.push({k:'box',v,frac:[(Math.abs(a.n)===1?'':Math.abs(a.n))+v,String(a.d)],wide:true});}
+  if(b.n!==0){const lab=fint(b)?String(Math.abs(b.n)):Math.abs(b.n)+'/'+b.d;it.push({k:b.n>0?'wt':'bal',label:b.n>0?lab:MINUS+lab});}
+  return it;}
+function itemW(it,c){if(it.k==='box')return it.wide?62:32;if(it.k==='wt')return Math.max(44,String(it.label).length*13+22);if(it.k==='bal')return 40;
+  if(it.k==='bag'){c.font='700 18px Rubik, sans-serif';return Math.max(90,c.measureText(sideText(it.s,it.v)).width+28);}return 34;}
+function drawItem(c,it,x,y,alpha){ // x center, y bottom
+  c.save();c.globalAlpha=alpha;
+  if(it.k==='box'){const w=it.wide?62:32,h=32;rr(c,x-w/2,y-h,w,h,6);c.fillStyle=it.v==='y'?C.yvar:C.primary;c.fill();
+    if(it.frac)cfrac(c,it.frac[0],it.frac[1],x,y-h/2,12,'#fff');else txt(c,it.label,x,y-h/2+1,it.wide?17:19,'#fff',700);}
+  else if(it.k==='wt'){const w=itemW(it,c),h=30;c.beginPath();c.moveTo(x-w/2+6,y-h);c.lineTo(x+w/2-6,y-h);c.lineTo(x+w/2,y);c.lineTo(x-w/2,y);c.closePath();c.fillStyle=C['ink-muted'];c.fill();
+    c.beginPath();c.arc(x,y-h-4,5,0,PI2);c.strokeStyle=C['ink-muted'];c.lineWidth=3;c.stroke();txt(c,it.label,x,y-h/2+1,17,'#fff',700);}
+  else if(it.k==='bal'){const by=y-58;c.strokeStyle=C['ink-muted'];c.lineWidth=1.5;c.beginPath();c.moveTo(x,y);c.quadraticCurveTo(x+6,y-20,x,by+18);c.stroke();
+    c.beginPath();c.ellipse(x,by,18,20,0,0,PI2);c.fillStyle='#9cc3e6';c.fill();c.strokeStyle='rgba(31,42,48,.35)';c.stroke();txt(c,it.label,x,by+1,14,C.ink,700);}
+  else if(it.k==='bag'){const w=itemW(it,c),h=40;rr(c,x-w/2,y-h,w,h,10);c.fillStyle=C['surface-200'];c.fill();c.setLineDash([5,4]);c.strokeStyle=C.ink;c.lineWidth=2;c.stroke();c.setLineDash([]);
+    const s=it.s;if(s.t==='g'&&!fint(s.k)){const inner=plainText(innerH(s.a,s.b,it.v));cfrac(c,inner,String(s.k.d),x,y-h/2,14,C.ink);}else txt(c,sideText(s,it.v),x,y-h/2+1,18,C.ink,700);}
+  c.restore();}
+function layout(c,items,cx,y){ // returns positions, wraps into rows of max width 150
+  const rows=[[]];let w=0;const maxW=150;
+  items.forEach(it=>{const iw=itemW(it,c)+6;if(w+iw>maxW&&rows[rows.length-1].length){rows.push([]);w=0;}rows[rows.length-1].push(it);w+=iw;});
+  const pos=[];rows.forEach((r,ri)=>{const tw=r.reduce((s,it)=>s+itemW(it,c)+6,0)-6;let x=cx-tw/2;r.forEach(it=>{const iw=itemW(it,c);pos.push({it,x:x+iw/2,y:y-ri*36});x+=iw+6;});});
+  return pos;}
+function makeBalance(cv,W,H){
+  const c=setup(cv,W,H);
+  const B={c,W,H,cur:null,prev:null,t:1,tilt:0,tiltTarget:0,tiltTimer:0,chips:[],twin:false,sys:null,prevSys:null,flash:0,check:null};
+  const hideItems=(items,fl,v)=>{let out=items;
+    if(fl.a){const boxes=out.filter(it=>it.k==='box');if(boxes.length){out=out.filter(it=>it.k!=='box');out.unshift({k:'box',v,label:'?'+v,wide:true});}}
+    if(fl.b){out=out.map(it=>it.k==='wt'||it.k==='bal'?{k:'wt',label:'?'}:it);if(!out.some(it=>it.label==='?'))out.push({k:'wt',label:'?'});}
+    return out;};
+  B.set=function(st,opt){opt=opt||{};B.prev=B.cur;B.cur={L:itemsFor(st.L,st.v),R:itemsFor(st.R,st.v),Ls:st.L,Rs:st.R,v:st.v||'x'};if(opt.hide)['L','R'].forEach(sd=>{if(opt.hide[sd])B.cur[sd]=hideItems(B.cur[sd],opt.hide[sd],B.cur.v);});B.t=B.prev?0:1;B.twin=false;B.check=null;
+    (opt.chips||[]).forEach(ch=>B.chips.push({side:ch.side,label:ch.label,t:0}));if(opt.flash)B.flash=1;};
+  B.reveal=function(){if(!B.cur||B.twin)return;B.cur.L=itemsFor(B.cur.Ls,B.cur.v);B.cur.R=itemsFor(B.cur.Rs,B.cur.v);B.flash=.6;};
+  B.setSys=function(sys){B.prevSys=B.sys;B.sys=sys;B.twin=true;B.t=B.prevSys?0:1;B.check=null;};
+  B.tiltOnce=function(dir){B.tiltTarget=dir*0.24;B.tiltTimer=70;};
+  B.draw=function(){const c=B.c;c.clearRect(0,0,W,H);
+    if(B.t<1)B.t=Math.min(1,B.t+(reduce?1:0.045));
+    if(B.tiltTimer>0){B.tiltTimer--;if(B.tiltTimer===0)B.tiltTarget=0;}
+    B.tilt=lerp(B.tilt,B.tiltTarget,reduce?1:0.12);
+    if(B.twin){drawTwin(B);return;}
+    if(!B.cur)return;
+    const cx=W/2,py=70,half=140,th=B.tilt;
+    const lx=cx-Math.cos(th)*half,ly=py-Math.sin(th)*half*-1,rx=cx+Math.cos(th)*half,ry=py+Math.sin(th)*half*-1;
+    // stand
+    c.fillStyle=C.line;c.beginPath();c.moveTo(cx,py);c.lineTo(cx-34,H-14);c.lineTo(cx+34,H-14);c.closePath();c.fill();rr(c,cx-70,H-16,140,10,5);c.fill();
+    // beam
+    c.strokeStyle=C.ink;c.lineWidth=7;c.lineCap='round';c.beginPath();c.moveTo(lx,ly);c.lineTo(rx,ry);c.stroke();
+    c.fillStyle=C.accent;c.beginPath();c.arc(cx,py,9,0,PI2);c.fill();
+    // pans
+    [[lx,ly,'L'],[rx,ry,'R']].forEach(([x,y,sd])=>{const panY=y+120;
+      c.strokeStyle=C['ink-muted'];c.lineWidth=2;c.beginPath();c.moveTo(x,y);c.lineTo(x-62,panY);c.moveTo(x,y);c.lineTo(x+62,panY);c.stroke();
+      c.beginPath();c.moveTo(x-78,panY);c.quadraticCurveTo(x,panY+26,x+78,panY);c.closePath();c.fillStyle=C.line;c.fill();
+      const a=B.t;
+      if(B.prev&&a<1)layout(c,B.prev[sd],x,panY-2).forEach(p=>drawItem(c,p.it,p.x,p.y-a*30,1-a));
+      layout(c,B.cur[sd],x,panY-2).forEach(p=>drawItem(c,p.it,p.x,p.y+(1-a)*-14,a));
+      if(!B.cur[sd].length)txt(c,'0',x,panY-16,20,C['ink-muted'],700);
+    });
+    // chips flying up
+    B.chips=B.chips.filter(ch=>ch.t<1);B.chips.forEach(ch=>{ch.t+=reduce?1:0.02;const x=ch.side==='L'?lx:rx,y=(ch.side==='L'?ly:ry)+80-ch.t*70;
+      c.save();c.globalAlpha=1-ch.t;c.font='700 20px Rubik, sans-serif';const w=c.measureText(ch.label).width+20;rr(c,x-w/2,y-16,w,32,16);c.fillStyle=C.accent;c.fill();txt(c,ch.label,x,y+1,20,C.ink,700);c.restore();});
+    if(B.flash>0){B.flash-=0.03;c.save();c.globalAlpha=Math.max(0,B.flash);c.strokeStyle=C.correct;c.lineWidth=6;c.strokeRect(4,4,W-8,H-8);c.restore();}
+    if(B.check){txt(c,B.check,cx,24,18,C.correct,700,'rtl');}
+  };
+  return B;}
+function drawTwin(B){const c=B.c,W=B.W,H=B.H,a=B.t;
+  const sysList=[B.sys];
+  [[B.sys,a],[B.prevSys,1-a]].forEach(([sys,al],k)=>{if(!sys||al<=0)return;
+    ['E1','E2'].forEach((key,i)=>{const e=sys[key],y0=18+i*(H/2),cx=W/2;
+      c.save();c.globalAlpha=al;
+      txt(c,i===0?'①':'②',22,y0+40,22,C['ink-muted'],700);
+      c.strokeStyle=C.ink;c.lineWidth=5;c.lineCap='round';c.beginPath();c.moveTo(cx-130,y0+20);c.lineTo(cx+130,y0+20);c.stroke();
+      c.fillStyle=C.accent;c.beginPath();c.arc(cx,y0+20,6,0,PI2);c.fill();
+      c.fillStyle=C.line;c.beginPath();c.moveTo(cx,y0+20);c.lineTo(cx-14,y0+H/2-26);c.lineTo(cx+14,y0+H/2-26);c.closePath();c.fill();
+      [[cx-130,'L'],[cx+130,'R']].forEach(([x,sd])=>{const panY=y0+H/2-36;c.strokeStyle=C['ink-muted'];c.lineWidth=1.5;c.beginPath();c.moveTo(x,y0+20);c.lineTo(x-50,panY);c.moveTo(x,y0+20);c.lineTo(x+50,panY);c.stroke();
+        c.beginPath();c.moveTo(x-64,panY);c.quadraticCurveTo(x,panY+18,x+64,panY);c.closePath();c.fillStyle=C.line;c.fill();
+        let items=[];if(sd==='L'){items=itemsXY(e.a,'x').concat(itemsXY(e.b,'y'));}else items=e.c>0?[{k:'wt',label:String(e.c)}]:e.c<0?[{k:'bal',label:MINUS+Math.abs(e.c)}]:[];
+        layout(c,items,x,panY-2).forEach(p=>drawItem(c,p.it,p.x,p.y,1));});
+      c.restore();});});}
+function itemsXY(coef,v){const it=[];if(!coef)return it;if(coef>0&&coef<=4){for(let i=0;i<coef;i++)it.push({k:'box',v,label:v});}else it.push({k:'box',v,label:num(coef)+v,wide:true});return it;}
+
+/* ---------- sound & confetti & stars ---------- */
+let AC=null,soundOn=true;
+function beep(f,d,type,v){if(!soundOn)return;try{AC=AC||new(window.AudioContext||window.webkitAudioContext)();const o=AC.createOscillator(),g=AC.createGain();o.type=type||'sine';o.frequency.value=f;g.gain.setValueAtTime(v||.08,AC.currentTime);g.gain.exponentialRampToValueAtTime(.0001,AC.currentTime+(d||.12));o.connect(g).connect(AC.destination);o.start();o.stop(AC.currentTime+(d||.12));}catch(e){}}
+const pop=()=>beep(660+Math.random()*120,.08,'sine',.07),soft=()=>beep(300,.15,'triangle',.04);
+const chord=()=>[523,659,784,1046].forEach((f,i)=>setTimeout(()=>beep(f,.3,'triangle',.07),i*90));
+$('sound').onclick=()=>{soundOn=!soundOn;$('sound').textContent=soundOn?'🔊':'🔇';$('sound').setAttribute('aria-label',soundOn?'השתקה':'הפעלת צליל');};
+const fx=$('fx'),fctx=fx.getContext('2d');let conf=[];
+function sizeFx(){fx.width=innerWidth*DPR;fx.height=innerHeight*DPR;fctx.setTransform(DPR,0,0,DPR,0,0);}sizeFx();addEventListener('resize',sizeFx);
+function burst(x,y,n){if(reduce)return;const cols=[C.accent,C.primary,C.correct,C.yvar,C.retry];for(let i=0;i<(n||80);i++){const a=Math.random()*PI2,s=3+Math.random()*8;conf.push({x,y,vx:Math.cos(a)*s,vy:Math.sin(a)*s-5,r:Math.random()*6,vr:(Math.random()-.5)*.4,c:cols[i%cols.length],life:80+Math.random()*50,w:5+Math.random()*5,h:7+Math.random()*6});}}
+function burstEl(el,n){const r=el.getBoundingClientRect();burst(r.left+r.width/2,r.top+r.height/2,n);}
+function fxStep(){fctx.clearRect(0,0,innerWidth,innerHeight);if(!conf.length)return;conf=conf.filter(p=>p.life-->0);for(const p of conf){p.vy+=.25;p.vx*=.985;p.x+=p.vx;p.y+=p.vy;p.r+=p.vr;fctx.save();fctx.translate(p.x,p.y);fctx.rotate(p.r);fctx.globalAlpha=Math.min(1,p.life/30);fctx.fillStyle=p.c;fctx.fillRect(-p.w/2,-p.h/2,p.w,p.h*Math.abs(Math.cos(p.r*2)));fctx.restore();}}
+let all={profiles:{},last:null};
+try{const s=JSON.parse(localStorage.getItem('eqGame2')||'null');if(s&&s.profiles)all=s;}catch(e){}
+let store={stars:{},seen:{}},player=null;
+try{const s=JSON.parse(localStorage.getItem('eqGame1')||'null');if(s)store=Object.assign(store,s);}catch(e){}
+const save=()=>{try{localStorage.setItem('eqGame2',JSON.stringify(all));}catch(e){}};
+function totalStars(){return Object.values(store.stars).reduce((s,v)=>s+v,0);}
+function addStar(key){store.stars[key]=(store.stars[key]||0)+1;save();$('starCount').textContent=totalStars();const b=$('starIcon');b.classList.remove('bump');void b.offsetWidth;b.classList.add('bump');}
+$('starCount').textContent=totalStars();
+function say(html,kind){const el=$('say');el.className='bubble'+(kind?' '+kind:'');
+  el.innerHTML=(kind==='ok'?'<span class="fbsym" aria-hidden="true">✓</span>':kind==='retry'?'<span class="fbsym" aria-hidden="true">↩</span>':'')+html;void el.offsetWidth;el.classList.add('pop');}
+
+/* =========================================================
+   LEVELS — לפי סולם החוברת
+   ========================================================= */
+const LEVELS={
+ one:[
+  {name:'צעד אחד',sub:'כמו 5x = 20 או x + 7 = 15'},
+  {name:'שני צעדים',sub:'כמו 2x + 3 = 11'},
+  {name:'נעלם בשני הצדדים',sub:'וגם סוגריים בצד אחד'},
+  {name:'סוגריים ושני צדדים',sub:'וגם תשובות מתחת לאפס'},
+  {name:'סוגריים משני הצדדים',sub:'וגם שברים במשוואה'}],
+ two:[
+  {name:'מקדמים 1',sub:'x + y = 10 ו־x − y = 4'},
+  {name:'מקדם אחד',sub:'2x + y = 13 ו־x + y = 8'},
+  {name:'שני מקדמים',sub:'כופלים משוואה אחת'},
+  {name:'כופלים את שתיהן',sub:'3x + 2y = 16 ו־2x + 5y = 18'}]};
+const ROUND=6;
+
+/* ---------- generators (answers computed, never typed) ---------- */
+const S=(L,R,v)=>({L,R,v:v||'x'});
+function genOne(lv){
+  for(let guard=0;guard<500;guard++){let st,x;
+    if(lv===1){const t=rnd(0,3);x=rnd(2,12);
+      if(t===0){const a=rnd(2,9);st=S(P(a,0),P(0,a*x));}
+      else if(t===1){const b=rnd(2,15);st=S(P(1,b),P(0,x+b));}
+      else if(t===2){const b=rnd(2,x+6);x=b+rnd(1,12);st=S(P(1,-b),P(0,x-b));}
+      else{const k=rnd(2,6),n=rnd(2,10);x=k*n;st=S(P(F(1,k),0),P(0,n));}}
+    else if(lv===2){x=rnd(2,12);const a=rnd(2,9),b=rnd(1,20),sg=pick([1,-1]);const c=a*x+sg*b;if(c<=0)continue;st=S(P(a,sg*b),P(0,c));}
+    else if(lv===3){const t=rnd(0,2);x=rnd(2,12);
+      if(t===0){const c=rnd(1,4),a=c+1,b=pick([1,-1])*rnd(1,15),d=a*x+b-c*x;if(d<=0||d>40)continue;st=S(P(a,b),P(c,d));}
+      else if(t===1){const c=rnd(1,4),a=c+pick([2,3]),b=pick([1,-1])*rnd(1,20),d=a*x+b-c*x;if(d<=0||d>60)continue;st=Math.random()<.5?S(P(a,b),P(c,d)):S(P(c,d),P(a,b));}
+      else{const k=rnd(2,6),m=rnd(1,9),sg=pick([1,-1]);if(sg<0&&x<=m)continue;st=S(G(k,1,sg*m),P(0,k*(x+sg*m)));}}
+    else if(lv===4){const t=rnd(0,2);
+      if(t<2){x=t===0?rnd(3,12):rnd(-15,-2);const k=rnd(2,5),m=rnd(1,9),sg=t===0?pick([1,-1]):1;const n=k*(x+sg*m)-x;if(t===0&&(n<=0||(sg<0&&x<=m)))continue;if(n===0)continue;st=S(G(k,1,sg*m),P(1,n));}
+      else{x=rnd(-12,-2);const c=rnd(1,3),a=c+1,b=rnd(1,15),d=a*x+b-c*x;if(d===0)continue;st=S(P(a,b),P(c,d));}}
+    else{const t=rnd(0,2);
+      if(t===0){x=rnd(1,10);const k2=rnd(2,4),k1=k2+rnd(1,2),m1=rnd(1,6);const num2=k1*(x+m1)-k2*x;if(num2%k2)continue;const m2=num2/k2;if(m2<=0||m2>15||m2===m1)continue;st=S(G(k1,1,m1),G(k2,1,m2));}
+      else if(t===1){const k=rnd(2,5),b=rnd(1,9),c=b+rnd(1,8);x=k*(c-b);st=S(P(F(1,k),b),P(0,c));}
+      else{const k=rnd(2,5),n=rnd(2,9),m=rnd(1,9);x=k*n-m;if(x<=0)continue;st=S(G(F(1,k),1,m),P(0,n));}}
+    if(!st)continue;
+    const fx_=F(x);if(!feq(evalSide(st.L,fx_),evalSide(st.R,fx_)))continue;
+    st.x=x;return st;}
+  throw new Error('gen');}
+function genTwo(lv){
+  for(let guard=0;guard<500;guard++){let x,y,E1,E2;
+    if(lv===1){y=rnd(1,9);x=y+rnd(1,9);E1={a:1,b:1,c:x+y};E2={a:1,b:-1,c:x-y};}
+    else if(lv===2){x=rnd(1,9);y=rnd(1,9);const a=rnd(2,4);E1={a,b:1,c:a*x+y};E2={a:1,b:1,c:x+y};if(Math.random()<.5)[E1,E2]=[E2,E1];}
+    else if(lv===3){x=rnd(1,8);y=rnd(1,8);const a=rnd(2,3),b=rnd(2,3);E1={a,b:1,c:a*x+y};E2={a:1,b,c:x+b*y};}
+    else{x=rnd(1,6);y=rnd(1,6);const a1=rnd(2,5),b1=rnd(2,5),a2=rnd(2,5),b2=rnd(2,5);
+      if(a1%a2===0||a2%a1===0||b1%b2===0||b2%b1===0)continue;if(a1*b2===a2*b1)continue;E1={a:a1,b:b1,c:a1*x+b1*y};E2={a:a2,b:b2,c:a2*x+b2*y};}
+    if(x===y&&lv>1&&Math.random()<.7)continue;
+    return{E1,E2,x,y,orig:{E1:{...E1},E2:{...E2}}};}
+  throw new Error('gen2');}
+
+/* ---------- operations on one-unknown state ---------- */
+function cloneSide(s){return s.t==='p'?P(s.a,s.b):G(s.k,s.a,s.b);}
+const mapSides=(st,f,only)=>({...st,L:only==='R'?cloneSide(st.L):f(st.L,'L'),R:only==='L'?cloneSide(st.R):f(st.R,'R')});
+const opAddConst=t=>(s)=>P(s.a,fadd(s.b,t));
+const opAddX=t=>(s)=>P(fadd(s.a,t),s.b);
+const opMul=n=>(s)=>{n=fF(n);if(s.t==='g'){const k=fmul(s.k,n);return feq(k,fo)?P(s.a,s.b):G(k,s.a,s.b);}return P(fmul(s.a,n),fmul(s.b,n));};
+const opExpand=()=>(s)=>{if(s.t==='g'&&fint(s.k)){const l=lin(s);return P(l.a,l.b);}return cloneSide(s);};
+function isSolved(st){const L=lin(st.L),R=lin(st.R);
+  if(feq(L.a,fo)&&L.b.n===0&&R.a.n===0)return{side:'L',v:R.b};
+  if(feq(R.a,fo)&&R.b.n===0&&L.a.n===0)return{side:'R',v:L.b};return null;}
+const xWord=(m,v)=>(m===1?'':m)+v;
+function options(st){
+  const v=st.v,goods=[],bads=[];
+  const sides=[['L',st.L],['R',st.R]];
+  const intGroup=sides.find(([,s])=>s.t==='g'&&fint(s.k)&&s.k.n!==1);
+  const fracSide=sides.find(([,s])=>(s.t==='g'&&!fint(s.k))||(s.t==='p'&&!fint(s.a)));
+  if(intGroup){const s=intGroup[1];
+    goods.push({label:'פותחים את הסוגריים',how:'פתחנו סוגריים',f:opExpand(),blank:'expand',hint:{t:'mul',k:s.k.n,m:s.b}});
+    const m=s.b;bads.push({label:(m>0?`מורידים ${m} משני הצדדים`:`מוסיפים ${-m} לשני הצדדים`),why:'paren'});}
+  else if(fracSide){let D=1;sides.forEach(([,s])=>{if(s.t==='g'&&!fint(s.k))D=lcm(D,s.k.d);if(s.t==='p')D=lcm(D,s.a.d);});
+    goods.push({label:`כופלים את שני הצדדים ב־${D}`,how:`כפלנו ב־${D}`,f:opMul(D),blank:'const',hint:{t:'mulc',by:D}});
+    bads.push({label:`מחלקים את שני הצדדים ב־${D}`,why:'inverse'});
+    const s=fracSide[1],other=fracSide[0]==='L'?st.R:st.L;
+    if(s.t==='p'&&s.b.n!==0&&!hasX(other)&&fint(s.b)){const b=s.b.n;goods.push({label:b>0?`מורידים ${b} משני הצדדים`:`מוסיפים ${-b} לשני הצדדים`,how:b>0?`הורדנו ${b}`:`הוספנו ${-b}`,f:opAddConst(F(-b)),blank:'const',chip:(b>0?MINUS:'+')+Math.abs(b)});}}
+  else{const aL=lin(st.L).a.n,aR=lin(st.R).a.n;
+    if(aL!==0&&aR!==0){const m=Math.min(aL,aR);
+      goods.push({label:`מורידים ${xWord(m,v)} משני הצדדים`,how:`הורדנו ${xWord(m,v)}`,f:opAddX(F(-m)),blank:'coef',hint:{m},chip:MINUS+xWord(m,v)});
+      bads.push({label:`מוסיפים ${xWord(m,v)} לשני הצדדים`,why:'signx'});
+      const big=aL>aR?'L':'R',b=lin(big==='L'?st.L:st.R).b.n;if(b!==0)bads.push({label:`מורידים ${xWord(m,v)} רק מהצד ${big==='L'?'השמאלי':'הימני'}`,why:'oneside',side:big});}
+    else{const xs=aL!==0?'L':'R',s=xs==='L'?st.L:st.R,a=lin(s).a.n,b=lin(s).b.n;
+      if(b!==0){goods.push({label:b>0?`מורידים ${b} משני הצדדים`:`מוסיפים ${-b} לשני הצדדים`,how:b>0?`הורדנו ${b}`:`הוספנו ${-b}`,f:opAddConst(F(-b)),blank:'const',chip:(b>0?MINUS:'+')+Math.abs(b),hint:{t:'add',delta:-b}});
+        bads.push({label:b>0?`מוסיפים ${b} לשני הצדדים`:`מורידים ${-b} משני הצדדים`,why:'sign'});
+        bads.push({label:b>0?`מורידים ${b} רק מהצד ${xs==='L'?'השמאלי':'הימני'}`:`מוסיפים ${-b} רק לצד ${xs==='L'?'השמאלי':'הימני'}`,why:'oneside',side:xs});}
+      else if(a!==1){goods.push({label:`מחלקים את שני הצדדים ב־${num(a)}`,how:`חילקנו ב־${num(a)}`,f:opMul(F(1,a)),blank:'const',hint:{t:'div',by:a}});
+        bads.push({label:`כופלים את שני הצדדים ב־${num(a)}`,why:'inverse'});
+        bads.push({label:`מורידים ${num(a)} משני הצדדים`,why:'coef'});}}}
+  const list=goods.map(g=>({...g,good:true})).concat(shuffle(bads).slice(0,goods.length>1?1:2).map(b=>({...b,good:false})));
+  return shuffle(list);}
+function makeBlanks(prev,next,o){const out=[],h=o.hint||{};
+  ['L','R'].forEach(sd=>{const p=prev[sd],n=next[sd];if(n.t!=='p')return;const pl=lin(p),nl=lin(n);
+    if(o.blank==='expand'){if(p.t==='g'&&fint(p.k)){out.push({side:sd,f:'a',value:n.a,hint:`חשבי: ${num(p.k.n)} פעמים ${p.a}.`});
+      if(n.b.n!==0)out.push({side:sd,f:'b',value:n.b,hint:`חשבי: ${num(p.k.n)} פעמים ${num(p.b)}.`+(p.b<0?' בסוגריים יש מינוס, ולכן גם התוצאה עם מינוס.':'')});}return;}
+    if(o.blank==='coef'){if(n.a.n!==0&&!feq(pl.a,nl.a))out.push({side:sd,f:'a',value:n.a,hint:`חשבי: ${num(pl.a.n)} פחות ${h.m}.`});return;}
+    if(o.blank==='const'){if(p.t==='g')return;if(n.b.n!==0&&!feq(pl.b,nl.b)&&fint(n.b)&&fint(pl.b)){let ht='כל איבר בצד הזה עובר את אותה פעולה. נסי שוב.';
+      if(h.t==='add')ht=`חשבי: ${m(`${num(pl.b.n)} ${opH(h.delta<0?MINUS:'+')} ${Math.abs(h.delta)}`)}`;
+      else if(h.t==='div')ht=`חשבי: ${m(fracH(num(pl.b.n),num(h.by)))}`;
+      else if(h.t==='mulc')ht=`חשבי: ${num(pl.b.n)} פעמים ${h.by}.`;
+      out.push({side:sd,f:'b',value:n.b,hint:ht});}}});
+  return out;}
+const blankFor=(prev,next,kind)=>{const b=makeBlanks(prev,next,{blank:kind});return b[0]||null;};
+const hideOf=bl=>{const h={};bl.forEach(b=>{if(b.side){h[b.side]=h[b.side]||{};h[b.side][b.f]=true;}});return h;};
+
+/* =========================================================
+   LESSONS
+   ========================================================= */
+const x_='<span class="vx">x</span>';
+const m=s=>`<span class="math">${s}</span>`;
+const LES={
+ one:[
+  {title:'צעד אחד',chips:['למה צריך לעשות אותו דבר לשני הצדדים?','מה זה בכלל נעלם?','איך יודעים אם התשובה נכונה?'],slides:[
+   {t:'משוואה היא מאזניים',x:`בשני הצדדים יש אותו משקל, ולכן המאזניים ישרים. ${x_} הוא קופסה סגורה, ואנחנו רוצים לגלות כמה היא שוקלת.<br>${m(`${x_} ${opH('+')} 3 ${opH('=')} 7`)}`,seq:[{s:S(P(1,3),P(0,7))},{s:S(P(1,0),P(0,4)),chips:[MINUS+'3']}]},
+   {t:'מה שעושים לצד אחד, עושים גם לשני',x:'אם מורידים משקולת רק מצד אחד, המאזניים נוטים, וזה כבר לא שוויון. לכן כל פעולה עושים <b>לשני הצדדים יחד</b>.',seq:[{s:S(P(1,3),P(0,7)),tilt:true}]},
+   {t:'פעולה הפוכה',x:`חיבור מבטלים בחיסור, וכפל מבטלים בחילוק.<br>${m(`<span class=\"tm\">5${x_}</span> ${opH('=')} 20`)} → מחלקים ב־5.<br>${m(`${fracH(x_,3)} ${opH('=')} 4`)} → כופלים ב־3.`,seq:[{s:S(P(5,0),P(0,20))},{s:S(P(1,0),P(0,4))},{s:S(P(F(1,3),0),P(0,4))},{s:S(P(1,0),P(0,12))}]}]},
+  {title:'שני צעדים',chips:['למה מורידים קודם את המספר?','מה אם אחרי החילוק יוצא שבר?','למה x לפעמים נמצא בצד הימני?'],slides:[
+   {t:'קודם המספר, אחר כך המקדם',x:`ב־${m(`<span class=\"tm\">2${x_}</span> ${opH('+')} 3 ${opH('=')} 11`)} יש שני דברים שמסתירים את ${x_}: המספר 3 והמקדם 2. קודם מורידים את 3, ורק אחר כך מחלקים ב־2.`,seq:[{s:S(P(2,3),P(0,11))},{s:S(P(2,0),P(0,8)),chips:[MINUS+'3']},{s:S(P(1,0),P(0,4))}]},
+   {t:'בדיקה בהצבה',x:`בסוף מציבים את התשובה במשוואה המקורית. אם ${m(`${x_} ${opH('=')} 4`)}, אז ${m(`<span class=\"tm\">2${x_}</span>`)} הוא 8, ו־${m(`8 ${opH('+')} 3 ${opH('=')} 11`)}. שני הצדדים שווים, אז התשובה נכונה.`,seq:[{s:S(P(0,11),P(0,11)),check:true}]}]},
+  {title:'נעלם בשני הצדדים',chips:['למה מורידים דווקא את ה־x הקטן?','מה עושים כשיש מינוס בתוך הסוגריים?','אפשר לפתור גם בדרך אחרת?'],slides:[
+   {t:'נעלם בשני הצדדים',x:`ב־${m(`<span class=\"tm\">3${x_}</span> ${opH(MINUS)} 8 ${opH('=')} <span class=\"tm\">2${x_}</span> ${opH('+')} 2`)} יש קופסאות בשני הצדדים. מורידים משני הצדדים את מספר הקופסאות הקטן יותר, וכך הן נשארות רק בצד אחד.`,seq:[{s:S(P(3,-8),P(2,2))},{s:S(P(1,-8),P(0,2)),chips:[MINUS+'2x']},{s:S(P(1,0),P(0,10)),chips:['+8']}]},
+   {t:'סוגריים בצד אחד',x:`${m(`4(${x_} ${opH(MINUS)} 3) ${opH('=')} 20`)}: קודם <b>פותחים סוגריים</b>, כלומר כופלים את 4 בכל מה שבפנים: ${m(`<span class=\"tm\">4${x_}</span> ${opH(MINUS)} 12`)}. אחר כך ממשיכים כרגיל.`,seq:[{s:S(G(4,1,-3),P(0,20))},{s:S(P(4,-12),P(0,20))},{s:S(P(4,0),P(0,32)),chips:['+12']},{s:S(P(1,0),P(0,8))}]}]},
+  {title:'סוגריים ושני צדדים',chips:['איך מספר יכול להיות מתחת לאפס?','מה זה בלון במאזניים?','איך בודקים תשובה שלילית?'],slides:[
+   {t:'סוגריים ונעלם בשני הצדדים',x:`${m(`3(${x_} ${opH('+')} 3) ${opH('=')} ${x_} ${opH('+')} 19`)}: פותחים סוגריים, ואז מורידים את ${x_} הקטן משני הצדדים.`,seq:[{s:S(G(3,1,3),P(1,19))},{s:S(P(3,9),P(1,19))},{s:S(P(2,9),P(0,19)),chips:[MINUS+'x']},{s:S(P(2,0),P(0,10)),chips:[MINUS+'9']},{s:S(P(1,0),P(0,5))}]},
+   {t:'מתחת לאפס',x:`לפעמים התשובה קטנה מאפס. במאזניים מספר שלילי הוא <b>בלון</b>: הוא מושך למעלה במקום למטה. ${m(`${x_} ${opH('+')} 18 ${opH('=')} 4`)} → ${m(`${x_} ${opH('=')} ${MINUS}14`)}`,seq:[{s:S(P(1,18),P(0,4))},{s:S(P(1,0),P(0,-14)),chips:[MINUS+'18']}]}]},
+  {title:'סוגריים משני הצדדים',chips:['למה כופלים כשיש שבר?','מה ההבדל בין סוגריים לשבר?','אפשר לחלק במקום לכפול?'],slides:[
+   {t:'סוגריים משני הצדדים',x:`${m(`3(${x_} ${opH('+')} 2) ${opH('=')} 2(${x_} ${opH('+')} 5)`)}: פותחים את שני הסוגריים, ואז זו משוואה עם נעלם בשני הצדדים.`,seq:[{s:S(G(3,1,2),G(2,1,5))},{s:S(P(3,6),P(2,10))},{s:S(P(1,6),P(0,10)),chips:[MINUS+'2x']},{s:S(P(1,0),P(0,4)),chips:[MINUS+'6']}]},
+   {t:'שבר במשוואה',x:`${m(`${fracH(x_,2)} ${opH('+')} 3 ${opH('=')} 7`)}: כדי להיפטר מהשבר <b>כופלים את שני הצדדים</b> במכנה. כל איבר נכפל: ${m(`${x_} ${opH('+')} 6 ${opH('=')} 14`)}.`,seq:[{s:S(P(F(1,2),3),P(0,7))},{s:S(P(1,6),P(0,14))},{s:S(P(1,0),P(0,8)),chips:[MINUS+'6']}]}]}],
+ two:[
+  {title:'שני נעלמים',chips:['למה צריך שתי משוואות?','למה חיבור מעלים את y?','אפשר להתחיל מ־y?'],slides:[
+   {t:'שתי משוואות, שני נעלמים',x:`יש שתי קופסאות שונות: ${x_} ו־<span class="vx">y</span>. משוואה אחת לא מספיקה, אבל שתיים כן. הרעיון: לחבר או לחסר את המשוואות כך שאחד הנעלמים ייעלם.`,sys:[{E1:{a:1,b:1,c:10},E2:{a:1,b:-1,c:4}}]},
+   {t:'מחברים, ו־y נעלם',x:`${m(`${x_} ${opH('+')} <span class="vx">y</span> ${opH('=')} 10`)} ועוד ${m(`${x_} ${opH(MINUS)} <span class="vx">y</span> ${opH('=')} 4`)} נותן ${m(`<span class=\"tm\">2${x_}</span> ${opH('=')} 14`)}, כי ${m(`<span class="vx">y</span> ${opH(MINUS)} <span class="vx">y</span>`)} זה אפס. אחר כך מציבים ${m(`${x_} ${opH('=')} 7`)} ומוצאים את <span class="vx">y</span>.`,seq:[{s:S(P(2,0),P(0,14))},{s:S(P(1,0),P(0,7))}]}]},
+  {title:'מחסירים משוואות',chips:['מתי מחברים ומתי מחסירים?','מה קורה למספרים כשמחסירים?','איך בודקים את שתי התשובות?'],slides:[
+   {t:'כשהמקדמים שווים, מחסירים',x:`ב־${m(`<span class=\"tm\">2${x_}</span> ${opH('+')} <span class="vx">y</span> ${opH('=')} 13`)} וב־${m(`${x_} ${opH('+')} <span class="vx">y</span> ${opH('=')} 8`)} יש <span class="vx">y</span> אחד בכל משוואה. מחסירים את המשוואות, ו־<span class="vx">y</span> נעלם: ${m(`${x_} ${opH('=')} 5`)}.`,sys:[{E1:{a:2,b:1,c:13},E2:{a:1,b:1,c:8}},{E1:{a:1,b:0,c:5},E2:{a:1,b:1,c:8}}]}]},
+  {title:'כופלים משוואה אחת',chips:['למה מותר לכפול משוואה?','באיזה מספר כופלים?','אפשר לכפול את המשוואה השנייה במקום?'],slides:[
+   {t:'כופלים כדי ליצור מקדמים שווים',x:`ב־${m(`<span class=\"tm\">2${x_}</span> ${opH('+')} <span class="vx">y</span> ${opH('=')} 11`)} וב־${m(`${x_} ${opH('+')} <span class=\"tm\">2<span class=\"vx\">y</span></span> ${opH('=')} 10`)} אין מקדמים שווים. כופלים את השנייה ב־2: ${m(`<span class=\"tm\">2${x_}</span> ${opH('+')} <span class=\"tm\">4<span class=\"vx\">y</span></span> ${opH('=')} 20`)}. עכשיו אפשר לחסר.`,sys:[{E1:{a:2,b:1,c:11},E2:{a:1,b:2,c:10}},{E1:{a:2,b:1,c:11},E2:{a:2,b:4,c:20}}]}]},
+  {title:'כופלים את שתיהן',chips:['איך בוחרים במה לכפול?','למה לא כופלים רק אחת?','מה זה מכפלה משותפת?'],slides:[
+   {t:'מחפשים מכפלה משותפת',x:`ב־${m(`<span class=\"tm\">3${x_}</span> ${opH('+')} <span class=\"tm\">2<span class=\"vx\">y</span></span> ${opH('=')} 16`)} וב־${m(`<span class=\"tm\">2${x_}</span> ${opH('+')} <span class=\"tm\">5<span class=\"vx\">y</span></span> ${opH('=')} 18`)} כופלים את הראשונה ב־2 ואת השנייה ב־3. כך בשתיהן יש ${m(`<span class=\"tm\">6${x_}</span>`)}, ואפשר לחסר.`,sys:[{E1:{a:3,b:2,c:16},E2:{a:2,b:5,c:18}},{E1:{a:6,b:4,c:32},E2:{a:6,b:15,c:54}}]}]}]};
+
+const lcv=$('lCv'),LB=makeBalance(lcv,420,300),bcv=$('bCv'),BB=makeBalance(bcv,420,300);
+const L={tr:'one',lv:0,i:0,t:0,seqI:0};
+function renderSlide(){const les=LES[L.tr][L.lv],s=les.slides[L.i];L.t=0;L.seqI=0;
+  $('lTitle').textContent=`רמה ${L.lv+1}: ${s.t}`;const tx=$('lText');tx.innerHTML=s.x;tx.classList.remove('pop');void tx.offsetWidth;tx.classList.add('pop');
+  $('lStep').innerHTML=les.slides.map((_,k)=>`<span class="${k<=L.i?'on':''}"></span>`).join('');
+  $('lPrev').style.visibility=L.i===0?'hidden':'visible';
+  const last=L.i===les.slides.length-1;$('lNext').textContent=last?'✏️ מתחילים לתרגל!':'הבא ←';$('lNext').classList.toggle('glow',last);$('lSkip').hidden=last;
+  $('chips').innerHTML='';les.chips.forEach(q=>{const b=document.createElement('button');b.type='button';b.textContent=q;b.onclick=()=>ask(q);$('chips').appendChild(b);});
+  LB.cur=null;LB.prev=null;LB.sys=null;LB.prevSys=null;
+  if(s.sys)LB.setSys(s.sys[0]);else{LB.set(s.seq[0].s);if(s.seq[0].check)LB.check='שני הצדדים שווים ✓';}}
+function lessonTick(){const s=LES[L.tr][L.lv].slides[L.i];L.t++;
+  if(s.sys){if(s.sys.length>1&&L.t%150===0){L.seqI=(L.seqI+1)%s.sys.length;LB.setSys(s.sys[L.seqI]);}}
+  else if(s.seq.length===1&&s.seq[0].tilt){if(L.t%160===40){LB.chips.push({side:'L',label:MINUS+'3',t:0});LB.tiltOnce(-1);}}
+  else if(s.seq.length>1&&L.t%130===0){L.seqI=(L.seqI+1)%s.seq.length;const q=s.seq[L.seqI];LB.set(q.s,{chips:(q.chips||[]).flatMap(c=>[{side:'L',label:c},{side:'R',label:c}])});}
+  LB.draw();}
+$('lNext').onclick=()=>{const n=LES[L.tr][L.lv].slides.length;if(L.i<n-1){L.i++;renderSlide();beep(600,.06,'sine',.05);}else startPractice();};
+$('lPrev').onclick=()=>{if(L.i>0){L.i--;renderSlide();}};
+$('lSkip').onclick=()=>startPractice();
+$('helpBtn').onclick=()=>openLesson();
+
+/* =========================================================
+   NAV
+   ========================================================= */
+let mode='lesson';
+function setView(){$('who').hidden=mode!=='who';$('gameNav').hidden=mode==='who';$('lesson').hidden=mode!=='lesson';$('practice').hidden=mode!=='practice';$('userBtn').hidden=mode==='who';}
+function showWho(){mode='who';const box=$('names');box.innerHTML='';
+  Object.keys(all.profiles).forEach(n=>{const pr=all.profiles[n],st=Object.values(pr.stars).reduce((a,v)=>a+v,0);const b=document.createElement('button');b.type='button';b.innerHTML=`<span></span><small>★ ${st}</small>`;b.firstChild.textContent=n;b.onclick=()=>enter(n);box.appendChild(b);});
+  $('nameNote').textContent=Object.keys(all.profiles).length?'':'עוד אין משתתפים. כתבו שם כדי להתחיל.';setView();$('starCount').textContent='0';}
+function enter(n){player=n;store=all.profiles[n];store.stars=store.stars||{};store.seen=store.seen||{};all.last=n;save();
+  $('userName').textContent=n;$('starCount').textContent=totalStars();
+  L.tr=store.tr||'one';L.lv=store.lv!=null?store.lv:2;document.querySelectorAll('.tracks button').forEach(x=>x.setAttribute('aria-selected',x.dataset.tr===L.tr));
+  for(const k in chats)delete chats[k];renderLevels();openLesson();}
+$('nameForm').addEventListener('submit',e=>{e.preventDefault();const n=$('nameIn').value.trim();if(!n)return;
+  if(all.profiles[n]){$('nameNote').textContent='השם הזה כבר קיים. אפשר ללחוץ עליו למעלה.';return;}
+  all.profiles[n]={stars:{},seen:{}};save();$('nameIn').value='';enter(n);});
+$('userBtn').onclick=()=>showWho();
+function renderLevels(){const box=$('levels');box.innerHTML='';LEVELS[L.tr].forEach((lv,i)=>{const b=document.createElement('button');b.setAttribute('role','tab');b.setAttribute('aria-selected',i===L.lv);
+  const st=store.stars[L.tr+i]||0;b.innerHTML=`רמה ${i+1}<small>${st?'★ '+st:''}</small>`;b.title=lv.name;b.onclick=()=>{L.lv=i;renderLevels();openLesson();};box.appendChild(b);});}
+function openLesson(){L.i=0;mode='lesson';renderSlide();renderChat();setView();}
+document.querySelectorAll('.tracks button').forEach(b=>b.onclick=()=>{L.tr=b.dataset.tr;document.querySelectorAll('.tracks button').forEach(x=>x.setAttribute('aria-selected',x===b));L.lv=L.tr==='one'?2:0;renderLevels();openLesson();});
+
+/* =========================================================
+   PRACTICE
+   ========================================================= */
+const R={eqs:[],idx:0,res:[],cur:null};
+function startPractice(){store.seen[L.tr+L.lv]=1;store.tr=L.tr;store.lv=L.lv;save();mode='practice';setView();
+  R.eqs=[];const seen=new Set();while(R.eqs.length<ROUND){const e=L.tr==='one'?genOne(L.lv+1):genTwo(L.lv+1);const key=JSON.stringify(L.tr==='one'?[e.L,e.R]:[e.E1,e.E2]);if(seen.has(key))continue;seen.add(key);R.eqs.push(e);}
+  R.idx=0;R.res=[];$('doneBox').hidden=true;$('levelName').textContent=`רמה ${L.lv+1} · ${LEVELS[L.tr][L.lv].name}`;loadEq();}
+function renderProg(){const p=$('prog');p.innerHTML='';for(let i=0;i<ROUND;i++){const s=document.createElement('span');if(i<R.res.length)s.className=R.res[i]?'done':'miss';if(i===R.idx&&R.res.length<ROUND)s.classList.add('now');p.appendChild(s);}}
+function loadEq(){const e=R.eqs[R.idx];
+  if(L.tr==='one'){R.cur={kind:'one',orig:e,st:{L:e.L,R:e.R,v:'x'},errs:0,phase:'choose',steps:[]};BB.cur=null;BB.prev=null;BB.set(R.cur.st);}
+  else{R.cur={kind:'two',sys:{E1:{...e.E1},E2:{...e.E2}},orig:e,errs:0,phase:'elim',steps:[],solved:{}};BB.sys=null;BB.prevSys=null;BB.setSys(R.cur.sys);}
+  $('steps').innerHTML='';$('stepsLbl').hidden=true;$('opsWrap').hidden=false;$('pad').hidden=true;$('doneBox').hidden=true;
+  renderProg();renderEq();renderOps();
+  const first=R.idx===0;
+  if(R.cur.kind==='one')say(first?'בחרי מה עושים לשני הצדדים כדי שהנעלם יישאר לבד. אחרי כל צעד תחשבי בעצמך את המספר החדש.':'משוואה חדשה. מה הצעד הראשון?');
+  else say(first?'שתי משוואות, שני נעלמים. בחרי פעולה שתעלים את אחד הנעלמים.':'זוג משוואות חדש. איזה נעלם קל להעלים?');}
+function addStep(html,how){$('stepsLbl').hidden=false;const li=document.createElement('li');li.innerHTML=html+(how?` <span class="how">${how}</span>`:'');$('steps').appendChild(li);}
+function slotsHtml(c){const sl={};if(!c.blanks)return sl;
+  c.blanks.forEach((b,i)=>{if(i<c.bi)return;const key=b.eq||b.side;sl[key]=sl[key]||{};
+    sl[key][b.f]=i===c.bi?`<span class="slot" id="slot">${c.typed?c.typed.replace('-',MINUS):'?'}</span>`:`<span class="slot">?</span>`;});return sl;}
+function renderEq(){const c=R.cur,box=$('eq');
+  if(c.kind==='two'&&(c.phase==='elim'||c.phase==='mulblank')){const sl=slotsHtml(c),E1=c.pend&&c.pend.key==='E1'?c.pend.e:c.sys.E1,E2=c.pend&&c.pend.key==='E2'?c.pend.e:c.sys.E2;
+    box.innerHTML=`<div class="ln"><span class="tag">①</span>${sysLineH(E1,sl.E1)}</div><div class="ln"><span class="tag">②</span>${sysLineH(E2,sl.E2)}</div>`;return;}
+  box.innerHTML=`<div class="ln">${eqH(c.st,slotsHtml(c))}</div>`+(c.kind==='two'&&c.solved.first?`<div class="ln small">${c.solved.first}</div>`:'');}
+function startBlanks(list,msg){const c=R.cur;c.blanks=list;c.bi=0;c.typed='';c.phase=c.phase==='mulblank'?'mulblank':'blank';$('opsWrap').hidden=true;$('pad').hidden=false;renderEq();say(msg||(list.length>1?`עכשיו חשבי בעצמך את ${list.length} המספרים החדשים, אחד אחרי השני.`:'עכשיו חשבי: איזה מספר נכנס במקום סימן השאלה?'));}
+function renderOps(){const c=R.cur,box=$('ops');box.innerHTML='';
+  let list;if(c.kind==='two'&&c.phase==='elim')list=options2(c.sys);else list=options(c.st);
+  c.opts=list;list.forEach((o,i)=>{const b=document.createElement('button');b.textContent=o.label;b.onclick=()=>choose(o,b);box.appendChild(b);});
+  $('opsLabel').textContent=c.kind==='two'&&c.phase==='elim'?'מה עושים עם המשוואות?':'מה עושים עכשיו לשני הצדדים?';}
+const WHY={
+  paren:'המספר נמצא בתוך הסוגריים, ולכן אי אפשר להוריד אותו ככה. קודם פותחים את הסוגריים.',
+  inverse:'זו הפעולה ההפוכה ממה שצריך. כדי לבטל כפל מחלקים, וכדי לבטל חילוק כופלים.',
+  sign:'זה חוקי, אבל עכשיו ליד הנעלם יש מספר גדול יותר. צריך את הפעולה ההפוכה: חיבור מבטלים בחיסור.',
+  signx:'כך יהיו עוד יותר קופסאות בשני הצדדים. כדי שהנעלם יישאר בצד אחד, מורידים.',
+  oneside:'ראית? המאזניים נטו. מה שעושים לצד אחד, חייבים לעשות גם לצד השני.',
+  coef:'המקדם צמוד לנעלם, כלומר כפל. כפל מבטלים בחילוק, לא בחיסור.',
+  noelim:'אחרי הפעולה הזו עדיין נשארים גם x וגם y. חפשי נעלם שהמקדמים שלו שווים (אז מחסירים) או הפוכים (אז מחברים).',
+  wrongk:'אחרי הכפל הזה עדיין אין נעלם עם מקדמים שווים בשתי המשוואות. באיזה מספר צריך לכפול כדי שיהיו שווים?'};
+function choose(o,btn){const c=R.cur;
+  if(!o.good){c.errs++;soft();btn.classList.add('retry');say(WHY[o.why],'retry');if(o.why==='oneside')BB.tiltOnce(o.side==='L'?-1:1),BB.chips.push({side:o.side,label:'?',t:0});return;}
+  pop();
+  if(c.kind==='two'&&c.phase==='elim'){applyTwo(o);return;}
+  const prev=c.st,next=mapSides(prev,o.f);
+  addStep(eqH(prev),'');
+  const bl=makeBlanks(prev,next,o);c.st=next;
+  BB.set(next,{chips:o.chip?[{side:'L',label:o.chip},{side:'R',label:o.chip}]:[],hide:hideOf(bl)});
+  $('steps').lastChild.querySelector('.how')||($('steps').lastChild.innerHTML+=` <span class="how">${o.how}</span>`);
+  if(bl.length)startBlanks(bl);else afterStep();}
+function afterStep(){const c=R.cur;c.blanks=null;c.phase='choose';$('pad').hidden=true;renderEq();
+  const sol=isSolved(c.st);
+  if(sol){finishOne(fnum(sol.v));return;}
+  $('opsWrap').hidden=false;renderOps();say(pick(['יופי. מה הצעד הבא?','נכון. ממשיכים: מה עכשיו?','מצוין. איזו פעולה עכשיו?']),'ok');}
+function submitBlank(){const c=R.cur;if(!c.typed||c.typed==='-')return;const val=parseInt(c.typed,10),b=c.blanks[c.bi];
+  const want=typeof b.value==='number'?b.value:fnum(b.value);
+  if(val!==want){c.errs++;soft();markBad();say(b.hint,'retry');return;}
+  pop();c.bi++;c.typed='';
+  if(c.bi<c.blanks.length){renderEq();say('נכון! ועכשיו המספר הבא.');return;}
+  if(c.phase==='mulblank'){c.sys[c.pend.key]=c.pend.e;c.pend=null;c.blanks=null;c.phase='elim';$('pad').hidden=true;$('opsWrap').hidden=false;BB.setSys(c.sys);renderEq();renderOps();say('נכון! עכשיו יש נעלם עם מקדמים שווים. מה עושים?','ok');return;}
+  BB.reveal();afterStep();}
+function markBad(){const s=$('slot');if(s){s.classList.remove('bad');void s.offsetWidth;s.classList.add('bad');}R.cur.typed='';setTimeout(()=>{if(R.cur&&R.cur.typed===''&&R.cur.blanks)renderEq();},450);}
+$('pad').addEventListener('click',e=>{const k=e.target.closest('button');if(!k)return;padKey(k.dataset.k);});
+function padKey(k){const c=R.cur;if(!c||!c.blanks)return;
+  if(k==='ok'){submitBlank();return;}
+  if(k==='del')c.typed=c.typed.slice(0,-1);
+  else if(k==='-')c.typed=c.typed.startsWith('-')?c.typed.slice(1):'-'+c.typed;
+  else if(c.typed.replace('-','').length<4)c.typed+=k;
+  const s=$('slot');if(s)s.textContent=c.typed?c.typed.replace('-',MINUS):'?';}
+addEventListener('keydown',e=>{if(mode!=='practice'||$('pad').hidden)return;if(e.target.tagName==='INPUT')return;
+  if(/^[0-9]$/.test(e.key))padKey(e.key);else if(e.key==='-')padKey('-');else if(e.key==='Backspace')padKey('del');else if(e.key==='Enter')padKey('ok');});
+
+function finishOne(v){const c=R.cur;
+  if(c.kind==='two'){finishTwoPart(v);return;}
+  addStep(eqH(c.st),'');
+  const o=c.orig,fx_=F(v),Lv=fnum(evalSide(o.L,fx_)),Rv=fnum(evalSide(o.R,fx_));
+  BB.check=`בדיקה: מציבים x = ${num(v)}, ושני הצדדים יוצאים ${num(Lv)} ✓`.replace(/x = (−?\d+)/,'x = $1');
+  BB.flash=1;$('opsWrap').hidden=true;
+  const clean=c.errs===0;R.res.push(clean);if(clean)addStar(L.tr+L.lv);chord();burstEl($('eq'),clean?90:40);
+  say(`${m(`<span class="vx">x</span> ${opH('=')} ${num(v)}`)} ${clean?'בלי אף טעות! ★':'פתרת!'} בדיקה בהצבה: שני הצדדים יוצאים ${m(num(Lv))}.`,'ok');
+  nextBtn();}
+function nextBtn(){const box=$('ops');$('opsWrap').hidden=false;$('opsLabel').textContent='';box.innerHTML='';const b=document.createElement('button');
+  b.className='go glow';b.style.gridColumn='1/-1';b.textContent=R.res.length<ROUND?'למשוואה הבאה ←':'לסיכום הסבב ←';b.onclick=()=>{R.idx++;if(R.res.length>=ROUND)roundDone();else loadEq();};box.appendChild(b);renderProg();}
+function roundDone(){$('opsWrap').hidden=true;$('pad').hidden=true;const ok=R.res.filter(Boolean).length;const d=$('doneBox');d.hidden=false;renderProg();
+  const pass=ok>=5,maxLv=LEVELS[L.tr].length;
+  d.innerHTML=`<div class="bigstat">${ok} מתוך ${ROUND}</div><p>${ok===ROUND?'כל המשוואות בלי אף טעות.':`פתרת ${ok} משוואות בלי טעות.`} ${pass?(L.lv+1<maxLv?'אפשר לעלות לרמה הבאה.':'סיימת את הרמה הגבוהה ביותר!'):'כדאי לעשות עוד סבב ברמה הזו לפני שעולים.'}</p><div class="row"></div>`;
+  const row=d.querySelector('.row');
+  const again=document.createElement('button');again.className=pass&&L.lv+1<maxLv?'go alt':'go';again.textContent='סבב נוסף ברמה הזו';again.onclick=()=>startPractice();row.appendChild(again);
+  if(pass&&L.lv+1<maxLv){const nx=document.createElement('button');nx.className='go';nx.textContent=`לרמה ${L.lv+2} ←`;nx.onclick=()=>{L.lv++;renderLevels();openLesson();};row.appendChild(nx);}
+  say(pass?'סבב מצוין!':'עבודה טובה. עוד סבב, והמשוואות האלה יהיו קלות.',pass?'ok':'');renderLevels();if(pass)burstEl(d,120);}
+
+/* ---------- two unknowns ---------- */
+function options2(sys){const {E1,E2}=sys,goods=[],bads=[];
+  const can=(p,q)=>p!==0&&q!==0;
+  const eqA=can(E1.a,E2.a)&&E1.a===E2.a,eqB=can(E1.b,E2.b)&&E1.b===E2.b,opA=can(E1.a,E2.a)&&E1.a===-E2.a,opB=can(E1.b,E2.b)&&E1.b===-E2.b;
+  if(opA||opB)goods.push({label:'מחברים את שתי המשוואות',act:'add'});
+  if(eqA||eqB){const v=eqA?'a':'b',o=eqA?'b':'a';const r12=E1[o]-E2[o];
+    goods.push(r12>0?{label:'מחסירים: ① פחות ②',act:'sub12'}:{label:'מחסירים: ② פחות ①',act:'sub21'});}
+  if(!goods.length){let best=null;['a','b'].forEach(v=>{if(!E1[v]||!E2[v])return;const L_=lcm(E1[v],E2[v]);if(!best||L_<best.L)best={v,L:L_};});
+    [['E1',E1],['E2',E2]].forEach(([key,e])=>{const k=best.L/Math.abs(e[best.v]);if(k>1)goods.push({label:`כופלים את משוואה ${key==='E1'?'①':'②'} ב־${k}`,act:'mul',key,k});});
+    bads.push({label:'מחברים את שתי המשוואות',why:'noelim'},{label:'מחסירים: ① פחות ②',why:'noelim'});
+    const g=goods[0];if(g){const wk=g.k+1;bads.push({label:`כופלים את משוואה ${g.key==='E1'?'①':'②'} ב־${wk}`,why:'wrongk'});}}
+  else{if(!(opA||opB))bads.push({label:'מחברים את שתי המשוואות',why:'noelim'});else bads.push({label:'מחסירים: ① פחות ②',why:'noelim'});}
+  return shuffle(goods.map(g=>({...g,good:true})).concat(shuffle(bads).slice(0,2).map(b=>({...b,good:false}))));}
+function applyTwo(o){const c=R.cur,{E1,E2}=c.sys;
+  addStep(`<span class="math" style="flex-direction:column;align-items:flex-start">${sysLineH(E1)}${sysLineH(E2)}</span>`,'');
+  if(o.act==='mul'){const e=c.sys[o.key],k=o.k,ne={a:e.a*k,b:e.b*k,c:e.c*k};c.pend={key:o.key,e:ne};c.phase='mulblank';
+    $('steps').lastChild.innerHTML+=` <span class="how">כפלנו את ${o.key==='E1'?'①':'②'} ב־${k}</span>`;
+    const bl=[];['a','b','c'].forEach(f=>{if(e[f])bl.push({eq:o.key,f,value:ne[f],hint:`חשבי: ${num(e[f])} פעמים ${k}. כופלים כל איבר במשוואה.`});});
+    startBlanks(bl,`כופלים כל איבר במשוואה ב־${k}. כתבי את המספרים החדשים, אחד אחרי השני.`);return;}
+  let r;if(o.act==='add')r={a:E1.a+E2.a,b:E1.b+E2.b,c:E1.c+E2.c};else if(o.act==='sub12')r={a:E1.a-E2.a,b:E1.b-E2.b,c:E1.c-E2.c};else r={a:E2.a-E1.a,b:E2.b-E1.b,c:E2.c-E1.c};
+  const v=r.a!==0?'x':'y',coef=r.a!==0?r.a:r.b;
+  $('steps').lastChild.innerHTML+=` <span class="how">${o.act==='add'?'חיברנו את המשוואות':'חיסרנו את המשוואות'}</span>`;
+  const sg=o.act==='add'?'+':MINUS,A1=o.act==='sub21'?E2:E1,A2=o.act==='sub21'?E1:E2,f=v==='x'?'a':'b';
+  c.elimVar=v;c.st={L:P(coef,0),R:P(0,r.c),v};c.phase='blank';
+  BB.set(c.st,{hide:{L:{a:true},R:{b:true}}});
+  startBlanks([{side:'L',f:'a',value:F(coef),hint:`חשבי: ${m(`${num(A1[f])} ${opH(sg)} ${num(A2[f])}`)}`},{side:'R',f:'b',value:F(r.c),hint:`חשבי: ${m(`${num(A1.c)} ${opH(sg)} ${num(A2.c)}`)}`}],
+    `${v==='x'?'y':'x'} נעלם! עכשיו חשבי את המספרים שנשארו: קודם כמה ${v} יש, ואחר כך המספר אחרי השווה.`);}
+function finishTwoPart(v){const c=R.cur,o=c.orig;
+  const known=c.st.v;c.solved[known]=v;
+  if(Object.keys(c.solved).length===1){ // substitute into original first equation
+    addStep(eqH(c.st),'');
+    const other=known==='x'?'y':'x',E=o.orig.E1;const ck=known==='x'?E.a:E.b,co=known==='x'?E.b:E.a;
+    let E_=E;if(co===0){E_=o.orig.E2;}
+    const ck2=known==='x'?E_.a:E_.b,co2=known==='x'?E_.b:E_.a;
+    c.solved.first=`${m(`<span class="vx">${known}</span> ${opH('=')} ${num(v)}`)} ✓`;
+    c.st={L:P(co2,0),R:P(0,E_.c),v:other};
+    // show substituted: co2·other + ck2·v = c  → child computes ck2·v
+    c.st.L=P(co2,ck2*v);c.phase='blank';c.subInfo={ck:ck2,v,known};BB.set(c.st,{hide:{L:{b:true}}});
+    startBlanks([{side:'L',f:'b',value:F(ck2*v),hint:`חשבי: ${ck2===1?num(v):`${num(ck2)} פעמים ${num(v)}`}.`}]);
+    say(`מצאנו ש־${m(`<span class="vx">${known}</span> ${opH('=')} ${num(v)}`)}. עכשיו מציבים אותו במשוואה ${E_===o.orig.E1?'①':'②'} המקורית: ${m(`${ck2===1?'':num(ck2)}<span class="vx">${known}</span>`)} הופך ל־${ck2===1?num(v):`${num(ck2)} פעמים ${num(v)}`}. כמה זה?`);
+    return;}
+  addStep(eqH(c.st),'');
+  const X=c.solved.x,Y=c.solved.y,E1=o.orig.E1,E2=o.orig.E2;
+  $('opsWrap').hidden=true;const clean=c.errs===0;R.res.push(clean);if(clean)addStar(L.tr+L.lv);chord();burstEl($('eq'),clean?90:40);
+  $('eq').innerHTML=`<div class="ln">${m(`<span class="vx">x</span> ${opH('=')} ${num(X)}`)}&nbsp;&nbsp;&nbsp;${m(`<span class="vx">y</span> ${opH('=')} ${num(Y)}`)}</div>`;
+  BB.setSys(o.orig);
+  say(`${clean?'בלי אף טעות! ★ ':'פתרת! '}בדיקה: במשוואה ① יוצא ${m(num(E1.a*X+E1.b*Y))} ובמשוואה ② יוצא ${m(num(E2.a*X+E2.b*Y))}, בדיוק כמו שצריך.`,'ok');
+  nextBtn();}
+
+/* =========================================================
+   ASK THE GUIDE
+   ========================================================= */
+const chats={};
+let busy=false;
+function addMsg(who,t){const d=document.createElement('div');d.className='msg '+who;const sp=document.createElement('span');sp.textContent=t;d.appendChild(sp);$('chat').appendChild(d);return sp;}
+function renderChat(){$('chat').innerHTML='';(chats[L.tr+L.lv]||[]).forEach(mm=>addMsg(mm.role==='user'?'me':'bot',mm.content));}
+function rules(){const les=LES[L.tr][L.lv],s=les.slides[L.i];
+  return `את מורה חמה וסבלנית למתמטיקה, ומדברת עם ילדה מחוננת בכיתה ד׳. הנושא: משוואות ${L.tr==='one'?'בנעלם אחד':'בשני נעלמים'}, רמה ${L.lv+1}: "${les.title}". השקף שהיא רואה: "${s.t}: ${plainText(s.x)}".
+כללים: עני בעברית פשוטה, בלשון נקבה כלפיה, ב־2 עד 4 משפטים קצרים. השתמשי בדימוי המאזניים כשזה עוזר. בלי מילים באנגלית ובלי עיצוב (בלי כוכביות או רשימות), אבל מותר לכתוב משוואות עם x ו־y. בלי סימן כפל ובלי נקודתיים במשוואה: כותבים 5x, וחילוק כשבר. אם היא מבקשת פתרון של תרגיל, תני רמז לצעד הראשון ולא את התשובה. אם השאלה לא קשורה, החזירי בעדינות לנושא. בסוף אפשר להוסיף שאלה קטנה שמעוררת סקרנות.`;}
+const ASK_URL='https://chem-lab-guide.uchimata99.workers.dev';
+async function ask(q){q=(q||'').trim().slice(0,300);if(!q||busy)return;
+  if(!navigator.onLine){$('askNote').textContent='אין אינטרנט כרגע. המדריכה צריכה חיבור כדי לענות.';return;}
+  busy=true;$('askBtn').disabled=true;$('askIn').value='';$('askNote').textContent='';
+  const key=L.tr+L.lv,hist=chats[key]=chats[key]||[];hist.push({role:'user',content:q});addMsg('me',q);const out=addMsg('bot','המדריכה חושבת... 🤔');
+  const les=LES[L.tr][L.lv],sl=les.slides[L.i];
+  try{const r=await fetch(ASK_URL,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},
+      body:JSON.stringify({app:'math',topic:`משוואות ${L.tr==='one'?'בנעלם אחד':'בשני נעלמים'}, רמה ${L.lv+1}: ${les.title}`,slide:sl.t+': '+plainText(sl.x),turns:hist.slice(-8)})});
+    const d=await r.json();if(!d||!d.text)throw{code:d&&d.error||'upstream'};
+    out.textContent=d.text;hist.push({role:'assistant',content:d.text});}
+  catch(e){hist.pop();const code=e&&e.code;out.parentNode.classList.add('retry');
+    out.textContent='↩ '+(code==='limit'?'המדריכה ענתה על הרבה שאלות היום וצריכה לנוח. נסי שוב מחר!':'משהו השתבש. נסי לשאול שוב.');}
+  finally{busy=false;$('askBtn').disabled=false;}}
+$('askForm').addEventListener('submit',e=>{e.preventDefault();ask($('askIn').value);});
+$('ask').hidden=false;
+const SR=window.SpeechRecognition||window.webkitSpeechRecognition;let rec=null,recOn=false;
+$('mic').onclick=()=>{const tip='כדי לשאול בקול: לחצי על המיקרופון שבמקלדת של הטלפון או המחשב, ואז הגידי את השאלה.';
+  if(!SR){$('askIn').focus();$('askNote').textContent=tip;return;}
+  if(recOn){try{rec.stop();}catch(e){}return;}
+  try{rec=new SR();rec.lang='he-IL';rec.interimResults=true;
+    rec.onresult=ev=>{let s='';for(const r of ev.results)s+=r[0].transcript;$('askIn').value=s;if(ev.results[ev.results.length-1].isFinal)ask(s);};
+    rec.onerror=ev=>{$('askNote').textContent=ev.error==='not-allowed'||ev.error==='service-not-allowed'?'המיקרופון לא זמין כאן. '+tip:'לא שמעתי טוב. נסי שוב.';};
+    rec.onend=()=>{recOn=false;$('mic').classList.remove('rec');};rec.start();recOn=true;$('mic').classList.add('rec');$('askNote').textContent='אני מקשיבה... 👂';}
+  catch(e){$('askNote').textContent=tip;}};
+
+/* ---------- start ---------- */
+if(all.last&&all.profiles[all.last])enter(all.last);else showWho();
+function loop(){if(mode==='lesson')lessonTick();else if(mode==='practice')BB.draw();fxStep();requestAnimationFrame(loop);}
+loop();
+window.__eqTest={R,get mode(){return mode},genOne,genTwo,options,options2,mapSides,isSolved,blankFor,evalSide,F,fnum,lin};
+})();
+</script>
+<script>
+if('serviceWorker' in navigator)addEventListener('load',()=>navigator.serviceWorker.register('sw.js').catch(()=>{}));
+</script>
+</body>
+</html>
