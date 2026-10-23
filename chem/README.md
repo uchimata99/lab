@@ -8,15 +8,20 @@
 - manifest.webmanifest — הגדרות ההתקנה
 - sw.js — עבודה בלי אינטרנט
 - icon-192.png, icon.svg — אייקונים
-- Code.gs — שרת המדריכה (מועתק ידנית לגוגל אפס סקריפט, לא נדחף לגיטהאב)
+- worker/ — שרת המדריכה ב-Cloudflare Worker (לא נדחף לגיטהאב)
+- Code.gs — הגרסה הקודמת של השרת, בגוגל אפס סקריפט (לא בשימוש)
 
-## חיבור המדריכה
+## שרת המדריכה
 
-1. ליצור פרויקט חדש בגוגל אפס סקריפט ולהדביק את Code.gs.
-2. בהגדרות הפרויקט, במאפייני הסקריפט, להוסיף מאפיין בשם ANTHROPIC_API_KEY עם מפתח מקונסולת אנתרופיק.
-3. פריסה ← פריסה חדשה ← אפליקציית אינטרנט. להפעיל בתור: אני. גישה: כל אחד.
-4. להעתיק את כתובת הפריסה ולהדביק אותה בקובץ index.html בשורה:
-   const ASK_URL='';
-5. לדחוף לגיטהאב.
+השרת רץ ב-Cloudflare, בחשבון uchi.mata1@gmail.com, בכתובת:
+https://chem-lab-guide.uchimata99.workers.dev
 
-מגבלה: עד 200 שאלות ביום (DAILY_LIMIT בקובץ Code.gs).
+הכתובת מופיעה בקובץ index.html בשורה const ASK_URL.
+המפתח שמור כסוד של ה-Worker בשם ANTHROPIC_API_KEY (בלוח הבקרה: Settings ← Variables and Secrets), ולא בקוד.
+
+לעדכון השרת, מתוך התיקייה worker:
+
+    npx wrangler deploy
+
+מגבלה: עד 200 שאלות ביום (DAILY_LIMIT בקובץ worker/worker.js). המונה שמור ב-KV בשם chem-lab-counts.
+השרת מקבל בקשות רק מ-https://uchimata99.github.io (ORIGIN בקובץ worker/worker.js).
