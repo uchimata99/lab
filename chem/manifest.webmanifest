@@ -1,0 +1,26 @@
+{
+  "name": "מעבדת הכימיה הקטנה",
+  "short_name": "מעבדת הכימיה",
+  "description": "משחק כימיה בסיסית לילדים",
+  "lang": "he",
+  "dir": "rtl",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "any",
+  "background_color": "#fbf7ef",
+  "theme_color": "#0e6e66",
+  "icons": [
+    {
+      "src": "icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}

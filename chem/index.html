@@ -1,0 +1,1027 @@
+<!doctype html>
+<html lang="he" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#0e6e66">
+<meta name="description" content="משחק כימיה בסיסית לילדים: אטומים, מולקולות, חומצות ובסיסים ומצבי צבירה">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icon-192.png">
+<link rel="apple-touch-icon" href="icon-192.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="מעבדת הכימיה">
+<title>מעבדת הכימיה הקטנה</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Rubik:wght@400;500;600;700&display=swap">
+<style>
+/* Layout: lab bench — a guide character teaches each rule just in time; canvas workbench + side notebook per station */
+:root{
+  /* מערכת העיצוב "משחקי לימוד 9–12" — ערכה בהירה אחת */
+  --surface-100:#fbf7ef; --surface-200:#f1eadb; --ink:#1f2a30; --ink-muted:#4f5b62; --line:#8a7f6c;
+  --primary:#0e6e66; --on-primary:#ffffff; --accent:#e07a1f; --correct:#1e7a46; --retry:#f2b33d;
+  --font:"Rubik","Heebo",system-ui,sans-serif;
+  --space-2:8px; --space-4:16px; --space-6:24px; --space-8:32px;
+  --radius-sm:8px; --radius-md:14px; --radius-pill:999px; --touch-min:48px; --answer-tile:72px;
+  /* כינויים שהמשחק משתמש בהם, נגזרים מהאסימונים */
+  --bg:var(--surface-100); --paper:var(--surface-200); --well:var(--surface-100); --muted:var(--ink-muted);
+  --hair:color-mix(in srgb,var(--line) 35%,var(--surface-200));
+  --lab:var(--primary); --lab-soft:color-mix(in srgb,var(--primary) 12%,var(--surface-100));
+  --accent-soft:color-mix(in srgb,var(--accent) 24%,var(--surface-100));
+  --retry-soft:color-mix(in srgb,var(--retry) 32%,var(--surface-100));
+  --good:var(--correct); --bad:var(--retry); --star:var(--accent);
+  --p:#d9483b; --n:#8d9aa3; --e:#2f6fd0;
+  --display:var(--font); --body:var(--font);
+  color-scheme:light;
+}
+html{direction:rtl}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--ink);font-family:var(--body);font-size:17px;line-height:1.5;
+  padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:18px 40px}
+.wrap{max-width:960px;margin:0 auto;display:flex;flex-direction:column;gap:16px}
+header{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap}
+h1{font-family:var(--display);font-weight:700;font-size:clamp(26px,5vw,36px);margin:0;line-height:1.1;text-wrap:balance}
+h1 span{color:var(--accent)}
+.hud{display:flex;gap:8px;align-items:center}
+.stars{font-family:var(--display);font-size:20px;display:flex;align-items:center;gap:6px;background:var(--paper);border:2px solid var(--line);border-radius:999px;padding:4px 14px;font-variant-numeric:tabular-nums}
+.stars b{color:var(--star);font-size:22px;display:inline-block}
+.stars b.bump{animation:bump .5s}
+@keyframes bump{40%{transform:scale(1.6) rotate(20deg)}}
+.icon-btn{width:42px;height:42px;border-radius:50%;border:2px solid var(--line);background:var(--paper);font-size:20px;cursor:pointer}
+nav{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}
+nav button{font-family:var(--display);font-weight:600;font-size:16px;border:2px solid var(--line);background:var(--paper);color:var(--ink);border-radius:14px;padding:10px 6px;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:2px}
+nav button small{font-family:var(--body);font-weight:400;color:var(--muted);font-size:13px}
+nav button[aria-selected="true"]{border-color:var(--lab);background:var(--lab-soft)}
+@media (max-width:600px){nav{grid-template-columns:repeat(2,1fr)}}
+.card{background:var(--paper);border:2px solid var(--line);border-radius:22px;padding:18px;display:flex;flex-direction:column;gap:14px}
+h2{font-family:var(--display);font-weight:600;font-size:24px;margin:0}
+.coach{display:flex;gap:12px;align-items:flex-start}
+.avatar{width:54px;height:54px;flex:none;border-radius:50%;background:var(--lab-soft);display:grid;place-items:center;font-size:30px;border:2px solid var(--lab)}
+.bubble{flex:1;min-width:0;background:var(--lab-soft);border-radius:4px 18px 18px 18px;padding:10px 16px;font-size:18px;font-weight:600;line-height:1.45}
+.bubble.pop{animation:pop .4s ease-out}
+@keyframes pop{0%{transform:scale(.96);opacity:.4}60%{transform:scale(1.02)}}
+.stage{display:grid;grid-template-columns:minmax(0,1.2fr) minmax(0,1fr);gap:18px;align-items:start}
+@media (max-width:720px){.stage{grid-template-columns:1fr}}
+.stage>*{min-width:0}
+canvas.cv{width:100%;height:auto;display:block;touch-action:none;border-radius:18px;background:var(--well);border:2px solid var(--line);cursor:pointer;user-select:none;-webkit-user-select:none}
+.side{display:flex;flex-direction:column;gap:12px}
+.go{font-family:var(--display);font-weight:600;font-size:19px;border:none;border-radius:14px;padding:12px 22px;background:var(--lab);color:var(--paper);cursor:pointer}
+.go.alt{background:transparent;color:var(--ink);border:2px solid var(--line)}
+.go.glow{animation:glow 1.2s ease-in-out infinite}
+@keyframes glow{50%{box-shadow:0 0 0 6px var(--lab-soft)}}
+button:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
+.progress{display:flex;gap:6px;flex-wrap:wrap}
+.progress span{width:14px;height:14px;border-radius:50%;background:var(--line)}
+.progress span.done{background:var(--star)}
+.progress span.now{outline:2px solid var(--lab);outline-offset:2px}
+/* element tile */
+.elrow{display:flex;gap:14px;align-items:center}
+.tile{width:118px;height:132px;flex:none;border:3px solid var(--ink);border-radius:12px;position:relative;background:var(--paper);display:flex;flex-direction:column;align-items:center;justify-content:center}
+.tile .z,.tile .a{position:absolute;font-family:var(--display);font-weight:700;font-size:20px;border-radius:8px;padding:0 6px}
+.tile .z{top:6px;right:8px;background:var(--accent-soft);color:var(--accent)}
+.tile .a{bottom:6px;left:8px;background:var(--lab-soft);color:var(--lab)}
+.tile .sym{font-family:var(--display);font-weight:700;font-size:46px;line-height:1;direction:ltr}
+.tile .nm{font-weight:700;font-size:16px}
+.legend{display:flex;flex-direction:column;gap:6px;font-size:15px}
+.legend b{font-family:var(--display);border-radius:6px;padding:0 6px}
+.legend .lz{background:var(--accent-soft);color:var(--accent)}
+.legend .la{background:var(--lab-soft);color:var(--lab)}
+.check{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:8px}
+.check li{display:grid;grid-template-columns:auto 1fr auto;gap:4px 10px;align-items:center;border:2px solid var(--line);border-radius:14px;padding:8px 12px;transition:border-color .3s,background .3s}
+.check li.ok{border-color:var(--good);background:color-mix(in srgb,var(--good) 10%,transparent)}
+.check li.no{border-color:var(--bad)}
+.check .dot{width:18px;height:18px;border-radius:50%}
+.check .ttl{font-weight:700}
+.check .cnt{font-family:var(--display);font-size:22px;font-variant-numeric:tabular-nums}
+.check .rule{grid-column:1/-1;font-size:14px;color:var(--muted)}
+/* molecules */
+.formula{font-family:var(--display);font-size:44px;font-weight:700;direction:ltr;text-align:center;line-height:1.1}
+.formula sub{font-size:.55em}
+.mname{font-family:var(--display);font-size:24px;text-align:center}
+.tag{align-self:center;font-size:14px;font-weight:700;border-radius:999px;padding:2px 12px;background:var(--accent-soft);color:var(--accent)}
+.decoder{display:flex;flex-direction:column;gap:6px;background:var(--well);border:2px dashed var(--line);border-radius:14px;padding:10px 14px}
+.decoder div{display:flex;align-items:center;gap:10px;font-size:17px}
+.decoder .f{font-family:var(--display);font-size:24px;direction:ltr;min-width:2.4em;text-align:center}
+.fact{background:var(--accent-soft);border-radius:14px;padding:10px 14px;font-weight:600}
+/* acid */
+.shelf{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.sub{border:2px solid var(--line);background:var(--paper);color:var(--ink);border-radius:14px;padding:6px 4px;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:0;font-size:14px;font-weight:600;position:relative}
+.sub .em{font-size:32px;line-height:1.2}
+.sub:disabled{cursor:default;opacity:.45}
+.sub.done::after{content:"✓";position:absolute;top:2px;left:8px;color:var(--good);font-weight:700;font-size:18px}
+.sub.sel{border-color:var(--accent);background:var(--accent-soft);opacity:1}
+.key{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;text-align:center;font-size:14px;font-weight:700}
+.key div{display:flex;flex-direction:column;gap:4px}
+.key i{display:block;height:26px;border-radius:8px}
+.bins{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.bin{border:2px solid var(--line);background:var(--well);color:var(--ink);border-radius:14px;padding:8px 6px;min-height:96px;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:4px;font-family:var(--display);font-weight:600;font-size:16px}
+.bin .items{display:flex;flex-wrap:wrap;gap:2px;justify-content:center;font-size:22px}
+.bin .items span{animation:land .5s ease-out}
+@keyframes land{0%{transform:translateY(-30px) scale(1.6);opacity:0}}
+.bin.ready{border-color:var(--lab);animation:glow 1.2s ease-in-out infinite}
+.shake{animation:shake .4s}
+@keyframes shake{20%,60%{transform:translateX(-7px)}40%,80%{transform:translateX(7px)}}
+/* heat */
+.missions{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:6px}
+.missions li{border:2px solid var(--line);border-radius:12px;padding:8px 12px;font-weight:600;display:flex;gap:8px;align-items:center}
+.missions li::before{content:"○";color:var(--muted);font-size:18px}
+.missions li.ok{border-color:var(--good)}
+.missions li.ok::before{content:"✓";color:var(--good)}
+.thermo{font-family:var(--display);font-size:38px;text-align:center;font-variant-numeric:tabular-nums;direction:ltr}
+.state{font-family:var(--display);font-size:24px;text-align:center;color:var(--accent)}
+.hold{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.hold button{font-family:var(--display);font-weight:600;font-size:18px;border-radius:14px;padding:12px 6px;border:2px solid var(--line);background:var(--well);color:var(--ink);cursor:pointer;touch-action:none;user-select:none;-webkit-user-select:none}
+.hold button:active{background:var(--accent-soft)}
+.rangewrap{direction:ltr;display:flex;align-items:center;gap:8px}
+.rangewrap input{flex:1;accent-color:var(--accent)}
+.meter{height:12px;border-radius:999px;background:var(--line);overflow:hidden;direction:ltr}
+.meter i{display:block;height:100%;background:var(--accent);border-radius:999px;transition:width .2s}
+.small{font-size:14px;color:var(--muted);margin:0}
+/* lesson */
+.lhead{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap}
+.lstep{display:flex;gap:6px}
+.lstep span{width:28px;height:8px;border-radius:999px;background:var(--line)}
+.lstep span.on{background:var(--accent)}
+.ltext{font-size:20px;line-height:1.55;min-height:6.5em}
+.ltext.pop{animation:pop .4s ease-out}
+.row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.ask{border-top:2px dashed var(--line);padding-top:14px;display:flex;flex-direction:column;gap:10px}
+.ask h3{font-family:var(--display);font-weight:600;font-size:21px;margin:0}
+.chips{display:flex;flex-wrap:wrap;gap:6px}
+.chips button{border:2px solid var(--line);background:var(--well);color:var(--ink);border-radius:999px;padding:6px 12px;font-family:var(--body);font-size:15px;font-weight:600;cursor:pointer}
+.chat{display:flex;flex-direction:column;gap:8px}
+.msg{max-width:88%;border-radius:16px;padding:8px 14px;font-size:18px;line-height:1.45;display:flex;gap:8px;align-items:flex-start}
+.msg.me{align-self:flex-start;background:var(--accent-soft);border-radius:16px 4px 16px 16px}
+.msg.bot{align-self:flex-end;background:var(--lab-soft);border-radius:4px 16px 16px 16px}
+.msg .say{flex:none;border:none;background:transparent;font-size:18px;cursor:pointer;padding:0}
+.askrow{display:flex;gap:8px;align-items:center}
+.askrow input{flex:1;min-width:0;font-family:var(--body);font-size:18px;padding:11px 14px;border-radius:14px;border:2px solid var(--line);background:var(--well);color:var(--ink)}
+.icon-btn.rec{background:var(--accent);border-color:var(--accent);animation:glow 1s infinite}
+.helpbtn{flex:none;border:2px solid var(--line);background:var(--paper);color:var(--ink);border-radius:999px;padding:6px 12px;font-family:var(--display);font-weight:600;font-size:15px;cursor:pointer;align-self:center}
+/* ===== החלת מערכת העיצוב: טיפוגרפיה, רווחים, פינות ומגע ===== */
+body{font-family:var(--font);font-size:18px;line-height:28px;padding-block:var(--space-6) var(--space-8)}
+.wrap{gap:var(--space-6)}
+header,.hud,.coach,.row,.askrow,.chips,.elrow{gap:var(--space-2)}
+h1{font-family:var(--font);font-size:32px;line-height:40px;font-weight:700}
+h1 span{color:var(--primary)}
+h2{font-family:var(--font);font-size:24px;line-height:32px;font-weight:700}
+.stars{border:2px solid var(--hair);background:var(--surface-200);min-height:var(--touch-min);font-family:var(--font);font-weight:700}
+.icon-btn{width:var(--touch-min);height:var(--touch-min);border-color:var(--line);background:var(--surface-200)}
+nav{gap:var(--space-2)}
+nav button{font-family:var(--font);font-size:18px;line-height:24px;font-weight:600;border-radius:var(--radius-md);border-color:var(--line);background:var(--surface-200);min-height:var(--answer-tile);padding:var(--space-2)}
+nav button small{font-size:16px;line-height:24px;color:var(--ink-muted)}
+nav button[aria-selected="true"]{border-color:var(--primary);background:var(--lab-soft)}
+.card{background:var(--surface-200);border:none;border-radius:var(--radius-md);padding:var(--space-4);gap:var(--space-6)}
+@media (min-width:720px){.card{padding:var(--space-8)}}
+.stage{gap:var(--space-6)}
+.side{gap:var(--space-4)}
+canvas.cv{background:var(--surface-100);border:2px solid var(--hair);border-radius:var(--radius-md)}
+.avatar{width:var(--touch-min);height:var(--touch-min);background:var(--lab-soft);border-color:var(--primary)}
+.bubble{font-size:18px;line-height:28px;font-weight:400;border-radius:4px var(--radius-md) var(--radius-md) var(--radius-md);padding:var(--space-2) var(--space-4);background:var(--lab-soft);color:var(--ink)}
+.bubble b{font-weight:700}
+.bubble.ok{background:var(--correct);color:var(--on-primary)}
+.bubble.retry{background:var(--retry);color:var(--ink)}
+.fbsym{display:inline-grid;place-items:center;width:28px;height:28px;border-radius:50%;font-weight:700;margin-inline-end:var(--space-2);vertical-align:-6px}
+.bubble.ok .fbsym{background:var(--on-primary);color:var(--correct)}
+.bubble.retry .fbsym{background:var(--ink);color:var(--retry)}
+.go{font-family:var(--font);font-size:18px;line-height:24px;font-weight:600;min-height:var(--touch-min);padding:var(--space-2) var(--space-6);border-radius:var(--radius-pill);background:var(--primary);color:var(--on-primary)}
+.go.alt{border-radius:var(--radius-md);border:2px solid var(--line);background:transparent;color:var(--ink)}
+.go.glow{animation:glow 1.2s ease-in-out infinite}
+@keyframes glow{50%{box-shadow:0 0 0 6px var(--lab-soft)}}
+button:focus-visible,input:focus-visible{outline:3px solid var(--ink);outline-offset:2px}
+.progress span{background:var(--hair)}
+.progress span.done{background:var(--accent)}
+.progress span.now{outline-color:var(--ink)}
+.tile{border-color:var(--ink);border-radius:var(--radius-md);background:var(--surface-100)}
+.tile .z,.tile .a,.legend b{font-family:var(--font);border-radius:var(--radius-sm)}
+.tile .z,.legend .lz{background:var(--accent-soft);color:var(--ink)}
+.tile .a,.legend .la{background:var(--lab-soft);color:var(--ink)}
+.tile .sym{font-family:var(--font);font-size:48px;line-height:56px}
+.legend{font-size:16px;line-height:24px}
+.check{gap:var(--space-2)}
+.check li{border-color:var(--hair);border-radius:var(--radius-md);padding:var(--space-2) var(--space-4)}
+.check .cnt{font-family:var(--font);font-size:24px;font-weight:700}
+.check .rule{font-size:16px;line-height:24px;color:var(--ink-muted)}
+.check li.ok{border-color:var(--correct);background:color-mix(in srgb,var(--correct) 10%,var(--surface-100))}
+.check li.no{border-color:var(--retry);background:var(--retry-soft)}
+.check li.ok .cnt::after{content:" ✓";color:var(--correct)}
+.check li.no .cnt::after{content:" ↩";color:var(--ink)}
+.formula{font-family:var(--font);font-size:48px;line-height:56px}
+.mname{font-family:var(--font);font-size:24px;line-height:32px;font-weight:700}
+.tag{font-size:16px;line-height:24px;border-radius:var(--radius-sm);background:var(--accent-soft);color:var(--ink);padding:0 var(--space-2)}
+.decoder{border-color:var(--hair);border-radius:var(--radius-md);background:var(--surface-100);padding:var(--space-2) var(--space-4)}
+.decoder .f{font-family:var(--font)}
+.fact{background:var(--accent-soft);color:var(--ink);border-radius:var(--radius-md);padding:var(--space-2) var(--space-4);font-weight:500}
+.shelf,.bins,.key{gap:var(--space-2)}
+.sub{min-height:var(--answer-tile);border-color:var(--line);background:var(--surface-100);border-radius:var(--radius-md);font-size:16px}
+.sub.done::after{color:var(--correct)}
+.sub.sel{border-color:var(--primary);background:var(--lab-soft)}
+.key{font-size:16px}
+.key i{display:flex;height:28px;border-radius:var(--radius-sm);overflow:hidden}
+.key i b{flex:1}
+.bin{min-height:96px;border-color:var(--line);background:var(--surface-100);border-radius:var(--radius-md);font-family:var(--font);font-size:18px}
+.bin.ready{border-color:var(--primary)}
+.bin.retry{border-color:var(--retry);background:var(--retry-soft)}
+.missions{gap:var(--space-2)}
+.missions li{border-color:var(--hair);border-radius:var(--radius-md);min-height:var(--touch-min);padding:var(--space-2) var(--space-4)}
+.missions li.ok{border-color:var(--correct);background:color-mix(in srgb,var(--correct) 10%,var(--surface-100))}
+.missions li.ok::before{color:var(--correct)}
+.thermo{font-family:var(--font);font-size:48px;line-height:56px;font-weight:700}
+.state{font-family:var(--font);font-size:20px;line-height:28px;font-weight:600;color:var(--primary)}
+.hold{gap:var(--space-2)}
+.hold button{font-family:var(--font);font-size:18px;min-height:var(--answer-tile);border-color:var(--line);background:var(--surface-100);border-radius:var(--radius-md)}
+.hold button:active{background:var(--accent-soft)}
+.rangewrap input{accent-color:var(--primary);min-height:var(--touch-min)}
+.meter{background:var(--hair);border-radius:var(--radius-pill)}
+.meter i{background:var(--accent);border-radius:var(--radius-pill)}
+.small{font-size:16px;line-height:24px;color:var(--ink-muted)}
+.lstep span{background:var(--hair)}
+.lstep span.on{background:var(--accent)}
+.ltext{font-size:18px;line-height:28px;min-height:7em}
+.ask{border-top:2px solid var(--hair);padding-top:var(--space-6);gap:var(--space-4)}
+.ask h3{font-family:var(--font);font-size:20px;line-height:28px;font-weight:600}
+.chips button{min-height:var(--touch-min);border-color:var(--line);background:var(--surface-100);border-radius:var(--radius-md);font-family:var(--font);font-size:16px;padding:var(--space-2) var(--space-4)}
+.msg{font-size:18px;line-height:28px;padding:var(--space-2) var(--space-4)}
+.msg.me{background:var(--accent-soft);border-radius:var(--radius-md) 4px var(--radius-md) var(--radius-md)}
+.msg.bot{background:var(--lab-soft);border-radius:4px var(--radius-md) var(--radius-md) var(--radius-md)}
+.msg.retry{background:var(--retry);color:var(--ink)}
+.askrow input{font-family:var(--font);min-height:var(--touch-min);border-radius:var(--radius-sm);border-color:var(--line);background:var(--surface-100)}
+.icon-btn.rec{background:var(--primary);border-color:var(--primary)}
+.helpbtn{min-height:var(--touch-min);border-color:var(--line);background:var(--surface-100);border-radius:var(--radius-md);font-family:var(--font);font-size:16px;padding:var(--space-2) var(--space-4)}
+#fx{position:fixed;inset:0;width:100%;height:100%;pointer-events:none;z-index:50}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+[hidden]{display:none!important}img{max-width:100%}body{margin:0}:root{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+</style>
+</head>
+<body>
+
+<canvas id="fx" aria-hidden="true"></canvas>
+<div class="wrap">
+  <header>
+    <h1>מעבדת <span>הכימיה</span> הקטנה</h1>
+    <div class="hud">
+      <button class="icon-btn" id="sound" aria-label="השתקה">🔊</button>
+      <div class="stars" aria-live="polite"><b id="starIcon">★</b><span id="starCount">0</span></div>
+    </div>
+  </header>
+
+  <nav role="tablist">
+    <button role="tab" aria-selected="true" data-st="atom">⚛️ בונים אטום<small>פרוטון, נייטרון, אלקטרון</small></button>
+    <button role="tab" aria-selected="false" data-st="mol">🧪 מטבח המולקולות<small>מחברים אטומים</small></button>
+    <button role="tab" aria-selected="false" data-st="acid">🥬 חומצה או בסיס?<small>ניסוי מיץ כרוב</small></button>
+    <button role="tab" aria-selected="false" data-st="heat">🌡️ מעבדת החום<small>מוצק, נוזל, גז</small></button>
+  </nav>
+
+  <!-- LESSON -->
+  <section class="card" id="lesson" hidden>
+    <div class="lhead"><h2 id="lTitle"></h2><div class="lstep" id="lStep"></div></div>
+    <div class="stage">
+      <canvas class="cv" id="lCv" aria-label="הדגמה מונפשת"></canvas>
+      <div class="side">
+        <div class="ltext" id="lText"></div>
+        <div class="row">
+          <button class="go alt" id="lPrev">→ הקודם</button>
+          <button class="go" id="lNext">הבא ←</button>
+        </div>
+        <button class="go alt" id="lSkip">דילוג ישר למשחק</button>
+      </div>
+    </div>
+    <div class="ask" id="ask" hidden>
+      <h3>יש לך שאלה? 🙋‍♀️ המדריכה עונה</h3>
+      <div class="chips" id="chips"></div>
+      <div class="chat" id="chat" aria-live="polite"></div>
+      <form class="askrow" id="askForm">
+        <input id="askIn" autocomplete="off" placeholder="כתבי או אמרי את השאלה שלך...">
+        <button type="button" class="icon-btn" id="mic" aria-label="שאלה בדיבור" hidden>🎤</button>
+        <button class="go" id="askBtn">שאלה</button>
+      </form>
+      <p class="small" id="askNote"></p>
+    </div>
+  </section>
+
+  <!-- ATOM -->
+  <section class="card" id="st-atom">
+    <div class="coach"><div class="avatar">👩‍🔬</div><div class="bubble" id="aSay"></div></div>
+    <div class="stage">
+      <canvas class="cv" id="atomCv" aria-label="שולחן בניית האטום: צנצנות חלקיקים ואטום"></canvas>
+      <div class="side">
+        <div class="progress" id="aProg"></div>
+        <div class="elrow">
+          <div class="tile"><span class="z" id="tZ"></span><span class="sym" id="tS"></span><span class="nm" id="tN"></span><span class="a" id="tA"></span></div>
+          <div class="legend">
+            <div><b class="lz">מספר אטומי</b> (למעלה): כמה פרוטונים יש</div>
+            <div><b class="la">מספר מסה</b> (למטה): פרוטונים + נייטרונים ביחד</div>
+          </div>
+        </div>
+        <ul class="check">
+          <li id="ckP"><span class="dot" style="background:var(--p)"></span><span class="ttl">פרוטונים</span><span class="cnt" id="cP">0</span><span class="rule">צריך כמו המספר האטומי</span></li>
+          <li id="ckE"><span class="dot" style="background:var(--e)"></span><span class="ttl">אלקטרונים</span><span class="cnt" id="cE">0</span><span class="rule">צריך כמו מספר הפרוטונים, כדי שהאטום יהיה מאוזן</span></li>
+          <li id="ckN"><span class="dot" style="background:var(--n)"></span><span class="ttl">נייטרונים</span><span class="cnt" id="cN">0</span><span class="rule" id="nRule"></span></li>
+        </ul>
+        <button class="go glow" id="aNext" hidden>ליסוד הבא ←</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- MOLECULES -->
+  <section class="card" id="st-mol" hidden>
+    <div class="coach"><div class="avatar">👩‍🔬</div><div class="bubble" id="mSay"></div></div>
+    <div class="stage">
+      <canvas class="cv" id="molCv" aria-label="שולחן הרכבת מולקולות: מגש אטומים ומשבצות"></canvas>
+      <div class="side">
+        <div class="progress" id="mProg"></div>
+        <div class="mname" id="mName"></div>
+        <div class="formula" id="mFormula"></div>
+        <span class="tag" id="mTag"></span>
+        <div class="decoder" id="mDec" hidden></div>
+        <button class="go alt" id="mDecBtn" hidden>איך קוראים את הנוסחה?</button>
+        <div class="fact" id="mFact" hidden></div>
+        <button class="go glow" id="mNext" hidden>למולקולה הבאה ←</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- ACID -->
+  <section class="card" id="st-acid" hidden>
+    <div class="coach"><div class="avatar">👩‍🔬</div><div class="bubble" id="cSay"></div></div>
+    <div class="stage">
+      <div class="side">
+        <canvas class="cv" id="acidCv" aria-label="כוס ניסוי וצנצנת מיץ כרוב"></canvas>
+        <button class="go" id="cPour" hidden>🥬 שפכי מיץ כרוב</button>
+      </div>
+      <div class="side">
+        <p class="small">1. בחרי חומר מהמדף</p>
+        <div class="shelf" id="shelf"></div>
+        <p class="small">2. סרגל הצבעים של מיץ הכרוב</p>
+        <div class="key">
+          <div><i><b style="background:#e8509a"></b><b style="background:#e02a55"></b></i>ורוד־אדום<br>חומצי</div>
+          <div><i><b style="background:#7a3fa3"></b></i>סגול<br>ניטרלי</div>
+          <div><i><b style="background:#1ea886"></b><b style="background:#3e6fd0"></b></i>כחול־ירוק<br>בסיסי</div>
+        </div>
+        <p class="small">3. שימי את החומר במדף הנכון</p>
+        <div class="bins">
+          <button class="bin" data-k="acid">מדף חומצי<span class="items"></span></button>
+          <button class="bin" data-k="neutral">מדף ניטרלי<span class="items"></span></button>
+          <button class="bin" data-k="base">מדף בסיסי<span class="items"></span></button>
+        </div>
+        <button class="go alt" id="cReset" hidden>מתחילים מחדש</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- HEAT -->
+  <section class="card" id="st-heat" hidden>
+    <div class="coach"><div class="avatar">👩‍🔬</div><div class="bubble" id="hSay"></div></div>
+    <div class="stage">
+      <canvas class="cv" id="heatCv" aria-label="כלי עם מולקולות מים ומבער"></canvas>
+      <div class="side">
+        <div class="thermo"><span id="tVal">20</span>°C</div>
+        <div class="state" id="hState"></div>
+        <div class="hold">
+          <button id="hCold" aria-label="קירור">❄️ קירור</button>
+          <button id="hHot" aria-label="חימום">🔥 חימום</button>
+        </div>
+        <div class="rangewrap"><span>❄️</span><input type="range" id="hRange" min="-30" max="150" value="20" aria-label="טמפרטורה"><span>🔥</span></div>
+        <p class="small">מהירות המולקולות</p>
+        <div class="meter"><i id="hMeter"></i></div>
+        <ul class="missions">
+          <li id="ms0">להקפיא את המים לקרח</li>
+          <li id="ms1">להרתיח את המים עד שיהפכו לאדים</li>
+          <li id="ms2">להמיס קרח בחזרה למים</li>
+        </ul>
+      </div>
+    </div>
+  </section>
+</div>
+
+<script>
+(function(){
+const $=id=>document.getElementById(id);
+const PI2=Math.PI*2, lerp=(a,b,t)=>a+(b-a)*t, clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
+const reduce=matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+/* ---------- theme colors for canvas ---------- */
+const C={};
+function readColors(){const s=getComputedStyle(document.documentElement);['bg','paper','well','ink','muted','line','accent','lab','p','n','e','good','bad','star','retry','correct'].forEach(k=>C[k]=s.getPropertyValue('--'+k).trim()||'#888888');}
+readColors();
+try{matchMedia('(prefers-color-scheme: dark)').addEventListener('change',readColors);}catch(e){}
+new MutationObserver(readColors).observe(document.documentElement,{attributes:true,attributeFilter:['data-theme']});
+
+const DPR=Math.min(2,window.devicePixelRatio||1);
+function setup(cv,W,H){cv.width=W*DPR;cv.height=H*DPR;const c=cv.getContext('2d');c.setTransform(DPR,0,0,DPR,0,0);return c;}
+function pt(cv,W,H,e){const r=cv.getBoundingClientRect();return{x:(e.clientX-r.left)/r.width*W,y:(e.clientY-r.top)/r.height*H};}
+function toClient(cv,W,H,x,y){const r=cv.getBoundingClientRect();return{x:r.left+x/W*r.width,y:r.top+y/H*r.height};}
+function hexRgb(h){h=h.replace('#','');if(h.length===3)h=h.split('').map(x=>x+x).join('');return[parseInt(h.slice(0,2),16),parseInt(h.slice(2,4),16),parseInt(h.slice(4,6),16)];}
+function shade(hex,amt){const c=hexRgb(hex),f=amt<0?0:255,t=Math.abs(amt);return`rgb(${c.map(v=>Math.round(lerp(v,f,t))).join(',')})`;}
+function rr(ctx,x,y,w,h,r){ctx.beginPath();ctx.moveTo(x+r,y);ctx.arcTo(x+w,y,x+w,y+h,r);ctx.arcTo(x+w,y+h,x,y+h,r);ctx.arcTo(x,y+h,x,y,r);ctx.arcTo(x,y,x+w,y,r);ctx.closePath();}
+function ball(ctx,x,y,r,col,label,lc){
+  ctx.fillStyle=col;ctx.beginPath();ctx.arc(x,y,r,0,PI2);ctx.fill();
+  ctx.lineWidth=1.5;ctx.strokeStyle='rgba(31,42,48,.35)';ctx.stroke();
+  ctx.fillStyle='rgba(255,255,255,.55)';ctx.beginPath();ctx.arc(x-r*.35,y-r*.38,r*.26,0,PI2);ctx.fill();
+  if(label){ctx.fillStyle=lc||'#fff';ctx.font=`700 ${Math.round(r*.95)}px Rubik, sans-serif`;ctx.textAlign='center';ctx.textBaseline='middle';ctx.direction='ltr';ctx.fillText(label,x,y+1);}
+}
+function text(ctx,s,x,y,size,col,weight){ctx.fillStyle=col;ctx.font=`${weight||600} ${size}px Rubik, sans-serif`;ctx.textAlign='center';ctx.textBaseline='middle';ctx.direction='rtl';ctx.fillText(s,x,y);}
+
+/* ---------- sound ---------- */
+let AC=null,soundOn=true;
+function beep(f,d,type,v){if(!soundOn)return;try{AC=AC||new(window.AudioContext||window.webkitAudioContext)();const o=AC.createOscillator(),g=AC.createGain();o.type=type||'sine';o.frequency.value=f;g.gain.setValueAtTime(v||.08,AC.currentTime);g.gain.exponentialRampToValueAtTime(.0001,AC.currentTime+(d||.12));o.connect(g).connect(AC.destination);o.start();o.stop(AC.currentTime+(d||.12));}catch(e){}}
+const pop=()=>beep(660+Math.random()*120,.08,'sine',.07);
+const buzz=()=>beep(170,.22,'square',.035);
+const chord=()=>[523,659,784,1046].forEach((f,i)=>setTimeout(()=>beep(f,.3,'triangle',.07),i*90));
+$('sound').onclick=()=>{soundOn=!soundOn;$('sound').textContent=soundOn?'🔊':'🔇';$('sound').setAttribute('aria-label',soundOn?'השתקה':'הפעלת צליל');};
+
+/* ---------- confetti ---------- */
+const fx=$('fx'),fctx=fx.getContext('2d');let conf=[];
+function sizeFx(){fx.width=innerWidth*DPR;fx.height=innerHeight*DPR;fctx.setTransform(DPR,0,0,DPR,0,0);}sizeFx();addEventListener('resize',sizeFx);
+function burst(x,y,n){if(reduce)return;const cols=[C.accent,C.star,C.lab,C.e,C.p];for(let i=0;i<(n||80);i++){const a=Math.random()*PI2,s=3+Math.random()*8;conf.push({x,y,vx:Math.cos(a)*s,vy:Math.sin(a)*s-5,r:Math.random()*6,vr:(Math.random()-.5)*.4,c:cols[i%cols.length],life:80+Math.random()*50,w:5+Math.random()*5,h:7+Math.random()*6});}}
+function fxStep(){if(!conf.length){fctx.clearRect(0,0,innerWidth,innerHeight);return;}fctx.clearRect(0,0,innerWidth,innerHeight);conf=conf.filter(p=>p.life-->0);for(const p of conf){p.vy+=.25;p.vx*=.985;p.x+=p.vx;p.y+=p.vy;p.r+=p.vr;fctx.save();fctx.translate(p.x,p.y);fctx.rotate(p.r);fctx.globalAlpha=Math.min(1,p.life/30);fctx.fillStyle=p.c;fctx.fillRect(-p.w/2,-p.h/2,p.w,p.h*Math.abs(Math.cos(p.r*2)));fctx.restore();}}
+
+/* ---------- stars & coach ---------- */
+let stars={atom:[],mol:[],acid:[],heat:[]};
+try{const s=JSON.parse(localStorage.getItem('chemStars2')||'null');if(s)stars=Object.assign(stars,s);}catch(e){}
+function hasStar(k,id){return stars[k].includes(id);}
+function addStar(k,id){if(hasStar(k,id))return;stars[k].push(id);try{localStorage.setItem('chemStars2',JSON.stringify(stars));}catch(e){}renderStars();const b=$('starIcon');b.classList.remove('bump');void b.offsetWidth;b.classList.add('bump');}
+function renderStars(){$('starCount').textContent=stars.atom.length+stars.mol.length+stars.acid.length+stars.heat.length;}
+renderStars();
+function say(el,html,kind){const key=(kind||'')+html;if(el._last===key)return;el._last=key;
+  el.className='bubble'+(kind?' '+kind:'');
+  el.innerHTML=(kind==='ok'?'<span class="fbsym" aria-hidden="true">✓</span>':kind==='retry'?'<span class="fbsym" aria-hidden="true">↩</span>':'')+html;
+  void el.offsetWidth;el.classList.add('pop');}
+function prog(el,n,isDone,cur){el.innerHTML='';for(let i=0;i<n;i++){const s=document.createElement('span');if(isDone(i))s.className='done';if(i===cur)s.classList.add('now');el.appendChild(s);}}
+function burstAt(cv,W,H,x,y,n){const c=toClient(cv,W,H,x,y);burst(c.x,c.y,n);}
+function burstEl(el,n){const r=el.getBoundingClientRect();burst(r.left+r.width/2,r.top+r.height/2,n);}
+
+/* =========================================================
+   STATION 1 — ATOM
+   ========================================================= */
+const ENAMES=[null,['H','מימן'],['He','הליום'],['Li','ליתיום'],['Be','בריליום'],['B','בור'],['C','פחמן'],['N','חנקן'],['O','חמצן'],['F','פלואור'],['Ne','ניאון'],['Na','נתרן'],['Mg','מגנזיום'],['Al','אלומיניום'],['Si','צורן'],['P','זרחן'],['S','גופרית'],['Cl','כלור'],['Ar','ארגון']];
+const ALV=[
+ {z:1,a:1,f:'מימן הוא היסוד הקל ביותר בעולם, ורוב השמש עשויה ממנו. שמת לב? אין לו בכלל נייטרונים!'},
+ {z:2,a:4,f:'הליום קל יותר מאוויר, ולכן בלונים מלאי הליום עפים למעלה.'},
+ {z:3,a:7,f:'ליתיום נמצא בסוללות של טלפונים. ראית? האלקטרון השלישי עבר למסלול חדש, כי במסלול הראשון יש מקום רק לשניים!'},
+ {z:6,a:12,f:'פחמן נמצא בכל יצור חי, בעיפרון וגם ביהלום!'},
+ {z:7,a:14,f:'רוב האוויר שאנחנו נושמים הוא חנקן.'},
+ {z:8,a:16,f:'חמצן הוא מה שהגוף שלנו לוקח מכל נשימה.'},
+ {z:10,a:20,f:'ניאון זוהר בשלטים מוארים. המסלול השני שלו מלא לגמרי: 8 אלקטרונים!'},
+ {z:11,a:23,f:'נתרן הוא חצי ממלח הבישול. בנית 8 יסודות, את כימאית אמיתית!'}
+];
+const AW=420,AH=500,ACX=210,ACY=180;
+const SH=[{r:64,cap:2,sp:.016},{r:102,cap:8,sp:.010},{r:138,cap:8,sp:.007}];
+const JARS=[{t:'p',x:345,y:420,nm:'פרוטון +'},{t:'n',x:210,y:420,nm:'נייטרון'},{t:'e',x:75,y:420,nm:'אלקטרון −'}];
+const acv=$('atomCv'),actx=setup(acv,AW,AH);
+const A={lv:0,parts:[],drag:null,done:false,ring:0,t:0,hover:-1};
+A.lv=ALV.findIndex((_,i)=>!hasStar('atom',i));if(A.lv<0)A.lv=0;
+const colT=t=>t==='p'?C.p:t==='n'?C.n:C.e;
+const live=t=>A.parts.filter(p=>!p.leave&&(!t||p.t===t));
+const cnt=t=>live(t).length;
+
+function layoutAtom(){
+  const ps=live('p'),ns=live('n'),nuc=[];
+  while(ps.length||ns.length){if(ps.length)nuc.push(ps.shift());if(ns.length)nuc.push(ns.shift());}
+  nuc.forEach((p,i)=>{const r=i?8.6*Math.sqrt(i):0,a=i*2.39996;p.tx=Math.cos(a)*r;p.ty=Math.sin(a)*r;});
+  live('e').forEach((p,i)=>{let s=0,base=0;while(s<SH.length-1&&i>=base+SH[s].cap){base+=SH[s].cap;s++;}p.sh=s;p.k=i-base;});
+  const totals=[0,0,0];live('e').forEach(p=>totals[p.sh]++);live('e').forEach(p=>p.m=totals[p.sh]);
+}
+function addPart(t,x,y){
+  if(A.done)return;
+  if(cnt(t)>=(t==='n'?14:12)){say($('aSay'),'הצנצנת הזאת התרוקנה למשימה הזו. כנראה יש יותר מדי, נסי להוציא כמה.','retry');buzz();return;}
+  A.parts.push({t,x,y,tx:0,ty:0,leave:false,born:A.t});layoutAtom();
+  beep(t==='e'?880:t==='p'?560:440,.09,'sine',.07);afterAtom();
+}
+function removePart(p){p.leave=true;layoutAtom();beep(300,.08,'sine',.06);afterAtom();}
+function atomUI(){
+  const L=ALV[A.lv],[s,n]=ENAMES[L.z];
+  $('tZ').textContent=L.z;$('tA').textContent=L.a;$('tS').textContent=s;$('tN').textContent=n;
+  $('nRule').textContent=`מספר המסה פחות המספר האטומי: ${L.a} − ${L.z} = ?`;
+  prog($('aProg'),ALV.length,i=>hasStar('atom',i),A.lv);
+}
+function setCk(li,cntEl,cur,need){cntEl.textContent=cur;li.classList.toggle('ok',cur===need);li.classList.toggle('no',cur>need);}
+function afterAtom(){
+  const L=ALV[A.lv],P=cnt('p'),E=cnt('e'),N=cnt('n'),need=L.a-L.z,nm=ENAMES[L.z][1];
+  setCk($('ckP'),$('cP'),P,L.z);setCk($('ckE'),$('cE'),E,L.z);setCk($('ckN'),$('cN'),N,need);
+  $('nRule').textContent=N===need?`${L.a} − ${L.z} = ${need} ✓`:`מספר המסה פחות המספר האטומי: ${L.a} − ${L.z} = ?`;
+  const sy=$('aSay');
+  if(P===L.z&&E===L.z&&N===need){
+    A.done=true;A.ring=1;chord();burstAt(acv,AW,AH,ACX,ACY,110);addStar('atom',A.lv);
+    say(sy,`בנית ${nm}! 🎉 ${L.f}`,'ok');$('aNext').hidden=false;prog($('aProg'),ALV.length,i=>hasStar('atom',i),A.lv);return;
+  }
+  if(A.lv===0&&P===0&&E===0&&N===0){say(sy,`שלום! בואי נבנה אטום של <b>${nm}</b>. בכרטיס של היסוד יש מספר ורוד למעלה: <b>המספר האטומי</b>. הוא אומר כמה פרוטונים צריך. גררי פרוטון אדום מהצנצנת אל מרכז האטום, או פשוט הקישי על הצנצנת.`);return;}
+  if(P===0){say(sy,`עכשיו <b>${nm}</b>! התחילי מהפרוטונים: הסתכלי על המספר האטומי בכרטיס.`);return;}
+  if(P>L.z){say(sy,`אופס, יותר מדי פרוטונים! עם ${P} פרוטונים זה כבר לא ${nm}, זה <b>${ENAMES[P][1]}</b>. מספר הפרוטונים קובע איזה יסוד זה. הקישי על פרוטון באטום כדי להוציא אותו.`,'retry');return;}
+  if(P<L.z){say(sy,`יש ${P} פרוטונים, אז כרגע זה <b>${ENAMES[P][1]}</b>. אבל אנחנו רוצים ${nm}: כמה פרוטונים אומר המספר האטומי בכרטיס?`);return;}
+  if(E<P){say(sy,`הפרוטונים מוכנים 👍 עכשיו אלקטרונים: כל פרוטון (+) צריך אלקטרון (−) אחד שיאזן אותו. ${P>2&&E===2?'המסלול הראשון מלא! האלקטרון הבא יעבור למסלול החיצוני.':''}`);return;}
+  if(E>P){say(sy,`יש יותר אלקטרונים מפרוטונים, אז האטום טעון במינוס. הקישי על אלקטרון שמסתובב כדי להוציא אותו.`,'retry');return;}
+  if(need===0&&N>0){say(sy,`למימן לא צריך נייטרונים בכלל: ${L.a} − ${L.z} = 0. הקישי על הנייטרון באטום כדי להוציא אותו.`,'retry');return;}
+  if(N!==need){say(sy,`כמעט! נשארו הנייטרונים (האפורים). חשבי: מספר המסה (${L.a}) פחות המספר האטומי (${L.z}). ${N>need?'כרגע יש יותר מדי.':''}`,N>need?'retry':'');return;}
+}
+$('aNext').onclick=()=>{A.lv=(A.lv+1)%ALV.length;A.parts.forEach(p=>p.leave=true);A.done=false;$('aNext').hidden=true;atomUI();layoutAtom();afterAtom();};
+
+function jarAt(x,y){return JARS.find(j=>Math.abs(x-j.x)<44&&y>j.y-52&&y<j.y+44);}
+acv.addEventListener('pointerdown',e=>{
+  const q=pt(acv,AW,AH,e);if(A.done)return;
+  const j=jarAt(q.x,q.y);
+  if(j){A.drag={t:j.t,x:q.x,y:q.y,sx:q.x,sy:q.y,moved:false,j};try{acv.setPointerCapture(e.pointerId);}catch(_){}return;}
+  let best=null,bd=16;for(const p of live()){const d=Math.hypot(p.x-q.x,p.y-q.y);if(d<bd){bd=d;best=p;}}
+  if(best)removePart(best);
+});
+acv.addEventListener('pointermove',e=>{const q=pt(acv,AW,AH,e);if(A.drag){A.drag.x=q.x;A.drag.y=q.y;if(Math.hypot(q.x-A.drag.sx,q.y-A.drag.sy)>8)A.drag.moved=true;}else{A.hover=jarAt(q.x,q.y)?1:-1;}});
+const endDragA=()=>{const d=A.drag;if(!d)return;A.drag=null;
+  if(!d.moved)addPart(d.t,d.j.x,d.j.y-20);
+  else if(Math.hypot(d.x-ACX,d.y-ACY)<170)addPart(d.t,d.x,d.y);};
+acv.addEventListener('pointerup',endDragA);acv.addEventListener('pointercancel',()=>{A.drag=null;});
+
+function updAtom(){
+  A.t++;
+  for(const p of A.parts){
+    let tx,ty,k=.16;
+    if(p.leave){const j=JARS.find(j=>j.t===p.t);tx=j.x;ty=j.y-10;k=.14;}
+    else if(p.t==='e'){const s=SH[p.sh],a=p.k/p.m*PI2+A.t*s.sp+p.sh*.7;tx=ACX+Math.cos(a)*s.r;ty=ACY+Math.sin(a)*s.r;k=A.t-p.born<40?.12:.35;}
+    else{tx=ACX+p.tx+Math.sin(A.t*.09+p.born)*.7;ty=ACY+p.ty+Math.cos(A.t*.08+p.born)*.7;}
+    p.x=lerp(p.x,tx,k);p.y=lerp(p.y,ty,k);
+  }
+  A.parts=A.parts.filter(p=>!(p.leave&&Math.hypot(p.x-JARS.find(j=>j.t===p.t).x,p.y-(JARS.find(j=>j.t===p.t).y-10))<6));
+  if(A.ring>0)A.ring-=.012;
+}
+function drawJar(ctx,j){
+  const {x,y}=j;ctx.save();
+  rr(ctx,x-38,y-36,76,66,14);ctx.fillStyle=C.paper;ctx.fill();ctx.lineWidth=2.5;ctx.strokeStyle=C.muted;ctx.stroke();
+  rr(ctx,x-30,y-46,60,11,4);ctx.fillStyle=C.muted;ctx.fill();
+  const spots=[[-18,14],[0,16],[18,14],[-9,0],[9,0],[-18,-14],[0,-14],[18,-14]];
+  for(const [dx,dy] of spots)ball(ctx,x+dx,y+dy+2,j.t==='e'?6:8,colT(j.t));
+  ctx.restore();text(ctx,j.nm,x,y+48,15,C.ink,700);
+}
+function drawAtom(){
+  const ctx=actx;ctx.clearRect(0,0,AW,AH);
+  const E=cnt('e'),P=cnt('p');
+  // shells
+  SH.forEach((s,i)=>{const used=live('e').some(p=>p.sh===i);ctx.setLineDash([5,7]);ctx.lineWidth=used?2.5:1.5;ctx.strokeStyle=used?C.e:C.line;ctx.globalAlpha=used?.55:1;ctx.beginPath();ctx.arc(ACX,ACY,s.r,0,PI2);ctx.stroke();ctx.globalAlpha=1;});
+  ctx.setLineDash([]);
+  // nucleus glow
+  const nuc=live().filter(p=>p.t!=='e').concat(A.parts.filter(p=>p.leave&&p.t!=='e'));
+  if(live('p').length||live('n').length){ctx.fillStyle='rgba(224,122,31,.14)';ctx.beginPath();ctx.arc(ACX,ACY,58,0,PI2);ctx.fill();}
+  else text(ctx,'כאן הגרעין',ACX,ACY,15,C.muted,600);
+  nuc.forEach(p=>ball(ctx,p.x,p.y,10,colT(p.t),p.t==='p'?'+':'',p.t==='p'?'#fff':''));
+  A.parts.filter(p=>p.t==='e').forEach(p=>{
+    if(!p.leave&&!reduce){ctx.strokeStyle=C.e;ctx.globalAlpha=.18;ctx.lineWidth=5;ctx.beginPath();const s=SH[p.sh],a=p.k/p.m*PI2+A.t*s.sp+p.sh*.7;ctx.arc(ACX,ACY,s.r,a-.35,a);ctx.stroke();ctx.globalAlpha=1;}
+    ball(ctx,p.x,p.y,8,C.e,'−','#fff');});
+  // id label
+  const lbl=P?`בנית: ${ENAMES[Math.min(P,18)][1]} (${ENAMES[Math.min(P,18)][0]})`:'עוד אין פרוטונים בגרעין';
+  text(ctx,lbl,ACX,ACY+165,18,C.ink,700);
+  const ch=P-E;if(P)text(ctx,ch===0?'מאוזן: מטען 0':ch>0?`מטען +${ch}: חסרים אלקטרונים`:`מטען ${ch}: יותר מדי אלקטרונים`,ACX,ACY+188,14,ch===0?C.good:C.muted,600);
+  // jars
+  JARS.forEach(j=>drawJar(ctx,j));
+  // drag ghost
+  if(A.drag&&A.drag.moved){ctx.globalAlpha=.9;ball(ctx,A.drag.x,A.drag.y,A.drag.t==='e'?10:12,colT(A.drag.t),A.drag.t==='p'?'+':A.drag.t==='e'?'−':'','#fff');ctx.globalAlpha=1;}
+  // ring
+  if(A.ring>0){ctx.strokeStyle=C.star;ctx.lineWidth=6*A.ring;ctx.globalAlpha=A.ring;ctx.beginPath();ctx.arc(ACX,ACY,150*(1.2-A.ring),0,PI2);ctx.stroke();ctx.globalAlpha=1;}
+}
+atomUI();afterAtom();
+
+/* =========================================================
+   STATION 2 — MOLECULES
+   ========================================================= */
+const ELS={H:{c:'#f1f1ee',t:'#333333',r:17,n:'מימן'},O:{c:'#e2493b',t:'#ffffff',r:24,n:'חמצן'},C:{c:'#3a4147',t:'#ffffff',r:24,n:'פחמן'},N:{c:'#2f6fe1',t:'#ffffff',r:23,n:'חנקן'},Na:{c:'#9b59b6',t:'#ffffff',r:26,n:'נתרן'},Cl:{c:'#3fae3a',t:'#ffffff',r:26,n:'כלור'}};
+const MOLS=[
+ {name:'גז מימן',f:[['H',2]],mode:'color',atoms:[['H',-22,0],['H',22,0]],bonds:[[0,1,1]],fact:'שני אטומי מימן מחזיקים ידיים. כך מימן נמצא בטבע: בזוגות!'},
+ {name:'מים',f:[['H',2],['O',1]],mode:'color',atoms:[['O',0,-12],['H',-50,26],['H',50,26]],bonds:[[0,1,1],[0,2,1]],fact:'מים! שני מימנים וחמצן אחד. כל טיפה מכילה מיליארדי מיליארדים של מולקולות כאלה.'},
+ {name:'גז חמצן',f:[['O',2]],mode:'color',atoms:[['O',-28,0],['O',28,0]],bonds:[[0,1,2]],fact:'זה החמצן שאנחנו נושמים. שימי לב לשני הקווים: זה "קשר כפול", חיבור חזק במיוחד.'},
+ {name:'מלח בישול',f:[['Na',1],['Cl',1]],mode:'color',atoms:[['Na',-30,0],['Cl',30,0]],bonds:[[0,1,1]],fact:'מדהים: נתרן לבד הוא מתכת שמתפוצצת במים, וכלור לבד הוא גז רעיל. ביחד? מלח שמפזרים על סלט!'},
+ {name:'פחמן דו־חמצני',f:[['C',1],['O',2]],mode:'formula',teach:true,atoms:[['O',-64,0],['C',0,0],['O',64,0]],bonds:[[0,1,2],[1,2,2]],fact:'"דו" פירושו שניים: שני חמצנים. זה הגז שאנחנו נושפים, והצמחים "נושמים" אותו כדי לגדול.'},
+ {name:'מתאן',f:[['C',1],['H',4]],mode:'formula',atoms:[['C',0,0],['H',0,-58],['H',58,0],['H',0,58],['H',-58,0]],bonds:[[0,1,1],[0,2,1],[0,3,1],[0,4,1]],fact:'מתאן הוא הגז שבוער בכיריים בהרבה בתים. לפחמן יש 4 "ידיים", ולכן הוא מחזיק 4 מימנים.'},
+ {name:'אמוניה',f:[['N',1],['H',3]],mode:'formula',atoms:[['N',0,4],['H',-54,32],['H',54,32],['H',0,-54]],bonds:[[0,1,1],[0,2,1],[0,3,1]],fact:'אמוניה משמשת לייצור דשן שעוזר לצמחים לגדול. לחנקן יש 3 "ידיים".'}
+];
+const MW=420,MH=470,MCX=210,MCY=170;
+const TRAY=['H','O','C','N','Na','Cl'].map((el,i)=>({el,x:370-i*64,y:398}));
+const mcv=$('molCv'),mctx=setup(mcv,MW,MH);
+const M={lv:0,slots:[],atoms:[],drag:null,done:false,bp:0,rot:0,t:0};
+M.lv=MOLS.findIndex((_,i)=>!hasStar('mol',i));if(M.lv<0)M.lv=0;
+const fHTML=f=>f.map(([e,n])=>e+(n>1?`<sub>${n}</sub>`:'')).join('');
+const words=['','אחד','שניים','שלושה','ארבעה'];
+function molLoad(){
+  const m=MOLS[M.lv];M.slots=m.atoms.map(([el,x,y])=>({el,x,y,atom:null,shake:0}));M.atoms=[];M.done=false;M.bp=0;M.rot=0;
+  $('mName').textContent=m.name;$('mFormula').innerHTML=fHTML(m.f);
+  $('mTag').textContent=m.mode==='color'?'שלב הצבעים':'שלב הנוסחה: בלי צבעים!';
+  $('mDec').innerHTML=m.f.map(([e,n])=>`<div><span class="f">${e}${n>1?`<sub>${n}</sub>`:''}</span>← ${n===1?ELS[e].n+' אחד':words[n]+' אטומי '+ELS[e].n}</div>`).join('');
+  $('mDec').hidden=!m.teach;$('mDecBtn').hidden=m.mode!=='formula'||!!m.teach;
+  $('mFact').hidden=true;$('mNext').hidden=true;
+  prog($('mProg'),MOLS.length,i=>hasStar('mol',i),M.lv);
+  const sy=$('mSay');
+  if(M.lv===0)say(sy,'בואי נבנה מולקולות! מולקולה היא כמה אטומים שמחוברים יחד. <b>הצבע של כל משבצת מגלה איזה אטום צריך שם</b>, והשמות מופיעים מתחת למגש. גררי אטום למשבצת או הקישי עליו.');
+  else if(m.teach)say(sy,'עכשיו בלי צבעים! כימאים כותבים <b>נוסחה</b>: האות היא סוג האטום, <b>והמספר הקטן אחריה אומר כמה</b>. אות בלי מספר = אחד. ראי את הפענוח בצד.');
+  else if(m.mode==='formula')say(sy,`קראי את הנוסחה ומלאי את המשבצות. זכרי: המספר הקטן אומר כמה אטומים. צריכה עזרה? יש כפתור פענוח.`);
+  else say(sy,`מלאי את המשבצות לפי הצבעים כדי לבנות <b>${m.name}</b>.`);
+}
+$('mDecBtn').onclick=()=>{$('mDec').hidden=false;$('mDecBtn').hidden=true;};
+$('mNext').onclick=()=>{M.lv=(M.lv+1)%MOLS.length;molLoad();};
+function slotPos(i){const s=M.slots[i],c=Math.cos(M.rot),sn=Math.sin(M.rot),bob=M.done?Math.sin(M.t*.05)*4:0;return{x:MCX+s.x*c-s.y*sn,y:MCY+s.x*sn+s.y*c+bob};}
+function home(el){return TRAY.find(t=>t.el===el);}
+function placeAtom(el,i,x,y){const s=M.slots[i];const a={el,x,y,slot:i,leave:false};s.atom=a;M.atoms.push(a);pop();afterMol();}
+function reject(el,x,y,i,msg){M.atoms.push({el,x,y,slot:-1,leave:true});if(i>=0)M.slots[i].shake=1;buzz();say($('mSay'),msg,'retry');}
+function tryPlace(el,i,x,y){const m=MOLS[M.lv],s=M.slots[i];
+  if(m.mode==='color'&&s.el!==el){reject(el,x,y,i,`המשבצת הזאת לא בצבע של ${ELS[el].n}. מצאי במגש את האטום שהצבע שלו זהה לצבע המשבצת.`);return;}
+  placeAtom(el,i,x,y);}
+function autoPlace(el){const m=MOLS[M.lv],h=home(el);
+  let i=M.slots.findIndex(s=>!s.atom&&(m.mode!=='color'||s.el===el));
+  if(i<0){if(m.mode==='color'){if(M.slots.some(s=>s.el===el))reject(el,h.x,h.y,-1,`כל המשבצות של ${ELS[el].n} כבר מלאות.`);else reject(el,h.x,h.y,-1,`אין ${ELS[el].n} במולקולה הזאת. אין משבצת בצבע שלו.`);}else reject(el,h.x,h.y,-1,'כל המשבצות מלאות. הקישי על אטום כדי להוציא אותו.');return;}
+  placeAtom(el,i,h.x,h.y);}
+function unplace(a){if(a.slot>=0)M.slots[a.slot].atom=null;a.slot=-1;a.leave=true;beep(300,.08,'sine',.06);afterMol();}
+function afterMol(){
+  const m=MOLS[M.lv],empty=M.slots.filter(s=>!s.atom).length,sy=$('mSay');
+  if(empty){if(m.mode==='color')say(sy,`יופי! עוד ${empty===1?'משבצת אחת':empty+' משבצות'}.`);return;}
+  const have={},need={};M.slots.forEach(s=>have[s.atom.el]=(have[s.atom.el]||0)+1);m.f.forEach(([e,n])=>need[e]=n);
+  const ok=Object.keys({...have,...need}).every(k=>(have[k]||0)===(need[k]||0));
+  if(!ok){
+    const extra={};Object.keys(have).forEach(k=>extra[k]=have[k]-(need[k]||0));
+    M.slots.forEach(s=>{const a=s.atom;if(extra[a.el]>0){extra[a.el]--;s.atom=null;a.slot=-1;a.leave=true;s.shake=1;}});
+    buzz();say(sy,`לא בדיוק. בנוסחה ${fHTML(m.f)} צריך: ${m.f.map(([e,n])=>`${n} ${ELS[e].n}`).join(' ו־')}. הוצאתי את מה שהיה מיותר, נסי שוב!`,'retry');return;}
+  // reassign to correct positions
+  const pool={};M.slots.forEach(s=>{(pool[s.atom.el]=pool[s.atom.el]||[]).push(s.atom);});
+  M.slots.forEach((s,i)=>{const a=pool[s.el].pop();a.slot=i;s.atom=a;});
+  M.done=true;M.bp=0;chord();burstAt(mcv,MW,MH,MCX,MCY,110);addStar('mol',M.lv);
+  say(sy,`הכנת <b>${m.name}</b>! 🎉`,'ok');$('mFact').textContent=m.fact;$('mFact').hidden=false;$('mNext').hidden=false;$('mDec').hidden=false;
+  prog($('mProg'),MOLS.length,i=>hasStar('mol',i),M.lv);
+}
+mcv.addEventListener('pointerdown',e=>{const q=pt(mcv,MW,MH,e);if(M.done)return;
+  const t=TRAY.find(t=>Math.hypot(t.x-q.x,t.y-q.y)<30);
+  if(t){M.drag={el:t.el,x:q.x,y:q.y,sx:q.x,sy:q.y,moved:false};try{mcv.setPointerCapture(e.pointerId);}catch(_){}return;}
+  const a=M.atoms.find(a=>a.slot>=0&&Math.hypot(a.x-q.x,a.y-q.y)<ELS[a.el].r+4);if(a)unplace(a);});
+mcv.addEventListener('pointermove',e=>{if(!M.drag)return;const q=pt(mcv,MW,MH,e);M.drag.x=q.x;M.drag.y=q.y;if(Math.hypot(q.x-M.drag.sx,q.y-M.drag.sy)>8)M.drag.moved=true;});
+mcv.addEventListener('pointerup',()=>{const d=M.drag;if(!d)return;M.drag=null;
+  if(!d.moved){autoPlace(d.el);return;}
+  let bi=-1,bd=48;M.slots.forEach((s,i)=>{if(s.atom)return;const p=slotPos(i),dd=Math.hypot(p.x-d.x,p.y-d.y);if(dd<bd){bd=dd;bi=i;}});
+  if(bi>=0)tryPlace(d.el,bi,d.x,d.y);else M.atoms.push({el:d.el,x:d.x,y:d.y,slot:-1,leave:true});});
+mcv.addEventListener('pointercancel',()=>{M.drag=null;});
+
+function updMol(){
+  M.t++;if(M.done){M.bp=Math.min(1,M.bp+.03);if(M.bp>=1&&!reduce)M.rot+=.006;}
+  for(const a of M.atoms){let tx,ty,k=.2;if(a.leave){const h=home(a.el);tx=h.x;ty=h.y;k=.15;}else{const p=slotPos(a.slot);tx=p.x;ty=p.y;k=M.done?.5:.22;}a.x=lerp(a.x,tx,k);a.y=lerp(a.y,ty,k);}
+  M.atoms=M.atoms.filter(a=>!(a.leave&&Math.hypot(a.x-home(a.el).x,a.y-home(a.el).y)<5));
+  M.slots.forEach(s=>{if(s.shake>0)s.shake-=.04;});
+}
+function bondLine(ctx,a,b,order,prog){
+  const ex=lerp(a.x,b.x,prog),ey=lerp(a.y,b.y,prog),dx=b.x-a.x,dy=b.y-a.y,L=Math.hypot(dx,dy)||1,nx=-dy/L*5,ny=dx/L*5;
+  ctx.lineCap='round';ctx.strokeStyle=C.ink;ctx.lineWidth=6;
+  const offs=order===2?[-1,1]:[0];for(const o of offs){ctx.beginPath();ctx.moveTo(a.x+nx*o,a.y+ny*o);ctx.lineTo(ex+nx*o,ey+ny*o);ctx.stroke();}
+}
+function drawMol(){
+  const ctx=mctx,m=MOLS[M.lv];ctx.clearRect(0,0,MW,MH);
+  const P=M.slots.map((_,i)=>slotPos(i));
+  // structure preview / bonds
+  if(M.done){m.bonds.forEach(([i,j,o])=>bondLine(ctx,M.slots[i].atom,M.slots[j].atom,o,M.bp));}
+  else{ctx.setLineDash([3,6]);ctx.strokeStyle=C.line;ctx.lineWidth=3;m.bonds.forEach(([i,j])=>{ctx.beginPath();ctx.moveTo(P[i].x,P[i].y);ctx.lineTo(P[j].x,P[j].y);ctx.stroke();});ctx.setLineDash([]);}
+  // empty slots
+  M.slots.forEach((s,i)=>{if(s.atom&&!s.atom.leave&&Math.hypot(s.atom.x-P[i].x,s.atom.y-P[i].y)<3)return;
+    const r=ELS[s.el].r,sx=P[i].x+Math.sin(s.shake*30)*s.shake*8,sy=P[i].y,pulse=1+Math.sin(M.t*.08+i)*.04;
+    ctx.setLineDash([5,5]);ctx.lineWidth=3;
+    if(m.mode==='color'){ctx.strokeStyle=ELS[s.el].c==='#f1f1ee'?C.muted:ELS[s.el].c;ctx.fillStyle=ELS[s.el].c;ctx.globalAlpha=.25;ctx.beginPath();ctx.arc(sx,sy,r*pulse,0,PI2);ctx.fill();ctx.globalAlpha=1;}
+    else{ctx.strokeStyle=C.muted;}
+    ctx.beginPath();ctx.arc(sx,sy,r*pulse,0,PI2);ctx.stroke();ctx.setLineDash([]);
+    if(!s.atom)text(ctx,'?',sx,sy+1,18,C.muted,700);});
+  // atoms
+  for(const a of M.atoms){const e=ELS[a.el];ball(ctx,a.x,a.y,e.r,e.c,a.el,e.t);}
+  // tray
+  rr(ctx,14,360,MW-28,96,18);ctx.fillStyle=C.paper;ctx.fill();ctx.strokeStyle=C.line;ctx.lineWidth=2;ctx.stroke();
+  TRAY.forEach(t=>{const e=ELS[t.el];ball(ctx,t.x,t.y,Math.max(19,e.r-2),e.c,t.el,e.t);text(ctx,e.n,t.x,t.y+38,14,C.ink,700);});
+  if(M.drag&&M.drag.moved){const e=ELS[M.drag.el];ctx.globalAlpha=.85;ball(ctx,M.drag.x,M.drag.y,e.r,e.c,M.drag.el,e.t);ctx.globalAlpha=1;}
+}
+molLoad();
+
+/* =========================================================
+   STATION 3 — ACID / BASE
+   ========================================================= */
+const SUBS=[
+ {e:'🍋',n:'מיץ לימון',ph:2.2,c:'#f6ec9b',f:'לימון חומצי מאוד, ולכן הוא חמוץ. טעם חמוץ הוא סימן לחומצה!'},
+ {e:'🫙',n:'חומץ',ph:2.8,c:'#efe9d2',f:'חומץ הוא חומצה. בגלל זה הוא חמוץ ומנקה אבנית.'},
+ {e:'🍊',n:'מיץ תפוזים',ph:3.6,c:'#ffb24a',f:'גם מיץ תפוזים חומצי, קצת פחות מלימון.'},
+ {e:'💧',n:'מים',ph:7,c:'#cfe7ff',f:'מים טהורים הם בדיוק באמצע: ניטרליים, לא חומציים ולא בסיסיים.'},
+ {e:'🥛',n:'חלב',ph:6.8,c:'#fbfbf6',f:'חלב כמעט ניטרלי, רק טיפ־טיפה חומצי.'},
+ {e:'🧂',n:'מי מלח',ph:7,c:'#e8f1f6',f:'מלח מומס במים לא משנה את הצבע. מי מלח ניטרליים.'},
+ {e:'🪥',n:'משחת שיניים',ph:8.6,c:'#dff3ff',f:'משחת שיניים קצת בסיסית. היא עוזרת לנטרל חומצות שפוגעות בשיניים.'},
+ {e:'🧁',n:'סודה לשתייה',ph:9,c:'#ffffff',f:'סודה לשתייה בסיסית. מערבבים אותה עם חומץ (חומצה) ויוצאות המון בועות!'},
+ {e:'🧼',n:'מי סבון',ph:10,c:'#eaf6ff',f:'סבון בסיסי, ולכן הוא מרגיש חלקלק. תחושה חלקלקה היא סימן לבסיס.'}
+];
+const kindOf=ph=>ph<6.3?'acid':ph<=7.5?'neutral':'base';
+const KN={acid:'חומצי',neutral:'ניטרלי',base:'בסיסי'},KC={acid:'ורוד־אדום',neutral:'סגול',base:'כחול־ירוק'};
+function indColor(ph){return ph<=3?'#e02a55':ph<=4?'#e8509a':ph<6.3?'#c04fa8':ph<=7.5?'#7a3fa3':ph<=8.7?'#3e6fd0':ph<=9.5?'#2a8fc4':'#1ea886';}
+const CW=360,CH=340,BX0=104,BX1=256,BY0=110,BY1=305;
+const ccv=$('acidCv'),cctx=setup(ccv,CW,CH);
+const S={step:'pick',cur:-1,level:0,tlevel:0,col:[220,230,240],tcol:[220,230,240],stream:null,swirl:[],t:0,timer:0,tries:0,bubbles:[]};
+const doneSet=new Set();
+SUBS.forEach((s,i)=>{if(hasStar('acid',i)){}});
+const shelf=$('shelf');
+SUBS.forEach((s,i)=>{const b=document.createElement('button');b.className='sub';b.innerHTML=`<span class="em">${s.e}</span>${s.n}`;b.onclick=()=>pickSub(i);shelf.appendChild(b);});
+function shelfUI(){[...shelf.children].forEach((b,i)=>{b.disabled=S.step!=='pick'||doneSet.has(i);b.classList.toggle('done',doneSet.has(i));b.classList.toggle('sel',i===S.cur&&S.step!=='pick');});
+  document.querySelectorAll('.bin').forEach(b=>b.classList.toggle('ready',S.step==='sort'));$('cPour').hidden=S.step!=='cabbage';}
+function pickSub(i){if(S.step!=='pick')return;S.cur=i;S.tries=0;const s=SUBS[i];S.step='pour1';S.timer=0;S.tlevel=.42;S.tcol=hexRgb(s.c);if(S.level<.02)S.col=hexRgb(s.c);
+  S.stream={x:CW/2,y:62,c:s.c};beep(400,.3,'sine',.04);say($('cSay'),`שופכים ${s.n} לכוס... 🫗`);shelfUI();}
+function pourCabbage(){if(S.step!=='cabbage')return;S.step='pour2';S.timer=0;S.tlevel=.82;S.stream={x:286,y:88,c:'#7a3fa3'};beep(350,.4,'sine',.04);say($('cSay'),'שופכים מיץ כרוב סגול... מה יקרה לצבע? 👀');shelfUI();}
+$('cPour').onclick=pourCabbage;
+ccv.addEventListener('pointerdown',e=>{const q=pt(ccv,CW,CH,e);if(Math.abs(q.x-300)<44&&q.y<120)pourCabbage();});
+document.querySelectorAll('.bin').forEach(b=>b.onclick=()=>{
+  if(S.step!=='sort'){if(S.step==='pick')say($('cSay'),'קודם בחרי חומר מהמדף ועשי את הניסוי 🧪','retry');return;}
+  const s=SUBS[S.cur],k=kindOf(s.ph);
+  if(b.dataset.k===k){
+    const sp=document.createElement('span');sp.textContent=s.e;sp.title=s.n;b.querySelector('.items').appendChild(sp);
+    doneSet.add(S.cur);if(S.tries===0)addStar('acid',S.cur);chord();burstEl(b,60);
+    S.step='drain';S.tlevel=0;S.stream=null;
+    if(doneSet.size===SUBS.length){say($('cSay'),`🏆 סיימת את כל הניסויים! ${s.f}<br>גילית לבד שני כללים של כימאים: <b>דברים חמוצים הם חומציים</b>, ו<b>דברים חלקלקים כמו סבון הם בסיסיים</b>.`,'ok');$('cReset').hidden=false;}
+    else say($('cSay'),`נכון, זה ${KN[k]}! ${s.f} בחרי חומר נוסף.`,'ok');
+  }else{S.tries++;buzz();b.classList.remove('shake');void b.offsetWidth;b.classList.add('shake');
+    say($('cSay'),`הסתכלי שוב בכוס: הצבע שיצא הוא <b>${KC[k]}</b>. איזה צבע בסרגל דומה לו?`,'retry');b.classList.add('retry');setTimeout(()=>b.classList.remove('retry'),1200);}
+  shelfUI();});
+$('cReset').onclick=()=>{doneSet.clear();document.querySelectorAll('.bin .items').forEach(x=>x.innerHTML='');$('cReset').hidden=true;S.step='pick';S.level=0;S.tlevel=0;acidIntro();shelfUI();};
+function acidIntro(){say($('cSay'),'מיץ של כרוב סגול הוא <b>מחוון</b>: הוא משנה צבע כשמערבבים אותו עם חומרים. נעשה ניסוי! בחרי חומר מהמדף, שפכי עליו מיץ כרוב, והצבע יגלה לך אם הוא חומצי, ניטרלי או בסיסי.');}
+function updAcid(){
+  S.t++;S.timer++;
+  S.level=lerp(S.level,S.tlevel,.035);
+  const k=S.step==='mix'?.035:.08;S.col=S.col.map((v,i)=>lerp(v,S.tcol[i],k));
+  if(S.step==='pour1'&&S.timer>70){S.step='cabbage';S.stream=null;say($('cSay'),'עכשיו הקישי על צנצנת <b>מיץ הכרוב הסגול</b> (או על הכפתור) כדי לשפוך אותו לכוס.');shelfUI();}
+  if(S.step==='pour2'){S.tcol=S.col.map((v,i)=>lerp(v,122+[0,-59,41][i],.02)).map(Math.round);
+    if(S.timer>70){S.step='mix';S.timer=0;S.stream=null;S.tcol=hexRgb(indColor(SUBS[S.cur].ph));
+      for(let i=0;i<40;i++)S.swirl.push({a:Math.random()*PI2,r:10+Math.random()*60,life:60+Math.random()*60});beep(700,.4,'triangle',.05);}}
+  if(S.step==='mix'&&S.timer>90){S.step='sort';say($('cSay'),'וואו, הצבע השתנה! השווי את הצבע בכוס ל<b>סרגל הצבעים</b>, ואז הקישי על המדף המתאים.');shelfUI();}
+  if(S.step==='drain'&&S.level<.02){S.step='pick';S.cur=-1;shelfUI();}
+  S.swirl=S.swirl.filter(p=>p.life-->0);S.swirl.forEach(p=>{p.a+=.12;p.r*=.985;});
+  if(S.level>.1&&Math.random()<.08&&!reduce)S.bubbles.push({x:BX0+20+Math.random()*(BX1-BX0-40),y:BY1-8,v:.5+Math.random()});
+  S.bubbles=S.bubbles.filter(b=>{b.y-=b.v;return b.y>BY1-S.level*(BY1-BY0)+4;});
+}
+function drawAcid(){
+  const ctx=cctx;ctx.clearRect(0,0,CW,CH);
+  // cabbage jar
+  const jx=300,jy=70,active=S.step==='cabbage';
+  ctx.save();ctx.translate(jx,jy);if(S.step==='pour2')ctx.rotate(-.7);
+  rr(ctx,-30,-34,60,66,12);ctx.fillStyle='#7a3fa3';ctx.fill();ctx.lineWidth=3;ctx.strokeStyle=active?C.accent:C.muted;ctx.stroke();
+  rr(ctx,-24,-42,48,10,4);ctx.fillStyle=C.muted;ctx.fill();
+  ctx.font='26px sans-serif';ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText('🥬',0,4);ctx.restore();
+  text(ctx,'מיץ כרוב',jx,jy+52,14,C.ink,700);
+  if(active&&!reduce){ctx.strokeStyle=C.accent;ctx.globalAlpha=.5+Math.sin(S.t*.15)*.4;ctx.lineWidth=3;ctx.beginPath();ctx.arc(jx,jy,48+Math.sin(S.t*.15)*3,0,PI2);ctx.stroke();ctx.globalAlpha=1;}
+  // poured item
+  if(S.cur>=0&&(S.step==='pour1')){ctx.save();ctx.translate(CW/2-30,46);ctx.rotate(.6);ctx.font='44px sans-serif';ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText(SUBS[S.cur].e,0,0);ctx.restore();}
+  // liquid
+  const top=BY1-S.level*(BY1-BY0),col=`rgb(${S.col.map(Math.round).join(',')})`;
+  ctx.save();ctx.beginPath();ctx.moveTo(BX0+2,BY0);ctx.lineTo(BX0+10,BY1-14);ctx.quadraticCurveTo(BX0+12,BY1,BX0+26,BY1);ctx.lineTo(BX1-26,BY1);ctx.quadraticCurveTo(BX1-12,BY1,BX1-10,BY1-14);ctx.lineTo(BX1-2,BY0);ctx.closePath();ctx.clip();
+  if(S.level>.01){ctx.fillStyle=col;ctx.beginPath();ctx.moveTo(BX0-10,top);for(let x=BX0-10;x<=BX1+10;x+=6)ctx.lineTo(x,top+Math.sin(x*.06+S.t*.12)*2.5*(S.stream?2:1));ctx.lineTo(BX1+10,BY1+10);ctx.lineTo(BX0-10,BY1+10);ctx.closePath();ctx.fill();
+    ctx.fillStyle='rgba(255,255,255,.25)';ctx.fillRect(BX0+18,top+8,10,BY1-top-20);
+    S.bubbles.forEach(b=>{ctx.strokeStyle='rgba(255,255,255,.7)';ctx.lineWidth=1.5;ctx.beginPath();ctx.arc(b.x,b.y,3,0,PI2);ctx.stroke();});
+    const cx=(BX0+BX1)/2,cy=(top+BY1)/2;S.swirl.forEach(p=>{ctx.fillStyle=`rgba(122,63,163,${Math.min(1,p.life/40)})`;ctx.beginPath();ctx.arc(cx+Math.cos(p.a)*p.r,cy+Math.sin(p.a)*p.r*.5,4,0,PI2);ctx.fill();});}
+  ctx.restore();
+  // beaker outline
+  ctx.strokeStyle=C.muted;ctx.lineWidth=4;ctx.lineJoin='round';ctx.beginPath();ctx.moveTo(BX0-8,BY0-4);ctx.lineTo(BX0,BY0);ctx.lineTo(BX0+10,BY1-14);ctx.quadraticCurveTo(BX0+12,BY1,BX0+26,BY1);ctx.lineTo(BX1-26,BY1);ctx.quadraticCurveTo(BX1-12,BY1,BX1-10,BY1-14);ctx.lineTo(BX1,BY0);ctx.stroke();
+  for(let i=1;i<=3;i++){const y=BY1-i*45;ctx.lineWidth=2;ctx.beginPath();ctx.moveTo(BX1-30,y);ctx.lineTo(BX1-14,y);ctx.stroke();}
+  // stream
+  if(S.stream&&S.timer<68){const s=S.stream;ctx.strokeStyle=s.c==='#ffffff'?'#e4e4e4':s.c;ctx.lineWidth=7;ctx.lineCap='round';ctx.beginPath();
+    const tx=CW/2+(s.x>CW/2?20:0);ctx.moveTo(s.x,s.y);ctx.bezierCurveTo(s.x,s.y+30,tx,top-40,tx,top);ctx.stroke();
+    for(let i=0;i<4;i++){const ph=(S.t*.08+i/4)%1;ctx.fillStyle=ctx.strokeStyle;ctx.beginPath();ctx.arc(tx+Math.sin(i*9+S.t*.3)*12*ph,top-ph*10,3,0,PI2);ctx.fill();}}
+  // label
+  if(S.cur>=0&&S.step!=='drain')text(ctx,SUBS[S.cur].e+' '+SUBS[S.cur].n,(BX0+BX1)/2,CH-14,16,C.ink,700);
+  else if(S.step==='pick')text(ctx,'הכוס מחכה לחומר 🧪',(BX0+BX1)/2,CH-14,16,C.muted,600);
+}
+acidIntro();shelfUI();
+
+/* =========================================================
+   STATION 4 — HEAT
+   ========================================================= */
+const HW=420,HH=380,BXa=34,BXb=370,BYa=24,BYb=286;
+const hcv=$('heatCv'),hctx=setup(hcv,HW,HH);
+const H={T:20,rate:0,mol:[],t:0,wasSolid:false,state:'',msDone:[false,false,false]};
+for(let i=0;i<30;i++){const c=i%6,r=Math.floor(i/6);H.mol.push({x:BXa+40+Math.random()*(BXb-BXa-80),y:BYb-30-Math.random()*90,vx:0,vy:0,ang:Math.random()*PI2,spin:(Math.random()-.5)*.1,lx:(BXa+BXb)/2-80+c*32,ly:BYb-20-r*30});}
+const stOf=T=>T<=0?'solid':T<100?'liquid':'gas';
+const SN={solid:['מוצק: קרח 🧊','המולקולות נצמדות בשורות מסודרות ורק רועדות במקום. בגלל זה לקרח יש צורה קבועה.'],liquid:['נוזל: מים 💧','המולקולות קרובות אבל זזות ומחליקות אחת ליד השנייה. בגלל זה מים מקבלים את הצורה של הכלי.'],gas:['גז: אדים ☁️','המולקולות עפות מהר לכל הכיוונים ומתרחקות זו מזו. בגלל זה אדים ממלאים את כל החדר.']};
+function speed(T){const s=stOf(T);return s==='solid'?.4+(T+30)/30*.6:s==='liquid'?1+T/50:3.2+(T-100)/22;}
+function setT(v){H.T=clamp(v,-30,150);$('hRange').value=Math.round(H.T);$('tVal').textContent=Math.round(H.T);$('hMeter').style.width=Math.min(100,speed(H.T)/5.5*100)+'%';
+  const s=stOf(H.T);
+  if(s!==H.state){const prev=H.state;H.state=s;$('hState').textContent=SN[s][0];
+    let msg=SN[s][1];
+    if(prev==='liquid'&&s==='solid')msg='❄️ קפא! '+msg;if(prev==='liquid'&&s==='gas')msg='♨️ רותח! '+msg;if(prev==='solid'&&s==='liquid')msg='🫠 נמס! '+msg;if(prev==='gas'&&s==='liquid')msg='💧 האדים התעבו בחזרה למים! '+msg;
+    if(prev)say($('hSay'),msg);
+    let m=-1;if(s==='solid')m=0;if(s==='gas')m=1;if(s==='liquid'&&prev==='solid')m=2;
+    if(m>=0&&!H.msDone[m]){H.msDone[m]=true;$('ms'+m).classList.add('ok');addStar('heat',m);chord();burstEl($('ms'+m),50);
+      if(H.msDone.every(Boolean))setTimeout(()=>say($('hSay'),'השלמת את כל משימות החום! 🏆 הסוד הגדול: מים, קרח ואדים הם <b>אותן מולקולות בדיוק</b>. רק המהירות שלהן משתנה.','ok'),1800);}
+    if(s!=='liquid')beep(s==='solid'?300:900,.25,'triangle',.05);}
+}
+$('hRange').addEventListener('input',e=>setT(+e.target.value));
+function holdBtn(el,r){el.addEventListener('pointerdown',e=>{H.rate=r;try{el.setPointerCapture(e.pointerId);}catch(_){}});['pointerup','pointercancel','lostpointercapture'].forEach(ev=>el.addEventListener(ev,()=>H.rate=0));el.addEventListener('click',e=>{if(e.detail===0)setT(H.T+r*12);});}
+holdBtn($('hHot'),1);holdBtn($('hCold'),-1);
+function updHeat(){
+  H.t++;if(H.rate)setT(H.T+H.rate*.9);
+  const s=stOf(H.T),sp=speed(H.T),M_=H.mol;
+  for(const p of M_){
+    p.ang+=p.spin*sp;
+    if(s==='solid'){const a=sp*1.6;p.x=lerp(p.x,p.lx+Math.sin(H.t*.5+p.lx)*a,.08);p.y=lerp(p.y,p.ly+Math.cos(H.t*.6+p.ly)*a,.08);p.vx=p.vy=0;p.spin*=.95;continue;}
+    p.vx+=(Math.random()-.5)*sp*.35;p.vy+=(Math.random()-.5)*sp*.35;
+    if(s==='liquid')p.vy+=.18;
+    const v=Math.hypot(p.vx,p.vy)||1;
+    if(s==='gas'){const tv=sp;p.vx*=lerp(1,tv/v,.1);p.vy*=lerp(1,tv/v,.1);}
+    else{const mx=sp*1.4;if(v>mx){p.vx*=mx/v;p.vy*=mx/v;}p.vx*=.97;p.vy*=.97;}
+    if(Math.abs(p.spin)<.02)p.spin+=(Math.random()-.5)*.05;
+  }
+  if(s!=='solid'){for(let i=0;i<M_.length;i++)for(let j=i+1;j<M_.length;j++){const a=M_[i],b=M_[j],dx=b.x-a.x,dy=b.y-a.y,d=Math.hypot(dx,dy)||.01;
+    if(d<26){const f=(26-d)*.12;a.vx-=dx/d*f;a.vy-=dy/d*f;b.vx+=dx/d*f;b.vy+=dy/d*f;}
+    else if(s==='liquid'&&d<38){const f=.012;a.vx+=dx/d*f;a.vy+=dy/d*f;b.vx-=dx/d*f;b.vy-=dy/d*f;}}}
+  for(const p of M_){if(s==='solid')continue;p.x+=p.vx;p.y+=p.vy;
+    if(p.x<BXa+14){p.x=BXa+14;p.vx=Math.abs(p.vx);}if(p.x>BXb-14){p.x=BXb-14;p.vx=-Math.abs(p.vx);}
+    if(p.y<BYa+14){p.y=BYa+14;p.vy=Math.abs(p.vy);}if(p.y>BYb-14){p.y=BYb-14;p.vy=-Math.abs(p.vy)*(s==='liquid'?.4:1);}}
+}
+function drawHeat(){
+  const ctx=hctx,s=stOf(H.T);ctx.clearRect(0,0,HW,HH);
+  // container
+  rr(ctx,BXa,BYa,BXb-BXa,BYb-BYa,16);
+  if(s==='solid'){ctx.fillStyle='rgba(150,205,255,.22)';ctx.fill();}
+  ctx.lineWidth=4;ctx.strokeStyle=C.muted;ctx.stroke();
+  if(s==='solid'){ctx.font='20px sans-serif';ctx.textAlign='center';ctx.textBaseline='middle';[[BXa+20,BYa+20],[BXb-20,BYa+20],[BXa+20,BYa+60]].forEach(([x,y])=>ctx.fillText('❄️',x,y));}
+  // molecules
+  for(const p of H.mol){
+    const ox=Math.cos(p.ang),oy=Math.sin(p.ang);
+    for(const sgn of[-1,1]){const a=p.ang+Math.PI/2+sgn*.92;ball(ctx,p.x+Math.cos(a)*12,p.y+Math.sin(a)*12,6.5,'#f1f1ee');}
+    ball(ctx,p.x,p.y,10.5,C.p);
+    if(s==='gas'&&!reduce){ctx.strokeStyle=C.accent;ctx.globalAlpha=.25;ctx.lineWidth=3;ctx.beginPath();ctx.moveTo(p.x,p.y);ctx.lineTo(p.x-p.vx*4,p.y-p.vy*4);ctx.stroke();ctx.globalAlpha=1;}
+  }
+  // burner & flame
+  rr(ctx,150,BYb+46,120,22,6);ctx.fillStyle=C.muted;ctx.fill();
+  rr(ctx,190,BYb+20,40,28,4);ctx.fillStyle=C.line;ctx.fill();
+  const fl=H.rate>0?1:clamp((H.T-25)/110,0,1);
+  if(fl>0.02){for(let i=0;i<5;i++){const fx_=166+i*22,h=(18+fl*26)*(1+Math.sin(H.t*.4+i*1.7)*.2);
+    ctx.fillStyle=i%2?'#ffb32b':'#ff6a2b';ctx.beginPath();ctx.moveTo(fx_-9,BYb+20);ctx.quadraticCurveTo(fx_-10,BYb+20-h*.6,fx_,BYb+20-h);ctx.quadraticCurveTo(fx_+10,BYb+20-h*.6,fx_+9,BYb+20);ctx.closePath();ctx.fill();}}
+  if(H.rate<0){ctx.font='26px sans-serif';ctx.textAlign='center';ctx.fillText('❄️',HW/2+(Math.sin(H.t*.2)*8),BYb+36);}
+  // thermometer
+  const tx=395,t0=BYa+6,t1=BYb+40,frac=(H.T+30)/180;
+  rr(ctx,tx-7,t0,14,t1-t0,7);ctx.fillStyle=C.paper;ctx.fill();ctx.strokeStyle=C.muted;ctx.lineWidth=2;ctx.stroke();
+  const tc=H.T<=0?'#4aa3ff':H.T<100?'#e2493b':'#ff2a2a';
+  ctx.fillStyle=tc;rr(ctx,tx-4,t1-frac*(t1-t0-6)-3,8,frac*(t1-t0-6),4);ctx.fill();ctx.beginPath();ctx.arc(tx,t1+8,11,0,PI2);ctx.fill();
+  [[0,'0°'],[100,'100°']].forEach(([v,l])=>{const y=t1-(v+30)/180*(t1-t0-6)-3;ctx.strokeStyle=C.ink;ctx.lineWidth=2;ctx.beginPath();ctx.moveTo(tx-12,y);ctx.lineTo(tx-7,y);ctx.stroke();ctx.fillStyle=C.ink;ctx.font='600 11px Rubik,sans-serif';ctx.textAlign='right';ctx.direction='ltr';ctx.fillText(l,tx-14,y+1);});
+}
+setT(20);H.state='liquid';say($('hSay'),'מים, קרח ואדים עשויים מאותן מולקולות: חמצן אחד (אדום) ושני מימנים (לבנים). מה משתנה ביניהם? <b>המהירות!</b> החזיקי את כפתור החימום או הקירור, או הזיזי את הסרגל, וראי מה קורה. נסי להשלים את 3 המשימות.');
+$('hState').textContent=SN.liquid[0];
+
+/* =========================================================
+   LESSONS — animated slides, read-aloud, ask the guide
+   ========================================================= */
+const LW=420,LH=300,lcv=$('lCv'),lctx=setup(lcv,LW,LH);
+function emoji(c,s,x,y,size){c.font=`${size}px sans-serif`;c.textAlign='center';c.textBaseline='middle';c.direction='ltr';c.fillText(s,x,y);}
+function wmol(c,x,y,ang,r){r=r||1;for(const sg of[-1,1]){const a=ang+Math.PI/2+sg*.92;ball(c,x+Math.cos(a)*12*r,y+Math.sin(a)*12*r,6.5*r,'#f1f1ee');}ball(c,x,y,10.5*r,C.p);}
+function nucleus(c,x,y,z,n,t,r){const arr=[];for(let i=0;i<Math.max(z,n);i++){if(i<z)arr.push('p');if(i<n)arr.push('n');}
+  arr.forEach((k,i)=>{const rr_=i?(r||8)*Math.sqrt(i):0,a=i*2.39996;ball(c,x+Math.cos(a)*rr_+Math.sin(t*.1+i)*.6,y+Math.sin(a)*rr_,(r||8)+1,k==='p'?C.p:C.n,k==='p'?'+':'','#fff');});}
+function orbit(c,x,y,rad,k,t,sp){c.setLineDash([4,6]);c.strokeStyle=C.line;c.lineWidth=2;c.beginPath();c.arc(x,y,rad,0,PI2);c.stroke();c.setLineDash([]);
+  for(let i=0;i<k;i++){const a=i/k*PI2+t*(sp||.02);ball(c,x+Math.cos(a)*rad,y+Math.sin(a)*rad,7,C.e,'−','#fff');}}
+function arrowLbl(c,x1,y1,x2,y2,s){c.strokeStyle=C.ink;c.lineWidth=2;c.beginPath();c.moveTo(x1,y1);c.lineTo(x2,y2);c.stroke();text(c,s,x1,y1+(y1<y2?-12:12),15,C.ink,700);}
+function makeSim(mode,n){const ps=[];for(let i=0;i<(n||14);i++){const c=i%5,r=Math.floor(i/5);ps.push({x:80+Math.random()*260,y:60+Math.random()*180,vx:0,vy:0,ang:Math.random()*6,lx:130+c*40,ly:230-r*40});}
+  return(c,t)=>{rr(c,40,24,340,250,16);c.strokeStyle=C.muted;c.lineWidth=3;c.stroke();
+    const sp=mode==='solid'?1:mode==='liquid'?1.6:4;
+    for(const p of ps){p.ang+=.03*sp;
+      if(mode==='solid'){p.x=lerp(p.x,p.lx+Math.sin(t*.5+p.lx)*2,.1);p.y=lerp(p.y,p.ly+Math.cos(t*.6+p.ly)*2,.1);}
+      else{p.vx+=(Math.random()-.5)*sp*.4;p.vy+=(Math.random()-.5)*sp*.4+(mode==='liquid'?.2:0);const v=Math.hypot(p.vx,p.vy)||1,mx=mode==='gas'?sp:sp*1.2;if(mode==='gas'||v>mx){p.vx*=mx/v;p.vy*=mx/v;}
+        p.x+=p.vx;p.y+=p.vy;if(p.x<56){p.x=56;p.vx=Math.abs(p.vx);}if(p.x>364){p.x=364;p.vx=-Math.abs(p.vx);}if(p.y<40){p.y=40;p.vy=Math.abs(p.vy);}if(p.y>258){p.y=258;p.vy=-Math.abs(p.vy)*(mode==='liquid'?.4:1);}}
+      wmol(c,p.x,p.y,p.ang);}};}
+const LES={
+ atom:{name:'מה זה אטום?',slides:[
+  {t:'הכול עשוי מאטומים',x:'השולחן, המים, האוויר ואפילו את: הכול בנוי מחלקיקים קטנטנים שנקראים <b>אטומים</b>. הם כל כך קטנים, שבנקודה אחת בסוף משפט יש יותר אטומים ממספר האנשים בעולם!',
+   a:(c,t)=>{emoji(c,'🍎',330,150,90);c.strokeStyle=C.muted;c.lineWidth=2;c.beginPath();c.moveTo(300,120);c.lineTo(150,62);c.moveTo(300,180);c.lineTo(150,238);c.stroke();
+    c.save();c.beginPath();c.arc(140,150,90,0,PI2);c.fillStyle=C.paper;c.fill();c.clip();
+    for(let i=0;i<7;i++)for(let j=0;j<7;j++){const x=68+i*24+(j%2)*12,y=78+j*24;ball(c,x+Math.sin(t*.1+i+j)*1.5,y+Math.cos(t*.12+i*j)*1.5,10,[C.p,C.e,C.lab,C.n][(i+j)%4]);}
+    c.restore();c.strokeStyle=C.ink;c.lineWidth=4;c.beginPath();c.arc(140,150,90,0,PI2);c.stroke();text(c,'בזום ענק...',140,276,16,C.ink,700);}},
+  {t:'מה יש בתוך האטום?',x:'במרכז האטום יש <b>גרעין</b>. בגרעין יש שני סוגי חלקיקים: <b style="color:var(--p)">פרוטונים</b> עם מטען חיובי (+), ו<b style="color:var(--n)">נייטרונים</b> שאין להם מטען בכלל.',
+   a:(c,t)=>{const s=1+Math.sin(t*.05)*.04;c.save();c.translate(210,150);c.scale(s,s);nucleus(c,0,0,6,6,t,13);c.restore();arrowLbl(c,330,70,232,128,'פרוטון (+)');arrowLbl(c,90,240,186,170,'נייטרון (בלי מטען)');}},
+  {t:'האלקטרונים',x:'מסביב לגרעין מסתובבים <b style="color:var(--e)">אלקטרונים</b> קטנים ומהירים, עם מטען שלילי (−). הם נעים במסלולים. במסלול הראשון יש מקום רק לשניים, ובשני עד שמונה.',
+   a:(c,t)=>{nucleus(c,210,150,3,4,t,8);orbit(c,210,150,55,2,t,.04);orbit(c,210,150,100,1,t,.025);arrowLbl(c,360,40,305,135,'אלקטרון (−)');}},
+  {t:'הפרוטונים הם תעודת הזהות',x:'מה שקובע איזה <b>יסוד</b> זה הוא מספר הפרוטונים. פרוטון אחד: מימן. שניים: הליום. שישה: פחמן. המספר הזה נקרא <b>המספר האטומי</b>, והוא כתוב על כל יסוד בטבלה של הכימאים.',
+   a:(c,t)=>{const z=1+Math.floor(t/110)%6,nn=[0,0,2,4,5,5,6][z];nucleus(c,150,150,z,nn,t,8);orbit(c,150,150,55,Math.min(z,2),t,.04);if(z>2)orbit(c,150,150,95,z-2,t,.025);
+    rr(c,272,82,110,128,12);c.fillStyle=C.paper;c.fill();c.strokeStyle=C.ink;c.lineWidth=3;c.stroke();text(c,String(z),360,102,20,C.lab,700);
+    c.fillStyle=C.ink;c.font='700 46px Rubik,sans-serif';c.textAlign='center';c.direction='ltr';c.fillText(ENAMES[z][0],327,150);text(c,ENAMES[z][1],327,190,17,C.ink,700);}},
+  {t:'אטום מאוזן',x:'באטום רגיל יש <b>אותו מספר</b> של פרוטונים ואלקטרונים. כל פלוס מתאזן עם מינוס אחד, ולכן האטום כולו מאוזן. עכשיו את יודעת מספיק כדי לבנות אטומים בעצמך!',
+   a:(c,t)=>{const k=1+Math.floor(t/40)%4;for(let i=0;i<3;i++){const y=80+i*70,on=i<k;ball(c,130,y,16,C.p,'+','#fff');ball(c,290,y,13,C.e,'−','#fff');if(on){c.strokeStyle=C.good;c.lineWidth=4;c.beginPath();c.moveTo(150,y);c.lineTo(274,y);c.stroke();}}
+    text(c,k>3?'3 פלוס ו־3 מינוס: מאוזן! ✓':'מחברים זוגות...',210,282,17,k>3?C.good:C.muted,700);}}],
+  chips:['כמה אטומים יש בגוף שלי?','ממה עשוי פרוטון?','למה האלקטרונים לא נופלים לגרעין?']},
+ mol:{name:'מה זו מולקולה?',slides:[
+  {t:'אטומים מתחברים',x:'אטומים אוהבים להתחבר זה לזה. החיבור נקרא <b>קשר</b>, וכמה אטומים שמחוברים יחד נקראים <b>מולקולה</b>.',
+   a:(c,t)=>{const ph=(t%180)/180,d=ph<.5?lerp(150,44,ph*2):44;if(ph>=.5){c.strokeStyle=C.ink;c.lineWidth=6;c.beginPath();c.moveTo(210-d/2,150);c.lineTo(210+d/2,150);c.stroke();if(ph<.6&&!reduce)emoji(c,'✨',210,110,30);}
+    ball(c,210-d/2,150,20,ELS.H.c,'H','#333');ball(c,210+d/2,150,20,ELS.H.c,'H','#333');text(c,ph>=.5?'מולקולה של מימן!':'שני אטומי מימן...',210,240,18,C.ink,700);}},
+  {t:'מולקולת מים',x:'כל טיפת מים בנויה ממולקולות קטנות. בכל אחת יש <b>אטום חמצן אחד</b> (אדום) ו<b>שני אטומי מימן</b> (לבנים).',
+   a:(c,t)=>{const ph=Math.min(1,(t%200)/90),ox=210,oy=135;const hs=[[-58,40],[58,40]];
+    hs.forEach(([dx,dy],i)=>{const sx=i?380:40,sy=40,x=lerp(sx,ox+dx,ph),y=lerp(sy,oy+dy,ph);if(ph>=1){c.strokeStyle=C.ink;c.lineWidth=6;c.beginPath();c.moveTo(ox,oy);c.lineTo(x,y);c.stroke();}ball(c,x,y,18,ELS.H.c,'H','#333');});
+    ball(c,ox,oy,28,ELS.O.c,'O','#fff');text(c,'2 מימן + 1 חמצן = מים 💧',210,262,18,C.ink,700);}},
+  {t:'נוסחה: השפה של הכימאים',x:'כימאים כותבים מולקולה בקיצור. כל אות היא סוג אטום, <b>והמספר הקטן אחריה אומר כמה</b>. אות בלי מספר פירושה אחד. אז H<sub>2</sub>O זה שני מימנים וחמצן אחד.',
+   a:(c,t)=>{const hi=Math.floor(t/70)%3;c.direction='ltr';c.textAlign='center';c.textBaseline='alphabetic';
+    c.font='700 80px Rubik,sans-serif';c.fillStyle=hi===0?C.lab:C.ink;c.fillText('H',150,120);c.font='700 44px Rubik,sans-serif';c.fillStyle=hi===1?C.lab:C.ink;c.fillText('2',197,136);c.font='700 80px Rubik,sans-serif';c.fillStyle=hi===2?C.lab:C.ink;c.fillText('O',265,120);
+    ball(c,140,190,17,ELS.H.c,'H','#333');ball(c,185,190,17,ELS.H.c,'H','#333');ball(c,265,190,24,ELS.O.c,'O','#fff');
+    text(c,['H = מימן','2 = שניים מהם','O = חמצן (אחד)'][hi],210,262,19,C.lab,700);}},
+  {t:'ביחד זה משהו חדש',x:'כשאטומים מתחברים יוצא חומר חדש לגמרי! <b>נתרן</b> לבד הוא מתכת מסוכנת, ו<b>כלור</b> לבד הוא גז רעיל. אבל כשהם מתחברים יוצא... <b>מלח</b> שמפזרים על סלט!',
+   a:(c,t)=>{const ph=(t%220)/220,d=ph<.45?lerp(260,60,ph/.45):60;ball(c,210-d/2,140,26,ELS.Na.c,'Na','#fff');ball(c,210+d/2,140,26,ELS.Cl.c,'Cl','#fff');
+    if(ph<.45){emoji(c,'⚠️',210-d/2,92,22);emoji(c,'☠️',210+d/2,92,22);}else{c.strokeStyle=C.ink;c.lineWidth=6;c.beginPath();c.moveTo(194,140);c.lineTo(226,140);c.stroke();emoji(c,'🧂',210,230,44);}}}],
+  chips:['למה מים הם נוזל?','מה מחזיק את האטומים ביחד?','כמה סוגים של מולקולות יש?']},
+ acid:{name:'חומצות ובסיסים',slides:[
+  {t:'חומצות',x:'<b>חומצות</b> הן חומרים עם טעם חמוץ. לימון, חומץ ותפוז הם חומציים. חומצות חזקות מאוד יכולות לשרוף, ולכן במעבדה נזהרים מהן.',
+   a:(c,t)=>{['🍋','🫙','🍊'].forEach((e,i)=>{emoji(c,e,110+i*100,120+Math.sin(t*.08+i)*8,60);});emoji(c,'😖',210,225,48);text(c,'חמוץ!',290,225,22,C.lab,700);}},
+  {t:'בסיסים',x:'<b>בסיסים</b> הם ההפך של חומצות. הם מרגישים חלקלקים, כמו סבון. סבון, סודה לשתייה ומשחת שיניים הם בסיסיים.',
+   a:(c,t)=>{['🧼','🧁','🪥'].forEach((e,i)=>emoji(c,e,110+i*100,140,58));for(let i=0;i<10;i++){const y=260-((t*1.2+i*30)%220),x=60+i*32+Math.sin(t*.05+i)*8;c.strokeStyle=C.e;c.globalAlpha=.6;c.lineWidth=2;c.beginPath();c.arc(x,y,6+i%3*3,0,PI2);c.stroke();c.globalAlpha=1;}text(c,'חלקלק!',210,250,22,C.lab,700);}},
+  {t:'ניטרלי: באמצע',x:'יש חומרים שהם לא חומצה ולא בסיס, אלא בדיוק באמצע. הם נקראים <b>ניטרליים</b>. מים טהורים הם ניטרליים.',
+   a:(c,t)=>{['#1ea886','#3e6fd0','#7a3fa3','#e8509a','#e02a55'].forEach((col,k)=>{c.fillStyle=col;c.fillRect(40+k*68,150,68,30);});text(c,'בסיסי',60,205,16,C.ink,700);text(c,'ניטרלי',210,205,16,C.ink,700);text(c,'חומצי',360,205,16,C.ink,700);emoji(c,'💧',210,110+Math.sin(t*.1)*6,50);emoji(c,'🍋',350,110,32);emoji(c,'🧼',70,110,32);}},
+  {t:'מיץ כרוב קוסם',x:'איך יודעים בלי לטעום? משתמשים ב<b>מחוון</b>: חומר שמשנה צבע. מיץ של כרוב סגול נהיה <b style="color:#e02a55">ורוד</b> בחומצה, נשאר <b style="color:#7a3fa3">סגול</b> בחומר ניטרלי, ונהיה <b style="color:#1ea886">כחול־ירוק</b> בבסיס.',
+   a:(c,t)=>{const seq=[['🍋','#e02a55'],['💧','#7a3fa3'],['🧼','#1ea886']],k=Math.floor(t/120)%3,ph=(t%120)/120,prev=seq[(k+2)%3][1],cur=seq[k][1];
+    const a=hexRgb(prev),b=hexRgb(cur),m=Math.min(1,ph*2.5),col=`rgb(${a.map((v,i)=>Math.round(lerp(v,b[i],m))).join(',')})`;
+    emoji(c,seq[k][0],320,90,56);emoji(c,'🥬',100,80,46);c.beginPath();c.moveTo(150,80);c.lineTo(170,82);c.lineTo(178,240);c.quadraticCurveTo(180,256,196,256);c.lineTo(244,256);c.quadraticCurveTo(260,256,262,240);c.lineTo(270,82);c.lineTo(290,80);
+    c.save();c.beginPath();c.moveTo(172,150);c.lineTo(178,240);c.quadraticCurveTo(180,256,196,256);c.lineTo(244,256);c.quadraticCurveTo(260,256,262,240);c.lineTo(268,150);c.closePath();c.fillStyle=col;c.fill();c.restore();
+    c.strokeStyle=C.muted;c.lineWidth=4;c.beginPath();c.moveTo(170,82);c.lineTo(178,240);c.quadraticCurveTo(180,256,196,256);c.lineTo(244,256);c.quadraticCurveTo(260,256,262,240);c.lineTo(270,82);c.stroke();}},
+  {t:'כלל הזהב של כימאים',x:'כימאים אמיתיים <b>אף פעם לא טועמים</b> חומרים במעבדה, ו<b>לא מערבבים חומרי ניקוי</b>, כי זה עלול להיות מסוכן. ניסויים עושים רק עם מבוגר. במשחק שלנו מותר לנסות הכול!',
+   a:(c,t)=>{emoji(c,'🥽',210,120+Math.sin(t*.08)*10,90);emoji(c,'🧤',110,220,44);emoji(c,'👩‍🔬',310,220,44);}}],
+  chips:['למה לימון חמוץ?','מה קורה כשמערבבים חומצה ובסיס?','למה הכרוב משנה צבע?']},
+ heat:{name:'מוצק, נוזל וגז',slides:[
+  {t:'המולקולות תמיד זזות',x:'גם כשנראה שהכול עומד במקום, המולקולות בתוך החומר <b>כל הזמן זזות</b>. ככל שחם יותר, הן זזות מהר יותר.',a:null,sim:'liquid'},
+  {t:'מוצק',x:'בחומר <b>מוצק</b>, כמו קרח, המולקולות צפופות ומסודרות בשורות. הן רק רועדות במקום. לכן למוצק יש צורה קבועה.',a:null,sim:'solid'},
+  {t:'נוזל',x:'בחומר <b>נוזל</b>, כמו מים, המולקולות קרובות אבל מחליקות אחת ליד השנייה. לכן מים זורמים ומקבלים את הצורה של הכוס.',a:null,sim:'liquid'},
+  {t:'גז',x:'בחומר <b>גז</b>, כמו אדים, המולקולות עפות מהר לכל הכיוונים ומתרחקות זו מזו. לכן גז ממלא את כל המקום שיש לו.',a:null,sim:'gas'},
+  {t:'החום משנה הכול',x:'מים ב־0 מעלות <b>קופאים</b> לקרח, וב־100 מעלות הם <b>רותחים</b> והופכים לאדים. אלה אותן מולקולות בדיוק! משתנה רק המהירות שלהן.',
+   a:(c,t)=>{const T=-20+((Math.sin(t*.015)+1)/2)*140,y0=250,y1=40,yy=v=>y0-(v+20)/140*(y0-y1);rr(c,196,y1-6,28,y0-y1+12,14);c.fillStyle=C.paper;c.fill();c.strokeStyle=C.muted;c.lineWidth=3;c.stroke();
+    c.fillStyle=T<=0?'#4aa3ff':T<100?'#e2493b':'#ff2a2a';rr(c,202,yy(T),16,y0-yy(T)+4,8);c.fill();c.beginPath();c.arc(210,y0+12,16,0,PI2);c.fill();
+    [[0,'0°'],[100,'100°']].forEach(([v,l])=>{c.strokeStyle=C.ink;c.lineWidth=2;c.beginPath();c.moveTo(226,yy(v));c.lineTo(240,yy(v));c.stroke();c.fillStyle=C.ink;c.font='700 15px Rubik,sans-serif';c.textAlign='left';c.direction='ltr';c.fillText(l,244,yy(v)+5);});
+    emoji(c,T<=0?'🧊':T<100?'💧':'☁️',330,150,70);text(c,T<=0?'קרח':T<100?'מים':'אדים',330,215,20,C.lab,700);}}],
+  chips:['למה קרח צף על המים?','לאן נעלמים המים כשהם מתאדים?','למה כשחם אני מזיעה?']}
+};
+let seen={};try{seen=JSON.parse(localStorage.getItem('chemLessons')||'{}')||{};}catch(e){}
+const L={st:null,i:0,t:0,sim:null};
+let active='atom',mode='lesson';
+function setView(){ $('lesson').hidden=mode!=='lesson';['atom','mol','acid','heat'].forEach(k=>$('st-'+k).hidden=(mode==='lesson'||k!==active)); }
+function openLesson(st,i){stopSpeak();L.st=st;L.i=i||0;mode='lesson';renderSlide();renderChat();setView();}
+function renderSlide(){const les=LES[L.st],s=les.slides[L.i];L.t=0;L.sim=s.sim?makeSim(s.sim,s.sim==='solid'?15:14):null;
+  $('lTitle').textContent=les.name+': '+s.t;const tx=$('lText');tx.innerHTML=s.x;tx.classList.remove('pop');void tx.offsetWidth;tx.classList.add('pop');
+  $('lStep').innerHTML=les.slides.map((_,k)=>`<span class="${k<=L.i?'on':''}"></span>`).join('');
+  $('lPrev').disabled=L.i===0;$('lPrev').style.visibility=L.i===0?'hidden':'visible';
+  const last=L.i===les.slides.length-1;$('lNext').textContent=last?'🎮 מתחילים לשחק!':'הבא ←';$('lNext').classList.toggle('glow',last);$('lSkip').hidden=last;
+  $('chips').innerHTML='';les.chips.forEach(q=>{const b=document.createElement('button');b.type='button';b.textContent=q;b.onclick=()=>ask(q);$('chips').appendChild(b);});
+  if(autoRead)speak(tx.textContent);}
+function toGame(){seen[L.st]=1;try{localStorage.setItem('chemLessons',JSON.stringify(seen));}catch(e){}stopSpeak();mode='game';setView();}
+$('lNext').onclick=()=>{const n=LES[L.st].slides.length;if(L.i<n-1){L.i++;stopSpeak();renderSlide();beep(600,.06,'sine',.05);}else toGame();};
+$('lPrev').onclick=()=>{if(L.i>0){L.i--;stopSpeak();renderSlide();}};
+$('lSkip').onclick=toGame;
+function drawLesson(){L.t++;const c=lctx;c.clearRect(0,0,LW,LH);const s=LES[L.st].slides[L.i];if(L.sim)L.sim(c,L.t);else if(s.a)s.a(c,L.t);}
+document.querySelectorAll('.coach').forEach((co,i)=>{const b=document.createElement('button');b.className='helpbtn';b.textContent='📖 הסבר ושאלות';b.onclick=()=>openLesson(['atom','mol','acid','heat'][i],0);co.appendChild(b);});
+
+/* speech out */
+const heVoice=null,autoRead=false;
+function speak(){}
+function stopSpeak(){}
+
+/* ask the guide */
+const chats={atom:[],mol:[],acid:[],heat:[]};
+let busy=false;
+function addMsg(who,txt){const d=document.createElement('div');d.className='msg '+who;const sp=document.createElement('span');sp.textContent=txt;d.appendChild(sp);
+  if(who==='bot'&&heVoice){const b=document.createElement('button');b.className='say';b.type='button';b.textContent='🔈';b.setAttribute('aria-label','הקראת התשובה');b.onclick=()=>speak(sp.textContent);d.appendChild(b);}
+  $('chat').appendChild(d);return sp;}
+function renderChat(){$('chat').innerHTML='';chats[L.st].forEach(m=>addMsg(m.role==='user'?'me':'bot',m.content));}
+function rules(){const les=LES[L.st],s=les.slides[L.i];
+  return `את מדריכה חמה וסבלנית במעבדת כימיה, ומדברת עם ילדה בת 10. הנושא עכשיו: "${les.name}". השקף שהיא רואה: "${s.t}: ${s.x.replace(/<[^>]+>/g,'')}".
+כללים: עני בעברית פשוטה בלבד, בלשון נקבה כלפיה, ב־2 עד 4 משפטים קצרים. השתמשי בדוגמה מהבית או מהחיים. בלי מילים באנגלית ובלי עיצוב (בלי כוכביות או רשימות). אפשר אימוג'י אחד. אם השאלה לא קשורה למדע, החזירי אותה בעדינות לנושא. לעולם אל תציעי לטעום חומרים, לערבב חומרי ניקוי, להדליק אש או לעשות ניסוי בלי מבוגר. אם את לא בטוחה, אמרי שזו שאלה מצוינת לשאול מורה. בסוף אפשר להוסיף שאלה קטנה שמעוררת סקרנות.`;}
+/* כתובת שרת המדריכה (אפס סקריפט) — להדביק אחרי הפריסה */
+const ASK_URL='';
+async function ask(q){q=(q||'').trim().slice(0,300);if(!q||busy)return;
+  if(!ASK_URL){$('askNote').textContent='המדריכה עוד לא חוברה לשרת.';return;}
+  if(!navigator.onLine){$('askNote').textContent='אין אינטרנט כרגע. המדריכה צריכה חיבור כדי לענות.';return;}
+  busy=true;$('askBtn').disabled=true;$('askIn').value='';$('askNote').textContent='';
+  const hist=chats[L.st];hist.push({role:'user',content:q});addMsg('me',q);const out=addMsg('bot','המדריכה חושבת... 🤔');
+  const les=LES[L.st],sl=les.slides[L.i];
+  try{
+    const r=await fetch(ASK_URL,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},
+      body:JSON.stringify({topic:les.name,slide:sl.t+': '+sl.x.replace(/<[^>]+>/g,''),turns:hist.slice(-8)})});
+    const d=await r.json();
+    if(!d||!d.text)throw{code:d&&d.error||'upstream'};
+    out.textContent=d.text;hist.push({role:'assistant',content:d.text});
+  }catch(e){hist.pop();const code=e&&e.code;out.parentNode.classList.add('retry');
+    out.textContent='↩ '+(code==='limit'?'המדריכה ענתה על הרבה שאלות היום וצריכה לנוח. נסי שוב מחר!':'משהו השתבש. נסי לשאול שוב.');}
+  finally{busy=false;$('askBtn').disabled=false;}}
+$('askForm').addEventListener('submit',e=>{e.preventDefault();ask($('askIn').value);});
+$('ask').hidden=false;
+
+/* speech in */
+const SR=window.SpeechRecognition||window.webkitSpeechRecognition;let rec=null,recOn=false;
+if(SR){$('mic').hidden=false;
+  $('mic').onclick=()=>{if(recOn){try{rec.stop();}catch(e){}return;}
+    try{rec=new SR();rec.lang='he-IL';rec.interimResults=true;rec.maxAlternatives=1;
+      rec.onresult=ev=>{let s='';for(const r of ev.results)s+=r[0].transcript;$('askIn').value=s;if(ev.results[ev.results.length-1].isFinal){ask(s);}};
+      rec.onerror=ev=>{$('askNote').textContent=ev.error==='not-allowed'||ev.error==='service-not-allowed'?'המיקרופון לא זמין כאן. אפשר ללחוץ על המיקרופון שבמקלדת של הטלפון ולהגיד את השאלה.':'לא שמעתי טוב. נסי שוב.';};
+      rec.onend=()=>{recOn=false;$('mic').classList.remove('rec');};
+      rec.start();recOn=true;$('mic').classList.add('rec');$('askNote').textContent='אני מקשיבה... 👂';}
+    catch(e){$('askNote').textContent='המיקרופון לא זמין כאן. אפשר ללחוץ על המיקרופון שבמקלדת של הטלפון ולהגיד את השאלה.';}};}
+else{$('mic').hidden=false;$('mic').onclick=()=>{$('askIn').focus();$('askNote').textContent='כדי לשאול בקול: לחצי על המיקרופון שבמקלדת של הטלפון או המחשב, ואז הגידי את השאלה.';};}
+
+/* ---------- tabs & loop ---------- */
+document.querySelectorAll('nav button').forEach(b=>b.addEventListener('click',()=>{
+  active=b.dataset.st;document.querySelectorAll('nav button').forEach(x=>x.setAttribute('aria-selected',x===b));
+  if(!seen[active])openLesson(active,0);else{stopSpeak();mode='game';setView();}
+}));
+if(!seen.atom)openLesson('atom',0);else{mode='game';setView();}
+function loop(){
+  if(mode==='lesson'){drawLesson();}
+  else if(active==='atom'){updAtom();drawAtom();}
+  else if(active==='mol'){updMol();drawMol();}
+  else if(active==='acid'){updAcid();drawAcid();}
+  else{updHeat();drawHeat();}
+  fxStep();requestAnimationFrame(loop);
+}
+if(document.fonts&&document.fonts.ready)document.fonts.ready.then(()=>{});
+loop();
+})();
+</script>
+<script>
+if('serviceWorker' in navigator)addEventListener('load',()=>navigator.serviceWorker.register('sw.js').catch(()=>{}));
+</script>
+</body>
+</html>
