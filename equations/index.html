@@ -142,6 +142,40 @@ canvas.cv{width:100%;height:auto;display:block;background:var(--surface-100);bor
 .askrow input{flex:1;min-width:0;min-height:var(--touch-min);font-family:var(--font);font-size:18px;padding:var(--space-2) var(--space-4);border-radius:var(--radius-sm);border:2px solid var(--line);background:var(--surface-100);color:var(--ink)}
 .icon-btn.rec{background:var(--primary);border-color:var(--primary)}
 #fx{position:fixed;inset:0;width:100%;height:100%;pointer-events:none;z-index:50}
+/* טלפון: הרמות בשורה אחת, וכפתורי הפעולה ולוח המספרים עולים מיד מתחת למשוואה, לפני המאזניים */
+@media (max-width:600px){
+  .wrap{gap:var(--space-4)}
+  .tracks button{min-height:56px}
+  .tracks button small{display:none}
+  .levels{flex-wrap:nowrap;gap:6px}
+  .levels button{min-width:0;flex:1 1 0;padding:0 4px;font-size:15px;white-space:nowrap}
+  #practice>.stage{order:2}
+  .coach .bubble{flex:1 1 calc(100% - 56px)}
+  .coach .helpbtn{margin-inline-start:56px}
+  .eqbox{min-height:88px;padding:var(--space-2)}
+  .eqmain{font-size:clamp(24px,7.4vw,34px);line-height:1.35}
+  .ops{grid-template-columns:repeat(auto-fit,minmax(140px,1fr))}
+  .ops button{font-size:16px}
+  .pad button{min-height:52px}
+}
+/* טאבלט לרוחב (כמו Galaxy Tab S11): ראש הדף קומפקטי, המאזניים בעמודה אחת,
+   והבועה, המשוואה והכפתורים בעמודה שלידם, כדי שלא צריך לגלול בכל צעד */
+@media (orientation:landscape) and (min-width:900px) and (min-height:560px) and (max-height:900px){
+  .wrap{gap:12px}
+  .card{padding:var(--space-4)}
+  .tracks button{min-height:52px}
+  .tracks button small{display:none}
+  #practice{display:grid;grid-template-columns:minmax(0,1.1fr) minmax(0,1fr);gap:12px 18px;align-items:start;align-content:start}
+  #practice>*{grid-column:2}
+  #practice>.stage{display:contents}
+  #practice>.stage>canvas{grid-column:1;grid-row:1/span 9}
+  #practice>.stage>.side{grid-column:2;order:5}
+  #practice .eqbox{min-height:88px}
+  .eqmain{font-size:38px;line-height:50px}
+  .pad{gap:6px}
+  .pad button{min-height:var(--touch-min);font-size:22px}
+  canvas.cv{max-width:calc((100svh - 200px) * var(--ar,1.4));margin-inline:auto}
+}
 @media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
 [hidden]{display:none!important}img{max-width:100%}:root{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
 </style>
@@ -287,7 +321,7 @@ const C={};
 function readColors(){const s=getComputedStyle(document.documentElement);['surface-100','surface-200','ink','ink-muted','line','primary','accent','correct','retry','yvar'].forEach(k=>C[k]=s.getPropertyValue('--'+k).trim()||'#888');}
 readColors();
 const DPR=Math.min(2,window.devicePixelRatio||1);
-function setup(cv,W,H){cv.width=W*DPR;cv.height=H*DPR;const c=cv.getContext('2d');c.setTransform(DPR,0,0,DPR,0,0);return c;}
+function setup(cv,W,H){cv.width=W*DPR;cv.height=H*DPR;cv.style.setProperty('--ar',W/H);const c=cv.getContext('2d');c.setTransform(DPR,0,0,DPR,0,0);return c;}
 function rr(c,x,y,w,h,r){c.beginPath();c.moveTo(x+r,y);c.arcTo(x+w,y,x+w,y+h,r);c.arcTo(x+w,y+h,x,y+h,r);c.arcTo(x,y+h,x,y,r);c.arcTo(x,y,x+w,y,r);c.closePath();}
 function txt(c,s,x,y,size,col,w,dir){c.fillStyle=col;c.font=`${w||600} ${size}px Rubik, sans-serif`;c.textAlign='center';c.textBaseline='middle';c.direction=dir||'ltr';c.fillText(s,x,y);}
 function cfrac(c,top,bot,x,y,size,col){txt(c,top,x,y-size*.55,size,col,700);txt(c,bot,x,y+size*.6,size,col,700);c.font=`700 ${size}px Rubik, sans-serif`;const w=Math.max(c.measureText(top).width,c.measureText(bot).width)+6;c.strokeStyle=col;c.lineWidth=2;c.beginPath();c.moveTo(x-w/2,y+1);c.lineTo(x+w/2,y+1);c.stroke();}
@@ -604,7 +638,10 @@ function renderEq(){const c=R.cur,box=$('eq');
   if(c.kind==='two'&&(c.phase==='elim'||c.phase==='mulblank')){const sl=slotsHtml(c),E1=c.pend&&c.pend.key==='E1'?c.pend.e:c.sys.E1,E2=c.pend&&c.pend.key==='E2'?c.pend.e:c.sys.E2;
     box.innerHTML=`<div class="ln"><span class="tag">①</span>${sysLineH(E1,sl.E1)}</div><div class="ln"><span class="tag">②</span>${sysLineH(E2,sl.E2)}</div>`;return;}
   box.innerHTML=`<div class="ln">${eqH(c.st,slotsHtml(c))}</div>`+(c.kind==='two'&&c.solved.first?`<div class="ln small">${c.solved.first}</div>`:'');}
-function startBlanks(list,msg){const c=R.cur;c.blanks=list;c.bi=0;c.typed='';c.phase=c.phase==='mulblank'?'mulblank':'blank';$('opsWrap').hidden=true;$('pad').hidden=false;renderEq();say(msg||(list.length>1?`עכשיו חשבי בעצמך את ${list.length} המספרים החדשים, אחד אחרי השני.`:'עכשיו חשבי: איזה מספר נכנס במקום סימן השאלה?'));}
+function startBlanks(list,msg){const c=R.cur;c.blanks=list;c.bi=0;c.typed='';c.phase=c.phase==='mulblank'?'mulblank':'blank';$('opsWrap').hidden=true;$('pad').hidden=false;renderEq();say(msg||(list.length>1?`עכשיו חשבי בעצמך את ${list.length} המספרים החדשים, אחד אחרי השני.`:'עכשיו חשבי: איזה מספר נכנס במקום סימן השאלה?'));padIntoView();}
+// במסך נמוך (טלפון) גוללים כך שכל לוח המספרים ייראה, בלי שהמשוואה תצא מהמסך
+function padIntoView(){requestAnimationFrame(()=>{const p=$('pad').getBoundingClientRect(),e=$('eq').getBoundingClientRect();if(p.bottom<=innerHeight)return;
+  scrollBy({top:Math.max(0,Math.min(p.bottom-innerHeight+12,e.top-8)),behavior:reduce?'auto':'smooth'});});}
 function renderOps(){const c=R.cur,box=$('ops');box.innerHTML='';
   let list;if(c.kind==='two'&&c.phase==='elim')list=options2(c.sys);else list=options(c.st);
   c.opts=list;list.forEach((o,i)=>{const b=document.createElement('button');b.textContent=o.label;b.onclick=()=>choose(o,b);box.appendChild(b);});
