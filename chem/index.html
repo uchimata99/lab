@@ -285,6 +285,13 @@ button:focus-visible,input:focus-visible{outline:3px solid var(--ink);outline-of
 .pt-legend{display:flex;flex-wrap:wrap;gap:6px 14px;font-size:14px;color:var(--ink-muted)}
 .pt-legend span{display:inline-flex;align-items:center;gap:6px}
 .pt-legend i{width:14px;height:14px;border-radius:4px;border:1px solid var(--line)}
+.xstage{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:18px;align-items:start}
+@media (max-width:720px){.xstage{grid-template-columns:1fr}}
+.xstage>*{min-width:0}
+canvas.xcv{touch-action:auto;cursor:default}
+.xchips{display:flex;flex-wrap:wrap;gap:6px}
+.xchips button{min-height:var(--touch-min);border:2px solid var(--line);background:var(--surface-100);color:var(--ink);border-radius:var(--radius-md);font-family:var(--font);font-size:16px;font-weight:600;padding:var(--space-2) 12px;cursor:pointer}
+.xchips button[aria-pressed="true"]{border-color:var(--primary);background:var(--lab-soft);outline:2px solid var(--primary);outline-offset:1px}
 /* טאבלט ומעלה: הטבלה המחזורית נכנסת לרוחב בלי גלילה */
 @media (min-width:721px){.pt{min-width:0;grid-template-columns:repeat(18,minmax(0,1fr))}}
 #fx{position:fixed;inset:0;width:100%;height:100%;pointer-events:none;z-index:50}
@@ -438,6 +445,23 @@ button:focus-visible,input:focus-visible{outline:3px solid var(--ink);outline-of
     <div class="pt-scroll" dir="ltr"><div class="pt" id="ptGrid"></div></div>
     <p class="pt-info" id="ptInfo">כל משבצת היא יסוד אחר. המספר הקטן הוא המספר האטומי: כמה פרוטונים יש בגרעין.</p>
     <div class="pt-legend" id="ptLegend"></div>
+  </section>
+
+  <!-- EXPLORERS: פינת הסבר לכל תחנה -->
+  <section class="card" id="x-mol" hidden>
+    <div class="lhead"><h2>אלבום המולקולות</h2><p class="small">לחצי על מולקולה כדי לראות ממה היא בנויה</p></div>
+    <div class="xstage"><canvas class="cv xcv" id="xMolCv" aria-label="ציור של המולקולה שנבחרה"></canvas>
+      <div class="side"><div class="xchips" id="xMolChips"></div><p class="pt-info" id="xMolInfo"></p></div></div>
+  </section>
+  <section class="card" id="x-acid" hidden>
+    <div class="lhead"><h2>סולם החומציות</h2><p class="small">לחצי על חומר כדי לראות איפה הוא על הסולם</p></div>
+    <div class="xstage"><canvas class="cv xcv" id="xAcidCv" aria-label="סולם חומציות מ־0 עד 14"></canvas>
+      <div class="side"><div class="xchips" id="xAcidChips"></div><p class="pt-info" id="xAcidInfo"></p></div></div>
+  </section>
+  <section class="card" id="x-heat" hidden>
+    <div class="lhead"><h2>מתי חומרים נמסים ורותחים?</h2><p class="small">לחצי על חומר כדי לראות את המצבים שלו</p></div>
+    <div class="xstage"><canvas class="cv xcv" id="xHeatCv" aria-label="ציר טמפרטורה עם מוצק, נוזל וגז"></canvas>
+      <div class="side"><div class="xchips" id="xHeatChips"></div><p class="pt-info" id="xHeatInfo"></p></div></div>
   </section>
 </div>
 
@@ -1021,10 +1045,72 @@ function pickElement(z){PZ=PZ===z?0:z;
   const gap=document.createElement('div');gap.className='gap';gap.style.gridRow=8;g.appendChild(gap);
   $('ptLegend').innerHTML=PCAT.map(k=>`<span><i style="background:${k[2]}"></i>${k[1]}</span>`).join('');})();
 
+/* ---------- explorers: פינת הסבר לכל תחנה ---------- */
+const XW=420,XH=260;
+const andJoin=a=>a.reduce((s,x,i)=>i?s+(/^\d/.test(x)?' ו־':' ו')+x:x,'');
+const deg=v=>`<bdi dir="ltr">${v<0?'−'+(-v):v}°</bdi>`;
+function explorer(key,items,label,draw,info){const cv=$(key+'Cv'),c=setup(cv,XW,XH),chips=$(key+'Chips');let cur=0;
+  const pick=i=>{cur=i;[...chips.children].forEach((b,k)=>b.setAttribute('aria-pressed',k===i));c.clearRect(0,0,XW,XH);draw(c,items[i]);$(key+'Info').innerHTML=info(items[i]);};
+  items.forEach((it,i)=>{const b=document.createElement('button');b.type='button';b.innerHTML=label(it);b.onclick=()=>{pick(i);beep(520+i*20,.06,'sine',.04);};chips.appendChild(b);});
+  pick(0);if(document.fonts&&document.fonts.ready)document.fonts.ready.then(()=>pick(cur));}
+
+// אלבום המולקולות: המולקולות מהמשחק ועוד כמה
+const XMOLS=MOLS.map(m=>({name:m.name,f:m.f,atoms:m.atoms,bonds:m.bonds,fact:m.fact})).concat([
+ {name:'גז חנקן',f:[['N',2]],atoms:[['N',-28,0],['N',28,0]],bonds:[[0,1,3]],fact:'כמעט 8 מתוך כל 10 חלקים של האוויר הם חנקן. שלושה קווים הם קשר משולש, חזק מאוד!'},
+ {name:'אוזון',f:[['O',3]],atoms:[['O',0,-22],['O',-56,18],['O',56,18]],bonds:[[0,1,2],[0,2,1]],fact:'שלושה חמצנים יחד. שכבת אוזון גבוה בשמיים שומרת עלינו מקרני השמש המזיקות.'},
+ {name:'מימן כלורי',f:[['H',1],['Cl',1]],atoms:[['H',-36,0],['Cl',24,0]],bonds:[[0,1,1]],fact:'כשממיסים אותו במים הוא נהיה חומצה חזקה. חומצה כזו יש בקיבה, והיא עוזרת לעכל את האוכל.'},
+ {name:'מי חמצן',f:[['H',2],['O',2]],atoms:[['O',-28,-8],['O',28,8],['H',-62,30],['H',62,-30]],bonds:[[0,1,1],[0,2,1],[1,3,1]],fact:'כמו מים, אבל עם עוד חמצן. משתמשים בו לחיטוי פצעים, ורק מבוגר מטפל בו.'}]);
+explorer('xMol',XMOLS,m=>m.name,(c,m)=>{const s=1.35,cx=XW/2,cy=XH/2-12,P=m.atoms.map(([,x,y])=>[cx+x*s,cy+y*s]);
+  m.bonds.forEach(([a,b,o])=>{const[x1,y1]=P[a],[x2,y2]=P[b],L=Math.hypot(x2-x1,y2-y1)||1,nx=-(y2-y1)/L,ny=(x2-x1)/L;c.strokeStyle=C.ink;c.lineWidth=5;
+    for(let k=0;k<o;k++){const off=(k-(o-1)/2)*9;c.beginPath();c.moveTo(x1+nx*off,y1+ny*off);c.lineTo(x2+nx*off,y2+ny*off);c.stroke();}});
+  m.atoms.forEach(([el],i)=>ball(c,P[i][0],P[i][1],ELS[el].r*1.15,ELS[el].c,el,ELS[el].t));
+  c.fillStyle=C.ink;c.font='700 26px Rubik,sans-serif';c.textAlign='center';c.textBaseline='alphabetic';c.direction='ltr';
+  let x=cx-m.f.reduce((w,[e,n])=>w+c.measureText(e).width+(n>1?14:0),0)/2;c.textAlign='left';
+  m.f.forEach(([e,n])=>{c.font='700 26px Rubik,sans-serif';c.fillText(e,x,XH-18);x+=c.measureText(e).width;if(n>1){c.font='700 16px Rubik,sans-serif';c.fillText(String(n),x+1,XH-10);x+=14;}});},
+ m=>`<b>${m.name}</b> (${fHTML(m.f)}): ${andJoin(m.f.map(([e,n])=>n===1?`אטום ${ELS[e].n} אחד`:`${n} אטומי ${ELS[e].n}`))}. ${m.fact}`);
+
+// סולם החומציות: החומרים מהמשחק ועוד כמה, מסודרים מהחומצי ביותר לבסיסי ביותר
+const XSUBS=SUBS.map(s=>({e:s.e,n:s.n,ph:s.ph,f:s.f})).concat([
+ {e:'🥤',n:'קולה',ph:2.5,f:'קולה חומצית למדי. לכן כדאי לשטוף את הפה במים אחרי שותים אותה.'},
+ {e:'☕',n:'קפה',ph:5,f:'קפה קצת חומצי.'},
+ {e:'🩸',n:'דם',ph:7.4,f:'הדם שלנו טיפ־טיפה בסיסי, והגוף שומר שהוא יישאר בדיוק כך.'},
+ {e:'🌊',n:'מי ים',ph:8.1,f:'מי הים קצת בסיסיים.'},
+ {e:'🧴',n:'אקונומיקה',ph:12.5,f:'אקונומיקה בסיסית מאוד ומסוכנת: לא נוגעים בה, ולעולם לא מערבבים אותה עם חומרי ניקוי אחרים!'}]).sort((a,b)=>a.ph-b.ph);
+explorer('xAcid',XSUBS,s=>`${s.e} ${s.n}`,(c,s)=>{const x0=30,x1=XW-30,y=150,h=34,X=v=>x0+v/14*(x1-x0);
+  for(let v=0;v<14;v+=.25){c.fillStyle=indColor(v);c.fillRect(X(v),y,X(v+.25)-X(v)+1,h);}
+  c.strokeStyle=C.ink;c.lineWidth=2;rr(c,x0,y,x1-x0,h,8);c.stroke();
+  c.fillStyle=C.ink;c.font='600 14px Rubik,sans-serif';c.textAlign='center';c.textBaseline='top';c.direction='ltr';for(let v=0;v<=14;v+=2)c.fillText(String(v),X(v),y+h+6);
+  text(c,'חומצי',X(1.5),y+h+38,16,C.ink,700);text(c,'ניטרלי',X(7),y+h+38,16,C.ink,700);text(c,'בסיסי',X(12.5),y+h+38,16,C.ink,700);
+  const mx=X(s.ph);c.fillStyle=C.ink;c.beginPath();c.moveTo(mx,y-4);c.lineTo(mx-9,y-18);c.lineTo(mx+9,y-18);c.closePath();c.fill();
+  emoji(c,s.e,clamp(mx,40,XW-40),y-62,48);c.font='700 16px Rubik,sans-serif';c.textBaseline='middle';c.fillStyle=C.ink;c.fillText(String(s.ph),clamp(mx,40,XW-40),y-26);},
+ s=>{const k=kindOf(s.ph),very=s.ph<=3||s.ph>=11?' מאוד':'';return `${s.e} <b>${s.n}</b>: רמת חומציות (pH) <bdi>${s.ph}</bdi>, כלומר ${KN[k]}${very}. מיץ כרוב סגול יהפוך בו לצבע ${KC[k]}. ${s.f} <span class="small">ככל שהמספר קטן יותר, החומר חומצי יותר. 7 הוא בדיוק באמצע.</span>`;});
+
+// מתי חומרים נמסים ורותחים (b:null פירושו שהחומר נשרף או מתפרק לפני שהוא רותח)
+const XHEAT=[
+ {e:'💧',n:'מים',m:0,b:100,f:'בבית אנחנו פוגשים מים בכל שלושת המצבים: קרח במקפיא, מים בברז ואדים מהקומקום.'},
+ {e:'🍫',n:'שוקולד',m:34,b:null,f:'שוקולד נמס קצת מתחת לחום הגוף, ולכן הוא נמס ביד ובפה. אם מחממים אותו הרבה הוא נשרף, ולא רותח.'},
+ {e:'🕯️',n:'שעוות נר',m:60,b:370,f:'הלהבה ממיסה את השעווה, והפתיל מושך את השעווה הנוזלית למעלה כדי שתבער.'},
+ {e:'🧪',n:'אלכוהול',m:-114,b:78,f:'אלכוהול רותח הרבה לפני המים, ולכן הוא מתאדה מהר מאוד מהיד.'},
+ {e:'🌬️',n:'חמצן',m:-218,b:-183,f:'חמצן הוא גז בכל טמפרטורה שיש על כדור הארץ. כדי שיהיה נוזל צריך לקרר אותו מאוד מאוד.'},
+ {e:'🌡️',n:'כספית',m:-39,b:357,f:'כספית היא מתכת שנוזלית בטמפרטורת החדר. פעם שמו אותה במדחומים. היא רעילה, ולא נוגעים בה.'},
+ {e:'🧂',n:'מלח',m:801,b:1465,f:'מלח נשאר מוצק עד חום עצום. מה שקורה במים הוא המסה, לא היתוך.'},
+ {e:'🥇',n:'זהב',m:1064,b:2856,f:'צורפים ממיסים זהב בתנור מיוחד ויוצקים אותו לתבניות של תכשיטים.'},
+ {e:'⚙️',n:'ברזל',m:1538,b:2862,f:'ברזל נמס רק בתנור ענק של מפעל פלדה.'}];
+const stateAt=(s,T)=>T<s.m?'מוצק':s.b==null||T<s.b?'נוזל':'גז';
+explorer('xHeat',XHEAT,s=>`${s.e} ${s.n}`,(c,s)=>{const top=Math.max(s.b==null?s.m+120:s.b,20),lo0=Math.min(s.m,20),pad=(top-lo0)*.18+10,lo=lo0-pad,hi=top+pad,x0=24,x1=XW-24,y=112,h=48,X=v=>x0+(v-lo)/(hi-lo)*(x1-x0);
+  const zones=[[lo,s.m,'#cfe6ff','🧊','מוצק'],[s.m,s.b==null?hi:s.b,'#7fb3ec','💧','נוזל']];if(s.b!=null)zones.push([s.b,hi,'#eef2f6','☁️','גז']);
+  zones.forEach(([a,b,col,em,lb])=>{c.fillStyle=col;c.fillRect(X(a),y,X(b)-X(a),h);const w=X(b)-X(a);if(w>54){emoji(c,em,(X(a)+X(b))/2,y-24,26);text(c,lb,(X(a)+X(b))/2,y+h/2,16,C.ink,700);}});
+  c.strokeStyle=C.ink;c.lineWidth=2;rr(c,x0,y,x1-x0,h,8);c.stroke();
+  c.font='700 15px Rubik,sans-serif';c.textAlign='center';c.textBaseline='top';c.direction='ltr';c.fillStyle=C.ink;
+  [[s.m,'נמס'],...(s.b!=null?[[s.b,'רותח']]:[])].forEach(([v,lb],i)=>{c.beginPath();c.moveTo(X(v),y);c.lineTo(X(v),y+h+8);c.stroke();c.fillText((v<0?'−'+(-v):v)+'°',clamp(X(v),26,XW-26),y+h+10+(i&&X(s.b)-X(s.m)<60?20:0));});
+  const rx=X(20);c.strokeStyle=C.lab;c.lineWidth=3;c.setLineDash([5,5]);c.beginPath();c.moveTo(rx,y-6);c.lineTo(rx,y+h+6);c.stroke();c.setLineDash([]);
+  text(c,'🏠 טמפרטורת החדר',clamp(rx,80,XW-80),y+h+62,15,C.lab,700);},
+ s=>`${s.e} <b>${s.n}</b>: נמס ב־${deg(s.m)}${s.b!=null?` ורותח ב־${deg(s.b)}`:''}. בטמפרטורת החדר (${deg(20)}) הוא <b>${stateAt(s,20)}</b>. ${s.f}`);
+
 let seen={};try{seen=JSON.parse(localStorage.getItem('chemLessons')||'{}')||{};}catch(e){}
 const L={st:null,i:0,t:0,sim:null};
 let active='atom',mode='lesson';
-function setView(){ $('lesson').hidden=mode!=='lesson';['atom','mol','acid','heat'].forEach(k=>$('st-'+k).hidden=(mode==='lesson'||k!==active));$('ptable').hidden=active!=='atom'; }
+function setView(){ $('lesson').hidden=mode!=='lesson';['atom','mol','acid','heat'].forEach(k=>$('st-'+k).hidden=(mode==='lesson'||k!==active));$('ptable').hidden=active!=='atom';['mol','acid','heat'].forEach(k=>$('x-'+k).hidden=active!==k); }
 function openLesson(st,i){stopSpeak();L.st=st;L.i=i||0;mode='lesson';renderSlide();renderChat();setView();}
 function renderSlide(){const les=LES[L.st],s=les.slides[L.i];L.t=0;L.sim=s.sim?makeSim(s.sim,s.sim==='solid'?15:14):null;
   $('lTitle').textContent=les.name+': '+s.t;const tx=$('lText');tx.innerHTML=s.x;tx.classList.remove('pop');void tx.offsetWidth;tx.classList.add('pop');
