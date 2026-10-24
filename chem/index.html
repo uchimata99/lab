@@ -248,6 +248,29 @@ button:focus-visible,input:focus-visible{outline:3px solid var(--ink);outline-of
 .askrow input{font-family:var(--font);min-height:var(--touch-min);border-radius:var(--radius-sm);border-color:var(--line);background:var(--surface-100)}
 .icon-btn.rec{background:var(--primary);border-color:var(--primary)}
 .helpbtn{min-height:var(--touch-min);border-color:var(--line);background:var(--surface-100);border-radius:var(--radius-md);font-family:var(--font);font-size:16px;padding:var(--space-2) var(--space-4)}
+/* טלפון: כפתור ההסבר יורד לשורה משלו מתחת לבועה, כדי שהבועה תקבל את כל הרוחב */
+@media (max-width:600px){
+  .coach{flex-wrap:wrap}
+  .coach .bubble{flex:1 1 calc(100% - 56px)}
+  .coach .helpbtn{margin-inline-start:56px;align-self:flex-start}
+}
+/* טאבלט לרוחב (כמו Galaxy Tab S11): ראש הדף קומפקטי, בועת המדריכה עוברת לעמודה שליד הקנבס,
+   והקנבס לא גבוה מהמסך, כדי שלא צריך לגלול באמצע גרירה */
+@media (orientation:landscape) and (min-width:900px) and (min-height:560px) and (max-height:900px){
+  .wrap{gap:12px}
+  h1{font-size:28px;line-height:34px}
+  nav button{min-height:52px}
+  nav button small{display:none}
+  section.card[id^="st-"]{display:grid;grid-template-columns:minmax(0,1.2fr) minmax(0,1fr);grid-template-rows:auto 1fr;gap:12px 18px;align-items:start}
+  section.card[id^="st-"]>.coach{grid-column:2;grid-row:1}
+  section.card[id^="st-"]>.stage{display:contents}
+  section.card[id^="st-"]>.stage>:first-child{grid-column:1;grid-row:1/span 2}
+  section.card[id^="st-"]>.stage>:last-child{grid-column:2;grid-row:2}
+  .coach{flex-wrap:wrap}
+  .coach .bubble{flex:1 1 calc(100% - 56px)}
+  .coach .helpbtn{margin-inline-start:56px;align-self:flex-start}
+  canvas.cv{max-width:calc((100svh - 200px) * var(--ar,1.4));margin-inline:auto}
+}
 .pt-scroll{overflow-x:auto;padding-bottom:4px}
 .pt{display:grid;grid-template-columns:repeat(18,minmax(36px,1fr));gap:3px;min-width:700px}
 .pt button,.pt .ph{aspect-ratio:1;border:1.5px solid color-mix(in srgb,var(--line) 60%,transparent);border-radius:6px;padding:2px 0 0;display:flex;flex-direction:column;align-items:center;justify-content:center;line-height:1;color:var(--ink);font-family:var(--font)}
@@ -262,6 +285,8 @@ button:focus-visible,input:focus-visible{outline:3px solid var(--ink);outline-of
 .pt-legend{display:flex;flex-wrap:wrap;gap:6px 14px;font-size:14px;color:var(--ink-muted)}
 .pt-legend span{display:inline-flex;align-items:center;gap:6px}
 .pt-legend i{width:14px;height:14px;border-radius:4px;border:1px solid var(--line)}
+/* טאבלט ומעלה: הטבלה המחזורית נכנסת לרוחב בלי גלילה */
+@media (min-width:721px){.pt{min-width:0;grid-template-columns:repeat(18,minmax(0,1fr))}}
 #fx{position:fixed;inset:0;width:100%;height:100%;pointer-events:none;z-index:50}
 @media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
 [hidden]{display:none!important}img{max-width:100%}body{margin:0}:root{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
@@ -430,7 +455,7 @@ try{matchMedia('(prefers-color-scheme: dark)').addEventListener('change',readCol
 new MutationObserver(readColors).observe(document.documentElement,{attributes:true,attributeFilter:['data-theme']});
 
 const DPR=Math.min(2,window.devicePixelRatio||1);
-function setup(cv,W,H){cv.width=W*DPR;cv.height=H*DPR;const c=cv.getContext('2d');c.setTransform(DPR,0,0,DPR,0,0);return c;}
+function setup(cv,W,H){cv.width=W*DPR;cv.height=H*DPR;cv.style.setProperty('--ar',W/H);const c=cv.getContext('2d');c.setTransform(DPR,0,0,DPR,0,0);return c;}
 function pt(cv,W,H,e){const r=cv.getBoundingClientRect();return{x:(e.clientX-r.left)/r.width*W,y:(e.clientY-r.top)/r.height*H};}
 function toClient(cv,W,H,x,y){const r=cv.getBoundingClientRect();return{x:r.left+x/W*r.width,y:r.top+y/H*r.height};}
 function hexRgb(h){h=h.replace('#','');if(h.length===3)h=h.split('').map(x=>x+x).join('');return[parseInt(h.slice(0,2),16),parseInt(h.slice(2,4),16),parseInt(h.slice(4,6),16)];}
