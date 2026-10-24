@@ -453,6 +453,11 @@ canvas.xcv{touch-action:auto;cursor:default}
     <div class="xstage"><canvas class="cv xcv" id="xMolCv" aria-label="ציור של המולקולה שנבחרה"></canvas>
       <div class="side"><div class="xchips" id="xMolChips"></div><p class="pt-info" id="xMolInfo"></p></div></div>
   </section>
+  <section class="card" id="x-bond" hidden>
+    <div class="lhead"><h2>סוגי קשרים</h2><p class="small">לחצי על סוג קשר כדי לראות מה קורה לאלקטרונים</p></div>
+    <div class="xstage"><canvas class="cv xcv" id="xBondCv" aria-label="ציור של שני אטומים והאלקטרונים שמחברים ביניהם"></canvas>
+      <div class="side"><div class="xchips" id="xBondChips"></div><p class="pt-info" id="xBondInfo"></p></div></div>
+  </section>
   <section class="card" id="x-acid" hidden>
     <div class="lhead"><h2>סולם החומציות</h2><p class="small">לחצי על חומר כדי לראות איפה הוא על הסולם</p></div>
     <div class="xstage"><canvas class="cv xcv" id="xAcidCv" aria-label="סולם חומציות מ־0 עד 14"></canvas>
@@ -938,11 +943,16 @@ function arrowLbl(c,x1,y1,x2,y2,s){c.strokeStyle=C.ink;c.lineWidth=2;c.beginPath
 function makeSim(mode,n){const ps=[];for(let i=0;i<(n||14);i++){const c=i%5,r=Math.floor(i/5);ps.push({x:80+Math.random()*260,y:60+Math.random()*180,vx:0,vy:0,ang:Math.random()*6,lx:130+c*40,ly:230-r*40});}
   return(c,t)=>{rr(c,40,24,340,250,16);c.strokeStyle=C.muted;c.lineWidth=3;c.stroke();
     const sp=mode==='solid'?1:mode==='liquid'?1.6:4;
-    for(const p of ps){p.ang+=.03*sp;
-      if(mode==='solid'){p.x=lerp(p.x,p.lx+Math.sin(t*.5+p.lx)*2,.1);p.y=lerp(p.y,p.ly+Math.cos(t*.6+p.ly)*2,.1);}
-      else{p.vx+=(Math.random()-.5)*sp*.4;p.vy+=(Math.random()-.5)*sp*.4+(mode==='liquid'?.2:0);const v=Math.hypot(p.vx,p.vy)||1,mx=mode==='gas'?sp:sp*1.2;if(mode==='gas'||v>mx){p.vx*=mx/v;p.vy*=mx/v;}
-        p.x+=p.vx;p.y+=p.vy;if(p.x<56){p.x=56;p.vx=Math.abs(p.vx);}if(p.x>364){p.x=364;p.vx=-Math.abs(p.vx);}if(p.y<40){p.y=40;p.vy=Math.abs(p.vy);}if(p.y>258){p.y=258;p.vy=-Math.abs(p.vy)*(mode==='liquid'?.4:1);}}
-      wmol(c,p.x,p.y,p.ang);}};}
+    if(mode==='solid')for(const p of ps){p.x=lerp(p.x,p.lx+Math.sin(t*.5+p.lx)*2,.1);p.y=lerp(p.y,p.ly+Math.cos(t*.6+p.ly)*2,.1);}
+    else{const liq=mode==='liquid';
+      for(const p of ps){const k=liq?.7:.4;p.vx+=(Math.random()-.5)*sp*k;p.vy+=(Math.random()-.5)*sp*k+(liq?.05:0);const v=Math.hypot(p.vx,p.vy)||1,mx=liq?sp*1.2:sp;
+        if(!liq||v>mx){p.vx*=mx/v;p.vy*=mx/v;}if(liq){p.vx*=.97;p.vy*=.97;}}
+      // המולקולות דוחות זו את זו כשהן קרובות מדי, ובנוזל גם נמשכות קצת: כך הנוזל נערם לכמה שכבות ולא לשורה אחת על הרצפה
+      for(let i=0;i<ps.length;i++)for(let j=i+1;j<ps.length;j++){const a=ps[i],b=ps[j],dx=b.x-a.x,dy=b.y-a.y,d=Math.hypot(dx,dy)||.01;
+        if(d<26){const f=(26-d)*.12;a.vx-=dx/d*f;a.vy-=dy/d*f;b.vx+=dx/d*f;b.vy+=dy/d*f;}
+        else if(liq&&d<40){const f=.03;a.vx+=dx/d*f;a.vy+=dy/d*f;b.vx-=dx/d*f;b.vy-=dy/d*f;}}
+      for(const p of ps){p.x+=p.vx;p.y+=p.vy;if(p.x<56){p.x=56;p.vx=Math.abs(p.vx);}if(p.x>364){p.x=364;p.vx=-Math.abs(p.vx);}if(p.y<40){p.y=40;p.vy=Math.abs(p.vy);}if(p.y>258){p.y=258;p.vy=-Math.abs(p.vy)*(liq?.4:1);}}}
+    for(const p of ps){p.ang+=.03*sp;wmol(c,p.x,p.y,p.ang);}};}
 const LES={
  atom:{name:'מה זה אטום?',slides:[
   {t:'הכול עשוי מאטומים',x:'השולחן, המים, האוויר ואפילו את: הכול בנוי מחלקיקים קטנטנים שנקראים <b>אטומים</b>. הם כל כך קטנים, שבנקודה אחת בסוף משפט יש יותר אטומים ממספר האנשים בעולם!',
@@ -1055,19 +1065,41 @@ function explorer(key,items,label,draw,info){const cv=$(key+'Cv'),c=setup(cv,XW,
   pick(0);if(document.fonts&&document.fonts.ready)document.fonts.ready.then(()=>pick(cur));}
 
 // אלבום המולקולות: המולקולות מהמשחק ועוד כמה
-const XMOLS=MOLS.map(m=>({name:m.name,f:m.f,atoms:m.atoms,bonds:m.bonds,fact:m.fact})).concat([
+const XMOLS=MOLS.map(m=>({name:m.name,f:m.f,atoms:m.atoms,bonds:m.bonds,fact:m.fact,ionic:m.f[0][0]==='Na'})).concat([
  {name:'גז חנקן',f:[['N',2]],atoms:[['N',-28,0],['N',28,0]],bonds:[[0,1,3]],fact:'כמעט 8 מתוך כל 10 חלקים של האוויר הם חנקן. שלושה קווים הם קשר משולש, חזק מאוד!'},
  {name:'אוזון',f:[['O',3]],atoms:[['O',0,-22],['O',-56,18],['O',56,18]],bonds:[[0,1,2],[0,2,1]],fact:'שלושה חמצנים יחד. שכבת אוזון גבוה בשמיים שומרת עלינו מקרני השמש המזיקות.'},
  {name:'מימן כלורי',f:[['H',1],['Cl',1]],atoms:[['H',-36,0],['Cl',24,0]],bonds:[[0,1,1]],fact:'כשממיסים אותו במים הוא נהיה חומצה חזקה. חומצה כזו יש בקיבה, והיא עוזרת לעכל את האוכל.'},
  {name:'מי חמצן',f:[['H',2],['O',2]],atoms:[['O',-28,-8],['O',28,8],['H',-62,30],['H',62,-30]],bonds:[[0,1,1],[0,2,1],[1,3,1]],fact:'כמו מים, אבל עם עוד חמצן. משתמשים בו לחיטוי פצעים, ורק מבוגר מטפל בו.'}]);
 explorer('xMol',XMOLS,m=>m.name,(c,m)=>{const s=1.35,cx=XW/2,cy=XH/2-12,P=m.atoms.map(([,x,y])=>[cx+x*s,cy+y*s]);
-  m.bonds.forEach(([a,b,o])=>{const[x1,y1]=P[a],[x2,y2]=P[b],L=Math.hypot(x2-x1,y2-y1)||1,nx=-(y2-y1)/L,ny=(x2-x1)/L;c.strokeStyle=C.ink;c.lineWidth=5;
+  if(m.ionic){P[0][0]-=14;P[1][0]+=14;c.strokeStyle=C.muted;c.lineWidth=3;c.setLineDash([6,6]);c.beginPath();c.moveTo(P[0][0],P[0][1]);c.lineTo(P[1][0],P[1][1]);c.stroke();c.setLineDash([]);}
+  else m.bonds.forEach(([a,b,o])=>{const[x1,y1]=P[a],[x2,y2]=P[b],L=Math.hypot(x2-x1,y2-y1)||1,nx=-(y2-y1)/L,ny=(x2-x1)/L;c.strokeStyle=C.ink;c.lineWidth=5;
     for(let k=0;k<o;k++){const off=(k-(o-1)/2)*9;c.beginPath();c.moveTo(x1+nx*off,y1+ny*off);c.lineTo(x2+nx*off,y2+ny*off);c.stroke();}});
   m.atoms.forEach(([el],i)=>ball(c,P[i][0],P[i][1],ELS[el].r*1.15,ELS[el].c,el,ELS[el].t));
+  if(m.ionic)[['+',C.p],['−',C.e]].forEach(([s,col],i)=>{const r=ELS[m.atoms[i][0]].r*1.15;ball(c,P[i][0]+r*.8,P[i][1]-r*.8,11,col,s,'#fff');});
   c.fillStyle=C.ink;c.font='700 26px Rubik,sans-serif';c.textAlign='center';c.textBaseline='alphabetic';c.direction='ltr';
   let x=cx-m.f.reduce((w,[e,n])=>w+c.measureText(e).width+(n>1?14:0),0)/2;c.textAlign='left';
   m.f.forEach(([e,n])=>{c.font='700 26px Rubik,sans-serif';c.fillText(e,x,XH-18);x+=c.measureText(e).width;if(n>1){c.font='700 16px Rubik,sans-serif';c.fillText(String(n),x+1,XH-10);x+=14;}});},
- m=>`<b>${m.name}</b> (${fHTML(m.f)}): ${andJoin(m.f.map(([e,n])=>n===1?`אטום ${ELS[e].n} אחד`:`${n} אטומי ${ELS[e].n}`))}. ${m.fact}`);
+ m=>`<b>${m.name}</b> (${fHTML(m.f)}): ${andJoin(m.f.map(([e,n])=>n===1?`אטום ${ELS[e].n} אחד`:`${n} אטומי ${ELS[e].n}`))}. ${bondText(m)} ${m.fact}`);
+function bondText(m){if(m.ionic)return 'הקשר כאן <b>יוני</b>: הנתרן נותן אלקטרון לכלור, ופלוס ומינוס נמשכים זה לזה.';
+  const n=[0,0,0,0];m.bonds.forEach(b=>n[b[2]]++);const nm=[null,['קשר יחיד','קשרים יחידים'],['קשר כפול','קשרים כפולים'],['קשר משולש','קשרים משולשים']];
+  return 'יש בה '+andJoin([1,2,3].filter(o=>n[o]).map(o=>n[o]===1?`<b>${nm[o][0]}</b> אחד`:`${n[o]} <b>${nm[o][1]}</b>`))+'.';}
+
+// סוגי קשרים: שיתוף זוג, שני זוגות או שלושה זוגות של אלקטרונים, או מסירה של אלקטרון (קשר יוני)
+const XBONDS=[
+ {k:'קשר יחיד',a:'H',b:'H',o:1,s:'H–H',x:'בקשר יחיד שני אטומים <b>משתפים</b> זוג אחד של אלקטרונים, כמו שני ילדים שמחזיקים יחד כדור. מסמנים אותו בקו אחד. לקשרים של שיתוף קוראים <b>קשרים קוולנטיים</b>. דוגמאות: גז מימן, מים ומתאן.'},
+ {k:'קשר כפול',a:'O',b:'O',o:2,s:'O=O',x:'בקשר כפול האטומים משתפים <b>שני זוגות</b> של אלקטרונים. הוא חזק יותר מקשר יחיד, ומסמנים אותו בשני קווים. דוגמאות: גז חמצן ופחמן דו־חמצני.'},
+ {k:'קשר משולש',a:'N',b:'N',o:3,s:'N≡N',x:'בקשר משולש האטומים משתפים <b>שלושה זוגות</b> של אלקטרונים. זה הקשר החזק מכולם, ומסמנים אותו בשלושה קווים. דוגמה: גז חנקן, שיש ממנו המון באוויר.'},
+ {k:'קשר יוני',a:'Na',b:'Cl',o:0,s:'Na⁺ Cl⁻',x:'כאן אטום אחד <b>נותן</b> אלקטרון לאטום אחר. הנתרן מאבד אלקטרון ונהיה חיובי (+), הכלור מקבל אלקטרון ונהיה שלילי (−), ופלוס ומינוס נמשכים זה לזה כמו מגנטים. כך נוצר מלח בישול.'}];
+explorer('xBond',XBONDS,b=>b.k,(c,b)=>{const y=112,R=66,ion=!b.o,xa=ion?118:162,xb=ion?302:258;
+  [[xa,b.a],[xb,b.b]].forEach(([x])=>{c.fillStyle='rgba(47,111,208,.07)';c.strokeStyle=C.line;c.lineWidth=2;c.setLineDash([4,6]);c.beginPath();c.arc(x,y,R,0,PI2);c.fill();c.stroke();c.setLineDash([]);});
+  if(!ion){const mx=(xa+xb)/2;for(let p=0;p<b.o;p++)for(let q=0;q<2;q++){const dy=(p-(b.o-1)/2)*24;ball(c,mx+(q?7:-7),y+dy,6,C.e,'','#fff');}
+    text(c,b.o===1?'זוג אלקטרונים משותף':b.o===2?'שני זוגות משותפים':'שלושה זוגות משותפים',mx,y+R+20,15,C.e,700);}
+  else{const ex=xb-R*.72,ey=y-R*.7;ball(c,ex,ey,7,C.e,'','#fff');c.strokeStyle=C.e;c.lineWidth=3;c.beginPath();c.moveTo(xa+R*.6,y-R*.75);c.quadraticCurveTo((xa+xb)/2,y-R*1.45,ex-10,ey-4);c.stroke();
+    c.beginPath();c.moveTo(ex-10,ey-4);c.lineTo(ex-22,ey-12);c.moveTo(ex-10,ey-4);c.lineTo(ex-20,ey+6);c.stroke();
+    text(c,'אלקטרון עובר',(xa+xb)/2,y-R*1.25,15,C.e,700);[['+',C.p,xa],['−',C.e,xb]].forEach(([s,col,x])=>ball(c,x+26,y-30,12,col,s,'#fff'));text(c,'נמשכים זה לזה 🧲',(xa+xb)/2,y+R+20,15,C.ink,700);}
+  [[xa,b.a],[xb,b.b]].forEach(([x,el])=>ball(c,x,y,ELS[el].r*1.2,ELS[el].c,el,ELS[el].t));
+  c.fillStyle=C.ink;c.font='700 26px Rubik,sans-serif';c.textAlign='center';c.textBaseline='alphabetic';c.direction='ltr';c.fillText(b.s,XW/2,XH-12);},
+ b=>`<b>${b.k}</b>: ${b.x}`);
 
 // סולם החומציות: החומרים מהמשחק ועוד כמה, מסודרים מהחומצי ביותר לבסיסי ביותר
 const XSUBS=SUBS.map(s=>({e:s.e,n:s.n,ph:s.ph,f:s.f})).concat([
@@ -1110,7 +1142,7 @@ explorer('xHeat',XHEAT,s=>`${s.e} ${s.n}`,(c,s)=>{const top=Math.max(s.b==null?s
 let seen={};try{seen=JSON.parse(localStorage.getItem('chemLessons')||'{}')||{};}catch(e){}
 const L={st:null,i:0,t:0,sim:null};
 let active='atom',mode='lesson';
-function setView(){ $('lesson').hidden=mode!=='lesson';['atom','mol','acid','heat'].forEach(k=>$('st-'+k).hidden=(mode==='lesson'||k!==active));$('ptable').hidden=active!=='atom';['mol','acid','heat'].forEach(k=>$('x-'+k).hidden=active!==k); }
+function setView(){ $('lesson').hidden=mode!=='lesson';['atom','mol','acid','heat'].forEach(k=>$('st-'+k).hidden=(mode==='lesson'||k!==active));$('ptable').hidden=active!=='atom';['mol','acid','heat'].forEach(k=>$('x-'+k).hidden=active!==k);$('x-bond').hidden=active!=='mol'; }
 function openLesson(st,i){stopSpeak();L.st=st;L.i=i||0;mode='lesson';renderSlide();renderChat();setView();}
 function renderSlide(){const les=LES[L.st],s=les.slides[L.i];L.t=0;L.sim=s.sim?makeSim(s.sim,s.sim==='solid'?15:14):null;
   $('lTitle').textContent=les.name+': '+s.t;const tx=$('lText');tx.innerHTML=s.x;tx.classList.remove('pop');void tx.offsetWidth;tx.classList.add('pop');
