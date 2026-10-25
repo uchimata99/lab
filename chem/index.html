@@ -48,11 +48,11 @@ h1 span{color:var(--accent)}
 .stars b.bump{animation:bump .5s}
 @keyframes bump{40%{transform:scale(1.6) rotate(20deg)}}
 .icon-btn{width:42px;height:42px;border-radius:50%;border:2px solid var(--line);background:var(--paper);font-size:20px;cursor:pointer}
-nav{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}
+nav{display:grid;grid-template-columns:repeat(5,1fr);gap:8px}
 nav button{font-family:var(--display);font-weight:600;font-size:16px;border:2px solid var(--line);background:var(--paper);color:var(--ink);border-radius:14px;padding:10px 6px;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:2px}
 nav button small{font-family:var(--body);font-weight:400;color:var(--muted);font-size:13px}
 nav button[aria-selected="true"]{border-color:var(--lab);background:var(--lab-soft)}
-@media (max-width:600px){nav{grid-template-columns:repeat(2,1fr)}}
+@media (max-width:600px){nav{grid-template-columns:repeat(2,1fr)}nav button:last-child{grid-column:1/-1}}
 .card{background:var(--paper);border:2px solid var(--line);border-radius:22px;padding:18px;display:flex;flex-direction:column;gap:14px}
 h2{font-family:var(--display);font-weight:600;font-size:24px;margin:0}
 .coach{display:flex;gap:12px;align-items:flex-start}
@@ -285,6 +285,14 @@ button:focus-visible,input:focus-visible{outline:3px solid var(--ink);outline-of
 .pt-legend{display:flex;flex-wrap:wrap;gap:6px 14px;font-size:14px;color:var(--ink-muted)}
 .pt-legend span{display:inline-flex;align-items:center;gap:6px}
 .pt-legend i{width:14px;height:14px;border-radius:4px;border:1px solid var(--line)}
+.qbtns button{flex:1 1 0;display:flex;flex-direction:column;align-items:center;gap:2px;font-size:16px;padding:10px 8px}
+.qbtns button small{font-size:14px;font-weight:600;color:var(--ink-muted)}
+.qsum{font-size:24px;font-weight:700;text-align:center;min-height:34px}
+.quiz .qq{font-size:20px;line-height:30px;font-weight:600;margin:0}
+.quiz .qopts{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:8px}
+.quiz .qopts button{min-height:var(--answer-tile);border:2px solid var(--line);background:var(--surface-100);color:var(--ink);border-radius:var(--radius-md);font-family:var(--font);font-size:17px;font-weight:600;padding:var(--space-2) var(--space-4);cursor:pointer}
+.quiz .qopts button.ok{border-color:var(--correct);background:color-mix(in srgb,var(--correct) 16%,var(--surface-100))}
+.quiz .qopts button.no{border-color:var(--retry);background:var(--retry-soft)}
 .xstage{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:18px;align-items:start}
 @media (max-width:720px){.xstage{grid-template-columns:1fr}}
 .xstage>*{min-width:0}
@@ -316,6 +324,7 @@ canvas.xcv{touch-action:auto;cursor:default}
     <button role="tab" aria-selected="false" data-st="mol">🧪 מטבח המולקולות<small>מחברים אטומים</small></button>
     <button role="tab" aria-selected="false" data-st="acid">🥬 חומצה או בסיס?<small>ניסוי מיץ כרוב</small></button>
     <button role="tab" aria-selected="false" data-st="heat">🌡️ מעבדת החום<small>מוצק, נוזל, גז</small></button>
+    <button role="tab" aria-selected="false" data-st="part">🔬 עולם החלקיקים<small>קווארקים, פוטונים ועוד</small></button>
   </nav>
 
   <!-- LESSON -->
@@ -439,15 +448,36 @@ canvas.xcv{touch-action:auto;cursor:default}
     </div>
   </section>
 
+  <!-- PARTICLES -->
+  <section class="card" id="st-part" hidden>
+    <div class="coach"><div class="avatar">👩‍🔬</div><div class="bubble" id="pSay"></div></div>
+    <div class="stage">
+      <canvas class="cv" id="partCv" aria-label="חלקיק שבונים משלושה קווארקים, ומד מטען"></canvas>
+      <div class="side">
+        <div class="progress" id="pProg"></div>
+        <div class="mname" id="pName"></div>
+        <p class="pt-info" id="pGoal"></p>
+        <div class="qsum" id="pSum" dir="ltr"></div>
+        <div class="row qbtns">
+          <button class="go alt" id="pU">➕ קווארק למעלה (u)<small>מטען +⅔</small></button>
+          <button class="go alt" id="pD">➕ קווארק למטה (d)<small>מטען −⅓</small></button>
+        </div>
+        <div class="row"><button class="go alt" id="pUndo">↩ מחיקה</button><button class="go alt" id="pClear">ניקוי</button></div>
+        <div class="fact" id="pFact" hidden></div>
+        <button class="go glow" id="pNext" hidden>לחלקיק הבא ←</button>
+      </div>
+    </div>
+  </section>
+
   <!-- ATOM INSIDE: ממה בנוי אטום -->
-  <section class="card" id="x-inside">
+  <section class="card" id="x-inside" data-for="atom">
     <div class="lhead"><h2>ממה בנוי אטום?</h2><p class="small">לחצי כדי לעשות זום פנימה, שלב אחרי שלב</p></div>
     <div class="xstage"><canvas class="cv xcv" id="xInsideCv" aria-label="ציור של חלקי האטום"></canvas>
       <div class="side"><div class="xchips" id="xInsideChips"></div><p class="pt-info" id="xInsideInfo"></p></div></div>
   </section>
 
   <!-- PERIODIC TABLE -->
-  <section class="card" id="ptable">
+  <section class="card" id="ptable" data-for="atom">
     <div class="lhead"><h2>הטבלה המחזורית</h2><p class="small">לחצי על יסוד כדי לראות את האטום שלו</p></div>
     <div class="pt-scroll" dir="ltr"><div class="pt" id="ptGrid"></div></div>
     <p class="pt-info" id="ptInfo">כל משבצת היא יסוד אחר. המספר הקטן הוא המספר האטומי: כמה פרוטונים יש בגרעין.</p>
@@ -455,32 +485,37 @@ canvas.xcv{touch-action:auto;cursor:default}
   </section>
 
   <!-- ATOM AMOUNTS: כמה מכל אטום -->
-  <section class="card" id="x-amount">
+  <section class="card" id="x-amount" data-for="atom">
     <div class="lhead"><h2>כמה מכל אטום?</h2><p class="small">לחצי על מקום או חפץ כדי לראות מאילו אטומים הוא עשוי</p></div>
     <div class="xstage"><canvas class="cv xcv" id="xAmountCv" aria-label="גרף עמודות של כמות כל יסוד"></canvas>
       <div class="side"><div class="xchips" id="xAmountChips"></div><p class="pt-info" id="xAmountInfo"></p></div></div>
   </section>
 
   <!-- EXPLORERS: פינת הסבר לכל תחנה -->
-  <section class="card" id="x-mol" hidden>
+  <section class="card" id="x-mol" data-for="mol" hidden>
     <div class="lhead"><h2>אלבום המולקולות</h2><p class="small">לחצי על מולקולה כדי לראות ממה היא בנויה</p></div>
     <div class="xstage"><canvas class="cv xcv" id="xMolCv" aria-label="ציור של המולקולה שנבחרה"></canvas>
       <div class="side"><div class="xchips" id="xMolChips"></div><p class="pt-info" id="xMolInfo"></p></div></div>
   </section>
-  <section class="card" id="x-bond" hidden>
+  <section class="card" id="x-bond" data-for="mol" hidden>
     <div class="lhead"><h2>סוגי קשרים</h2><p class="small">לחצי על סוג קשר כדי לראות מה קורה לאלקטרונים</p></div>
     <div class="xstage"><canvas class="cv xcv" id="xBondCv" aria-label="ציור של שני אטומים והאלקטרונים שמחברים ביניהם"></canvas>
       <div class="side"><div class="xchips" id="xBondChips"></div><p class="pt-info" id="xBondInfo"></p></div></div>
   </section>
-  <section class="card" id="x-acid" hidden>
+  <section class="card" id="x-acid" data-for="acid" hidden>
     <div class="lhead"><h2>סולם החומציות</h2><p class="small">לחצי על חומר כדי לראות איפה הוא על הסולם</p></div>
     <div class="xstage"><canvas class="cv xcv" id="xAcidCv" aria-label="סולם חומציות מ־0 עד 14"></canvas>
       <div class="side"><div class="xchips" id="xAcidChips"></div><p class="pt-info" id="xAcidInfo"></p></div></div>
   </section>
-  <section class="card" id="x-heat" hidden>
+  <section class="card" id="x-heat" data-for="heat" hidden>
     <div class="lhead"><h2>מתי חומרים נמסים ורותחים?</h2><p class="small">לחצי על חומר כדי לראות את המצבים שלו</p></div>
     <div class="xstage"><canvas class="cv xcv" id="xHeatCv" aria-label="ציר טמפרטורה עם מוצק, נוזל וגז"></canvas>
       <div class="side"><div class="xchips" id="xHeatChips"></div><p class="pt-info" id="xHeatInfo"></p></div></div>
+  </section>
+  <section class="card" id="x-part" data-for="part" hidden>
+    <div class="lhead"><h2>אלבום החלקיקים</h2><p class="small">כל החלקיקים הבסיסיים שמדענים מכירים. לחצי כדי להכיר אותם</p></div>
+    <div class="xstage"><canvas class="cv xcv" id="xPartCv" aria-label="טבלת החלקיקים הבסיסיים"></canvas>
+      <div class="side"><div class="xchips" id="xPartChips"></div><p class="pt-info" id="xPartInfo"></p></div></div>
   </section>
 </div>
 
@@ -529,9 +564,9 @@ function fxStep(){if(!conf.length){fctx.clearRect(0,0,innerWidth,innerHeight);re
 /* ---------- stars & coach ---------- */
 let stars={atom:[],mol:[],acid:[],heat:[]};
 try{const s=JSON.parse(localStorage.getItem('chemStars2')||'null');if(s)stars=Object.assign(stars,s);}catch(e){}
-function hasStar(k,id){return stars[k].includes(id);}
-function addStar(k,id){if(hasStar(k,id))return;stars[k].push(id);try{localStorage.setItem('chemStars2',JSON.stringify(stars));}catch(e){}renderStars();const b=$('starIcon');b.classList.remove('bump');void b.offsetWidth;b.classList.add('bump');}
-function renderStars(){$('starCount').textContent=stars.atom.length+stars.mol.length+stars.acid.length+stars.heat.length;}
+function hasStar(k,id){return (stars[k]||[]).includes(id);}
+function addStar(k,id){if(hasStar(k,id))return;(stars[k]=stars[k]||[]).push(id);try{localStorage.setItem('chemStars2',JSON.stringify(stars));}catch(e){}renderStars();const b=$('starIcon');b.classList.remove('bump');void b.offsetWidth;b.classList.add('bump');}
+function renderStars(){$('starCount').textContent=Object.values(stars).reduce((n,a)=>n+(Array.isArray(a)?a.length:0),0);}
 renderStars();
 function say(el,html,kind){const key=(kind||'')+html;if(el._last===key)return;el._last=key;
   el.className='bubble'+(kind?' '+kind:'');
@@ -678,7 +713,11 @@ const MOLS=[
  {name:'מלח בישול',f:[['Na',1],['Cl',1]],mode:'color',atoms:[['Na',-30,0],['Cl',30,0]],bonds:[[0,1,1]],fact:'מדהים: נתרן לבד הוא מתכת שמתפוצצת במים, וכלור לבד הוא גז רעיל. ביחד? מלח שמפזרים על סלט!'},
  {name:'פחמן דו־חמצני',f:[['C',1],['O',2]],mode:'formula',teach:true,atoms:[['O',-64,0],['C',0,0],['O',64,0]],bonds:[[0,1,2],[1,2,2]],fact:'"דו" פירושו שניים: שני חמצנים. זה הגז שאנחנו נושפים, והצמחים "נושמים" אותו כדי לגדול.'},
  {name:'מתאן',f:[['C',1],['H',4]],mode:'formula',atoms:[['C',0,0],['H',0,-58],['H',58,0],['H',0,58],['H',-58,0]],bonds:[[0,1,1],[0,2,1],[0,3,1],[0,4,1]],fact:'מתאן הוא הגז שבוער בכיריים בהרבה בתים. לפחמן יש 4 "ידיים", ולכן הוא מחזיק 4 מימנים.'},
- {name:'אמוניה',f:[['N',1],['H',3]],mode:'formula',atoms:[['N',0,4],['H',-54,32],['H',54,32],['H',0,-54]],bonds:[[0,1,1],[0,2,1],[0,3,1]],fact:'אמוניה משמשת לייצור דשן שעוזר לצמחים לגדול. לחנקן יש 3 "ידיים".'}
+ {name:'אמוניה',f:[['N',1],['H',3]],mode:'formula',atoms:[['N',0,4],['H',-54,32],['H',54,32],['H',0,-54]],bonds:[[0,1,1],[0,2,1],[0,3,1]],fact:'אמוניה משמשת לייצור דשן שעוזר לצמחים לגדול. לחנקן יש 3 "ידיים".'},
+ {name:'גז חנקן',f:[['N',2]],mode:'formula',atoms:[['N',-30,0],['N',30,0]],bonds:[[0,1,3]],fact:'כמעט 8 מתוך כל 10 חלקים של האוויר הם חנקן. שלושה קווים הם קשר משולש, חזק מאוד!'},
+ {name:'מימן כלורי',f:[['H',1],['Cl',1]],mode:'formula',atoms:[['H',-38,0],['Cl',26,0]],bonds:[[0,1,1]],fact:'כשממיסים אותו במים הוא נהיה חומצה חזקה. חומצה כזו יש בקיבה, והיא עוזרת לעכל את האוכל.'},
+ {name:'אוזון',f:[['O',3]],mode:'formula',atoms:[['O',0,-24],['O',-58,18],['O',58,18]],bonds:[[0,1,2],[0,2,1]],fact:'שלושה חמצנים יחד. שכבת אוזון גבוה בשמיים שומרת עלינו מקרני השמש המזיקות.'},
+ {name:'מי חמצן',f:[['H',2],['O',2]],mode:'formula',atoms:[['O',-30,-8],['O',30,8],['H',-66,32],['H',66,-32]],bonds:[[0,1,1],[0,2,1],[1,3,1]],fact:'כמו מים, אבל עם עוד חמצן. משתמשים בו לחיטוי פצעים, ורק מבוגר מטפל בו.'}
 ];
 const MW=420,MH=470,MCX=210,MCY=170;
 const TRAY=['H','O','C','N','Na','Cl'].map((el,i)=>({el,x:370-i*64,y:398}));
@@ -751,7 +790,7 @@ function updMol(){
 function bondLine(ctx,a,b,order,prog){
   const ex=lerp(a.x,b.x,prog),ey=lerp(a.y,b.y,prog),dx=b.x-a.x,dy=b.y-a.y,L=Math.hypot(dx,dy)||1,nx=-dy/L*5,ny=dx/L*5;
   ctx.lineCap='round';ctx.strokeStyle=C.ink;ctx.lineWidth=6;
-  const offs=order===2?[-1,1]:[0];for(const o of offs){ctx.beginPath();ctx.moveTo(a.x+nx*o,a.y+ny*o);ctx.lineTo(ex+nx*o,ey+ny*o);ctx.stroke();}
+  const offs=order===3?[-1.6,0,1.6]:order===2?[-1,1]:[0];for(const o of offs){ctx.beginPath();ctx.moveTo(a.x+nx*o,a.y+ny*o);ctx.lineTo(ex+nx*o,ey+ny*o);ctx.stroke();}
 }
 function drawMol(){
   const ctx=mctx,m=MOLS[M.lv];ctx.clearRect(0,0,MW,MH);
@@ -1014,6 +1053,16 @@ const LES={
     emoji(c,seq[k][0],320,90,56);emoji(c,'🥬',100,80,46);c.beginPath();c.moveTo(150,80);c.lineTo(170,82);c.lineTo(178,240);c.quadraticCurveTo(180,256,196,256);c.lineTo(244,256);c.quadraticCurveTo(260,256,262,240);c.lineTo(270,82);c.lineTo(290,80);
     c.save();c.beginPath();c.moveTo(172,150);c.lineTo(178,240);c.quadraticCurveTo(180,256,196,256);c.lineTo(244,256);c.quadraticCurveTo(260,256,262,240);c.lineTo(268,150);c.closePath();c.fillStyle=col;c.fill();c.restore();
     c.strokeStyle=C.muted;c.lineWidth=4;c.beginPath();c.moveTo(170,82);c.lineTo(178,240);c.quadraticCurveTo(180,256,196,256);c.lineTo(244,256);c.quadraticCurveTo(260,256,262,240);c.lineTo(270,82);c.stroke();}},
+  {t:'סולם החומציות',x:'כימאים מודדים כמה חומר חומצי במספר מ־0 עד 14, שנקרא <b>pH</b>. ככל שהמספר <b>קטן</b> יותר, החומר <b>חומצי</b> יותר. 7 הוא בדיוק באמצע, ניטרלי. ככל שהמספר <b>גדול</b> יותר, החומר <b>בסיסי</b> יותר.',
+   a:(c,t)=>{const x0=40,x1=380,y=150,X=v=>x0+v/14*(x1-x0);for(let v=0;v<14;v+=.25){c.fillStyle=indColor(v);c.fillRect(X(v),y,X(v+.25)-X(v)+1,36);}
+    c.strokeStyle=C.ink;c.lineWidth=2;rr(c,x0,y,x1-x0,36,8);c.stroke();c.fillStyle=C.ink;c.font='600 14px Rubik,sans-serif';c.textAlign='center';c.textBaseline='top';c.direction='ltr';for(let v=0;v<=14;v+=2)c.fillText(String(v),X(v),y+42);
+    const seq=[['🍋',2.2],['💧',7],['🧼',10]],k=Math.floor(t/110)%3,ph=lerp(seq[(k+2)%3][1],seq[k][1],Math.min(1,(t%110)/40)),mx=X(ph);
+    c.beginPath();c.moveTo(mx,y-4);c.lineTo(mx-9,y-18);c.lineTo(mx+9,y-18);c.closePath();c.fill();emoji(c,seq[k][0],mx,y-52,44);
+    text(c,'חומצי',X(1.5),y+78,16,C.ink,700);text(c,'ניטרלי',X(7),y+78,16,C.ink,700);text(c,'בסיסי',X(12.5),y+78,16,C.ink,700);}},
+  {t:'נטרול: חומצה פוגשת בסיס',x:'כשמערבבים חומצה ובסיס בכמות הנכונה, הם <b>מבטלים זה את זה</b>, ונוצרים <b>מים ומלח</b>. זה נקרא <b>נטרול</b>. כך טבליה נגד צרבת מרגיעה קיבה חומצית מדי, ומשחת שיניים מנטרלת חומצות שפוגעות בשיניים.',
+   a:(c,t)=>{const ph=(t%240)/240,m=Math.min(1,Math.max(0,(ph-.35)/.4)),cup=(x,col,lvl,lb)=>{c.fillStyle=col;c.fillRect(x-38,250-lvl*120,76,lvl*120);c.strokeStyle=C.muted;c.lineWidth=4;c.beginPath();c.moveTo(x-40,120);c.lineTo(x-40,252);c.lineTo(x+40,252);c.lineTo(x+40,120);c.stroke();text(c,lb,x,274,16,C.ink,700);};
+    cup(80,'#e02a55',1-m*.8,'חומצה');cup(340,'#1ea886',1-m*.8,'בסיס');const a=hexRgb('#e02a55'),b=hexRgb('#1ea886'),mid=hexRgb('#7a3fa3'),f=Math.min(1,m*1.2),col=`rgb(${a.map((v,i)=>Math.round(lerp(lerp(v,b[i],.5),mid[i],f))).join(',')})`;
+    cup(210,col,m*.9,m>.95?'ניטרלי! 💧🧂':'מערבבים...');if(ph>.3&&ph<.8){c.strokeStyle='#e02a55';c.lineWidth=5;c.beginPath();c.moveTo(118,130);c.quadraticCurveTo(150,90,180,140);c.stroke();c.strokeStyle='#1ea886';c.beginPath();c.moveTo(302,130);c.quadraticCurveTo(270,90,240,140);c.stroke();}}},
   {t:'כלל הזהב של כימאים',x:'כימאים אמיתיים <b>אף פעם לא טועמים</b> חומרים במעבדה, ו<b>לא מערבבים חומרי ניקוי</b>, כי זה עלול להיות מסוכן. ניסויים עושים רק עם מבוגר. במשחק שלנו מותר לנסות הכול!',
    a:(c,t)=>{emoji(c,'🥽',210,120+Math.sin(t*.08)*10,90);emoji(c,'🧤',110,220,44);emoji(c,'👩‍🔬',310,220,44);}}],
   chips:['למה לימון חמוץ?','מה קורה כשמערבבים חומצה ובסיס?','למה הכרוב משנה צבע?']},
@@ -1027,7 +1076,23 @@ const LES={
     c.fillStyle=T<=0?'#4aa3ff':T<100?'#e2493b':'#ff2a2a';rr(c,202,yy(T),16,y0-yy(T)+4,8);c.fill();c.beginPath();c.arc(210,y0+12,16,0,PI2);c.fill();
     [[0,'0°'],[100,'100°']].forEach(([v,l])=>{c.strokeStyle=C.ink;c.lineWidth=2;c.beginPath();c.moveTo(226,yy(v));c.lineTo(240,yy(v));c.stroke();c.fillStyle=C.ink;c.font='700 15px Rubik,sans-serif';c.textAlign='left';c.direction='ltr';c.fillText(l,244,yy(v)+5);});
     emoji(c,T<=0?'🧊':T<100?'💧':'☁️',330,150,70);text(c,T<=0?'קרח':T<100?'מים':'אדים',330,215,20,C.lab,700);}}],
-  chips:['למה קרח צף על המים?','לאן נעלמים המים כשהם מתאדים?','למה כשחם אני מזיעה?']}
+  chips:['למה קרח צף על המים?','לאן נעלמים המים כשהם מתאדים?','למה כשחם אני מזיעה?']},
+ part:{name:'עולם החלקיקים',slides:[
+  {t:'עמוק בתוך הפרוטון',x:'הפרוטונים והנייטרונים בנויים מחלקיקים קטנים עוד יותר, שנקראים <b>קווארקים</b>. בכל פרוטון יש שלושה: שניים "למעלה" (u) ואחד "למטה" (d). מה שמחזיק אותם יחד הם חלקיקים שנקראים <b>גלואונים</b>, על שם המילה "דבק" באנגלית.',
+   a:(c,t)=>{quarks(c,210,140,105,C.p,['u','u','d'],t);text(c,'פרוטון',210,272,18,C.ink,700);}},
+  {t:'מטען של שלישים',x:'לקווארקים יש מטען מוזר: <b>חלק</b> ממטען של פרוטון. לקווארק למעלה יש <b>+⅔</b> (שני שלישים), ולקווארק למטה <b>−⅓</b> (מינוס שליש). בפרוטון: ⅔ + ⅔ − ⅓ = <b>1</b>. בנייטרון: ⅔ − ⅓ − ⅓ = <b>0</b>.',
+   a:(c,t)=>{const k=Math.floor(t/60)%5,row=(y,ks,res,lb)=>{ks.forEach((q,i)=>{if(i<Math.min(k,3)||k>3){ball(c,70+i*80,y,24,q==='u'?'#e07a1f':'#2a8f6a',q,'#fff');text(c,q==='u'?'+⅔':'−⅓',70+i*80,y+40,17,C.ink,700);}});
+      if(k>3){text(c,'= '+res,330,y,26,C.lab,700);text(c,lb,330,y+34,16,C.ink,700);}};row(90,['u','u','d'],'1','פרוטון');row(210,['u','d','d'],'0','נייטרון');}},
+  {t:'שישה סוגי קווארקים',x:'יש <b>שישה</b> סוגים של קווארקים: למעלה, למטה, מקסים, מוזר, עליון ותחתון. בכל הדברים שסביבנו יש רק "למעלה" ו"למטה". את הארבעה האחרים, שהם כבדים הרבה יותר, יוצרים רק לרגע קצר במאיצי חלקיקים ענקיים. הקווארק העליון כבד כמו אטום שלם של זהב!',
+   a:(c,t)=>{[['u','למעלה'],['c','מקסים'],['t','עליון'],['d','למטה'],['s','מוזר'],['b','תחתון']].forEach(([q,n],i)=>{const x=90+(i%3)*120,y=90+Math.floor(i/3)*120,big=1+(i%3)*.25,on=i%3===0;
+      c.globalAlpha=on?1:.75;ball(c,x,y,20*big+Math.sin(t*.05+i)*1.5,i<3?'#e07a1f':'#2a8f6a',q,'#fff');c.globalAlpha=1;text(c,n,x,y+46,16,C.ink,700);});text(c,'← כבדים יותר',210,282,15,C.muted,700);}},
+  {t:'לפטונים: האלקטרון ובני משפחתו',x:'האלקטרון שייך למשפחה שנקראת <b>לפטונים</b>. יש לו שני "אחים" כבדים, המיואון והטאו, ויש גם <b>ניטרינו</b>: חלקיק כמעט בלי משקל ובלי מטען. מהשמש מגיעים כל כך הרבה ניטרינו, ש<b>טריליוני ניטרינו עוברים דרך הגוף שלך בכל שנייה</b>, בלי שתרגישי כלום!',
+   a:(c,t)=>{emoji(c,'☀️',50,150,60);emoji(c,'🧒',260,150,90);for(let i=0;i<14;i++){const x=((t*3+i*53)%380)+20,y=60+(i*37)%190;c.globalAlpha=.75;ball(c,x,y,4,'#8e7cc3','','');c.globalAlpha=1;}text(c,'ניטרינו עוברים דרך הכול',210,282,16,C.ink,700);}},
+  {t:'בוזונים: שליחי הכוחות',x:'יש חלקיקים שתפקידם להעביר כוח. <b>הפוטון</b> מעביר את הכוח החשמלי והמגנטי, והוא גם האור. <b>הגלואון</b> מדביק את הקווארקים. <b>בוזוני W ו־Z</b> אחראים לקרינה רדיואקטיבית ועוזרים לשמש לבעור. ו<b>בוזון היגס</b>, שהתגלה בשנת 2012, נותן לחלקיקים את המסה שלהם.',
+   a:(c,t)=>{[['γ','פוטון','#e8b923'],['g','גלואון','#e07a1f'],['W Z','W ו־Z','#d9534f'],['H','היגס','#b8860b']].forEach(([s,n,col],i)=>{const x=70+i*94,y=130+Math.sin(t*.06+i)*6;ball(c,x,y,30,col,s,'#fff');text(c,n,x,y+52,16,C.ink,700);});}},
+  {t:'הפוטון: חלקיק של אור',x:'האור עשוי מחלקיקים קטנים שנקראים <b>פוטונים</b>. אין להם משקל בכלל, והם הדבר המהיר ביותר ביקום: 300,000 קילומטר בשנייה! פוטון שיוצא מהשמש מגיע לכדור הארץ אחרי <b>בערך 8 דקות</b>.',
+   a:(c,t)=>{emoji(c,'☀️',60,150,70);emoji(c,'🌍',360,150,60);c.strokeStyle='#e8b923';c.lineWidth=3;for(let k=0;k<3;k++){const x0=((t*2.4+k*110)%240)+95;c.beginPath();for(let x=0;x<40;x++){const yy=150+Math.sin((x+t*2)*.5)*9*Math.sin(x/40*Math.PI);x?c.lineTo(x0+x,yy):c.moveTo(x0+x,yy);}c.stroke();}text(c,'בערך 8 דקות מהשמש אלינו',210,240,17,C.ink,700);}}],
+  chips:['ממה עשוי קווארק?','למה אי אפשר לראות קווארק לבד?','איך גילו את בוזון היגס?']}
 };
 /* ---------- periodic table ---------- */
 const PSYM='H He Li Be B C N O F Ne Na Mg Al Si P S Cl Ar K Ca Sc Ti V Cr Mn Fe Co Ni Cu Zn Ga Ge As Se Br Kr Rb Sr Y Zr Nb Mo Tc Ru Rh Pd Ag Cd In Sn Sb Te I Xe Cs Ba La Ce Pr Nd Pm Sm Eu Gd Tb Dy Ho Er Tm Yb Lu Hf Ta W Re Os Ir Pt Au Hg Tl Pb Bi Po At Rn Fr Ra Ac Th Pa U Np Pu Am Cm Bk Cf Es Fm Md No Lr Rf Db Sg Bh Hs Mt Ds Rg Cn Nh Fl Mc Lv Ts Og'.split(' ');
@@ -1079,11 +1144,7 @@ function explorer(key,items,label,draw,info){const cv=$(key+'Cv'),c=setup(cv,XW,
   pick(0);if(document.fonts&&document.fonts.ready)document.fonts.ready.then(()=>pick(cur));}
 
 // אלבום המולקולות: המולקולות מהמשחק ועוד כמה
-const XMOLS=MOLS.map(m=>({name:m.name,f:m.f,atoms:m.atoms,bonds:m.bonds,fact:m.fact,ionic:m.f[0][0]==='Na'})).concat([
- {name:'גז חנקן',f:[['N',2]],atoms:[['N',-28,0],['N',28,0]],bonds:[[0,1,3]],fact:'כמעט 8 מתוך כל 10 חלקים של האוויר הם חנקן. שלושה קווים הם קשר משולש, חזק מאוד!'},
- {name:'אוזון',f:[['O',3]],atoms:[['O',0,-22],['O',-56,18],['O',56,18]],bonds:[[0,1,2],[0,2,1]],fact:'שלושה חמצנים יחד. שכבת אוזון גבוה בשמיים שומרת עלינו מקרני השמש המזיקות.'},
- {name:'מימן כלורי',f:[['H',1],['Cl',1]],atoms:[['H',-36,0],['Cl',24,0]],bonds:[[0,1,1]],fact:'כשממיסים אותו במים הוא נהיה חומצה חזקה. חומצה כזו יש בקיבה, והיא עוזרת לעכל את האוכל.'},
- {name:'מי חמצן',f:[['H',2],['O',2]],atoms:[['O',-28,-8],['O',28,8],['H',-62,30],['H',62,-30]],bonds:[[0,1,1],[0,2,1],[1,3,1]],fact:'כמו מים, אבל עם עוד חמצן. משתמשים בו לחיטוי פצעים, ורק מבוגר מטפל בו.'}]);
+const XMOLS=MOLS.map(m=>({name:m.name,f:m.f,atoms:m.atoms,bonds:m.bonds,fact:m.fact,ionic:m.f[0][0]==='Na'}));
 explorer('xMol',XMOLS,m=>m.name,(c,m)=>{const s=1.35,cx=XW/2,cy=XH/2-12,P=m.atoms.map(([,x,y])=>[cx+x*s,cy+y*s]);
   if(m.ionic){P[0][0]-=14;P[1][0]+=14;c.strokeStyle=C.muted;c.lineWidth=3;c.setLineDash([6,6]);c.beginPath();c.moveTo(P[0][0],P[0][1]);c.lineTo(P[1][0],P[1][1]);c.stroke();c.setLineDash([]);}
   else m.bonds.forEach(([a,b,o])=>{const[x1,y1]=P[a],[x2,y2]=P[b],L=Math.hypot(x2-x1,y2-y1)||1,nx=-(y2-y1)/L,ny=(x2-x1)/L;c.strokeStyle=C.ink;c.lineWidth=5;
@@ -1116,8 +1177,10 @@ explorer('xBond',XBONDS,b=>b.k,(c,b)=>{const y=112,R=66,ion=!b.o,xa=ion?118:162,
  b=>`<b>${b.k}</b>: ${b.x}`);
 
 // ממה בנוי אטום: זום פנימה מהאטום עד הקווארקים
-function quarks(c,x,y,R,col,kinds){c.fillStyle=col;c.globalAlpha=.18;c.beginPath();c.arc(x,y,R,0,PI2);c.fill();c.globalAlpha=1;c.strokeStyle=col;c.lineWidth=3;c.beginPath();c.arc(x,y,R,0,PI2);c.stroke();
-  c.strokeStyle=C.muted;c.lineWidth=2;c.setLineDash([3,4]);kinds.forEach((_,i)=>{const a1=-Math.PI/2+i*PI2/3,a2=-Math.PI/2+(i+1)*PI2/3;c.beginPath();c.moveTo(x+Math.cos(a1)*R*.45,y+Math.sin(a1)*R*.45);c.lineTo(x+Math.cos(a2)*R*.45,y+Math.sin(a2)*R*.45);c.stroke();});c.setLineDash([]);
+// t מועבר כשרוצים גלואונים מונפשים (קפיצים גליים) במקום קווים מקווקווים
+function quarks(c,x,y,R,col,kinds,t){c.fillStyle=col;c.globalAlpha=.18;c.beginPath();c.arc(x,y,R,0,PI2);c.fill();c.globalAlpha=1;c.strokeStyle=col;c.lineWidth=3;c.beginPath();c.arc(x,y,R,0,PI2);c.stroke();
+  if(t==null){c.strokeStyle=C.muted;c.lineWidth=2;c.setLineDash([3,4]);kinds.forEach((_,i)=>{const a1=-Math.PI/2+i*PI2/3,a2=-Math.PI/2+(i+1)*PI2/3;c.beginPath();c.moveTo(x+Math.cos(a1)*R*.45,y+Math.sin(a1)*R*.45);c.lineTo(x+Math.cos(a2)*R*.45,y+Math.sin(a2)*R*.45);c.stroke();});c.setLineDash([]);}
+  else{const P=kinds.map((_,i)=>[x+Math.cos(-Math.PI/2+i*PI2/3)*R*.45,y+Math.sin(-Math.PI/2+i*PI2/3)*R*.45]);for(let i=0;i<P.length&&P.length>1;i++)gluon(c,P[i],P[(i+1)%P.length],t+i*20);}
   kinds.forEach((k,i)=>{const a=-Math.PI/2+i*PI2/3,qx=x+Math.cos(a)*R*.45,qy=y+Math.sin(a)*R*.45;ball(c,qx,qy,R*.24,k==='u'?'#e07a1f':'#2a8f6a',k,'#fff');});}
 const XINSIDE=[
  {k:'האטום',d:c=>{c.fillStyle='rgba(47,111,208,.08)';c.beginPath();c.arc(210,118,100,0,PI2);c.fill();[60,100].forEach(r=>{c.setLineDash([4,6]);c.strokeStyle=C.line;c.lineWidth=2;c.beginPath();c.arc(210,118,r,0,PI2);c.stroke();});c.setLineDash([]);
@@ -1149,6 +1212,8 @@ const XAMT=[
  {k:'🏖️ חול',by:'מתוך 100 אטומים',v:[['חמצן',67],['צורן',33]],x:'חול עשוי בעיקר מצורן דו־חמצני: צורן אחד ושני חמצנים. ומחול מתיכים עושים <b>זכוכית</b>!'},
  {k:'🍬 סוכר',by:'מתוך 100 אטומים',v:[['מימן',49],['פחמן',27],['חמצן',24]],x:'מולקולת סוכר בנויה מ־12 פחמנים, 22 מימנים ו־11 חמצנים. אותם יסודות כמו במים ובפחמן דו־חמצני, רק מסודרים אחרת.'},
  {k:'🧂 מלח',by:'מתוך 100 אטומים',v:[['נתרן',50],['כלור',50]],x:'בכל גרגר מלח יש <b>בדיוק אותו מספר</b> של אטומי נתרן ושל אטומי כלור.'}];
+function gluon(c,[x1,y1],[x2,y2],t){const L=Math.hypot(x2-x1,y2-y1),nx=-(y2-y1)/L,ny=(x2-x1)/L;c.strokeStyle='#e07a1f';c.lineWidth=2.5;c.beginPath();
+  for(let s=0;s<=40;s++){const f=s/40,w=Math.sin(f*Math.PI*8+t*.15)*5,px=x1+(x2-x1)*f+nx*w,py=y1+(y2-y1)*f+ny*w;s?c.lineTo(px,py):c.moveTo(px,py);}c.stroke();}
 const pctTxt=v=>v<1?'פחות מ־1':String(v);
 explorer('xAmount',XAMT,s=>s.k,(c,s)=>{text(c,s.by,210,22,16,C.muted,600);const n=s.v.length,step=Math.min(36,190/n),y0=48,xr=318,W=250;
   s.v.forEach(([nm,v],i)=>{const y=y0+i*step,bw=Math.max(3,v/100*W),other=nm==='כל השאר';c.fillStyle=other?C.n:C.lab;
@@ -1157,6 +1222,121 @@ explorer('xAmount',XAMT,s=>s.k,(c,s)=>{text(c,s.by,210,22,16,C.muted,600);const 
     c.textAlign='right';c.fillText(pctTxt(v),xr-bw-6,y+(step-10)/2);});
   c.strokeStyle=C.line;c.lineWidth=2;c.beginPath();c.moveTo(xr+1,y0-4);c.lineTo(xr+1,y0+n*step-6);c.stroke();},
  s=>`<b>${s.k}</b> (${s.by}): ${andJoin(s.v.map(([nm,v])=>`${nm} ${pctTxt(v)}`))}. ${s.x}`);
+
+/* =========================================================
+   STATION 5 — PARTICLES: בונים חלקיקים משלושה קווארקים
+   ========================================================= */
+const PW=420,PH=360,pcv=$('partCv'),pctx=setup(pcv,PW,PH);
+// nu = כמה קווארקים "למעלה" צריך, ch = המטען הכולל
+const PLV=[
+ {n:'פרוטון',nu:2,ch:1,col:'#d9483b',goal:'שלושה קווארקים, ומטען כולל של <b>+1</b>.',say:'בואי נבנה חלקיקים מקווארקים! לכל קווארק יש מטען חלקי: לקווארק <b>למעלה +⅔</b>, ולקווארק <b>למטה −⅓</b>. בחרי שלושה קווארקים כך שהמטען של כולם יחד יהיה <b>+1</b>, וכך תבני פרוטון.',fact:'בדיוק כך בנוי כל פרוטון ביקום: שני קווארקים למעלה ואחד למטה. ⅔ + ⅔ − ⅓ = 1.'},
+ {n:'נייטרון',nu:1,ch:0,col:'#8d9aa3',goal:'שלושה קווארקים, ומטען כולל של <b>0</b>.',say:'עכשיו נייטרון: שלושה קווארקים, והמטען של כולם יחד צריך להיות <b>0</b>.',fact:'⅔ − ⅓ − ⅓ = 0, ולכן לנייטרון אין מטען. נייטרון לבד, מחוץ לגרעין, מתפרק אחרי בערך רבע שעה לפרוטון, אלקטרון וניטרינו!'},
+ {n:'דלתא פלוס פלוס',nu:3,ch:2,col:'#9b59b6',goal:'אתגר: שלושה קווארקים, ומטען כולל של <b>+2</b>.',say:'אתגר! יש חלקיק אמיתי עם מטען <b>+2</b>. אילו שלושה קווארקים יתנו את זה?',fact:'זה חלקיק אמיתי שנקרא <b>דלתא פלוס פלוס</b>. הוא חי זמן קצר להפליא ואז מתפרק לפרוטון ולחלקיק נוסף. מדענים יוצרים אותו במאיצי חלקיקים.'},
+ {n:'דלתא מינוס',nu:0,ch:-1,col:'#5b6fb0',goal:'אתגר: שלושה קווארקים, ומטען כולל של <b>−1</b>.',say:'ועוד אתגר: חלקיק עם מטען <b>−1</b>.',fact:'גם זה חלקיק אמיתי: <b>דלתא מינוס</b>, שלושה קווארקים למטה. גם הוא מתפרק מהר מאוד.'}];
+const P={lv:0,qs:[],done:false,t:0,shake:0};
+P.lv=PLV.findIndex((_,i)=>!hasStar('part',i));if(P.lv<0)P.lv=0;
+// מטען בשלישים: u = 2, d = −1 (שלישים של מטען הפרוטון)
+const third=n=>{if(!n)return '0';const a=Math.abs(n),w=Math.floor(a/3),r=a%3;return (n<0?'−':'+')+(w||'')+(r===1?'⅓':r===2?'⅔':'');};
+const qCharge=qs=>qs.reduce((s,q)=>s+(q==='u'?2:-1),0);
+function partUI(){const l=PLV[P.lv];$('pName').textContent=l.n;$('pGoal').innerHTML=l.goal;
+  $('pSum').textContent=P.qs.length?P.qs.map((q,i)=>q==='u'?(i?'+ ':'')+'⅔':'− ⅓').join(' ')+' = '+third(qCharge(P.qs)):'';
+  $('pU').disabled=$('pD').disabled=P.done||P.qs.length>=3;$('pUndo').disabled=$('pClear').disabled=P.done||!P.qs.length;
+  prog($('pProg'),PLV.length,i=>hasStar('part',i),P.lv);}
+function partLoad(){P.qs=[];P.done=false;$('pFact').hidden=true;$('pNext').hidden=true;partUI();say($('pSay'),PLV[P.lv].say);}
+function partAdd(q){if(P.done||P.qs.length>=3)return;P.qs.push(q);beep(q==='u'?660:440,.08,'sine',.06);
+  if(P.qs.length===3){const l=PLV[P.lv],ch=qCharge(P.qs);
+    if(P.qs.filter(x=>x==='u').length===l.nu){P.done=true;addStar('part',P.lv);burstEl(pcv,90);beep(880,.2,'triangle',.07);
+      say($('pSay'),`כן! בנית <b>${l.n}</b> עם מטען ${third(ch)} בדיוק! 🎉`,'ok');$('pFact').innerHTML=l.fact;$('pFact').hidden=false;$('pNext').hidden=false;}
+    else{P.shake=1;buzz();say($('pSay'),`יצא מטען ${third(ch)}, אבל ${l.n} צריך ${third(l.ch*3)}. לחצי "מחיקה" והחליפי קווארק.`,'retry');}}
+  partUI();}
+$('pU').onclick=()=>partAdd('u');$('pD').onclick=()=>partAdd('d');
+$('pUndo').onclick=()=>{if(!P.done){P.qs.pop();partUI();}};$('pClear').onclick=()=>{if(!P.done){P.qs=[];partUI();}};
+$('pNext').onclick=()=>{P.lv=(P.lv+1)%PLV.length;partLoad();};
+function drawPart(){P.t++;const c=pctx,l=PLV[P.lv];c.clearRect(0,0,PW,PH);P.shake=Math.max(0,P.shake-.03);
+  const cx=210+Math.sin(P.t*1.3)*8*P.shake,cy=160,R=112,s=P.done?1+Math.sin(P.t*.08)*.03:1;
+  text(c,`מטרה: ${l.n} (${third(l.ch*3)})`,210,16,15,C.muted,700);
+  c.save();c.translate(cx,cy);c.scale(s,s);c.fillStyle=l.col;c.globalAlpha=.15;c.beginPath();c.arc(0,0,R,0,PI2);c.fill();c.globalAlpha=1;
+  c.strokeStyle=l.col;c.lineWidth=3;if(!P.done)c.setLineDash([8,6]);c.beginPath();c.arc(0,0,R,0,PI2);c.stroke();c.setLineDash([]);
+  const pos=[0,1,2].map(i=>[Math.cos(-Math.PI/2+i*PI2/3)*R*.5,Math.sin(-Math.PI/2+i*PI2/3)*R*.5]);
+  if(P.qs.length>1)for(let i=0;i<P.qs.length;i++){if(P.qs.length===2&&i===1)break;gluon(c,pos[i],pos[(i+1)%P.qs.length],P.t+i*20);}
+  pos.forEach(([x,y],i)=>{const q=P.qs[i];if(!q){c.strokeStyle=C.line;c.lineWidth=2;c.setLineDash([4,5]);c.beginPath();c.arc(x,y,28,0,PI2);c.stroke();c.setLineDash([]);text(c,'?',x,y,22,C.muted,700);return;}
+    const bob=Math.sin(P.t*.07+i*2)*2;c.strokeStyle=['#e53935','#43a047','#1e88e5'][i];c.lineWidth=4;c.beginPath();c.arc(x,y+bob,33,0,PI2);c.stroke();
+    ball(c,x,y+bob,28,q==='u'?'#e07a1f':'#2a8f6a',q,'#fff');text(c,q==='u'?'+⅔':'−⅓',x,y+bob+46,16,C.ink,700);});
+  c.restore();
+  // מד מטען מ־1− עד 2+
+  const my=322,X=v=>60+(v+1)/3*300;c.strokeStyle=C.ink;c.lineWidth=2;c.beginPath();c.moveTo(X(-1),my);c.lineTo(X(2),my);c.stroke();
+  for(let k=-3;k<=6;k++){const v=k/3,big=k%3===0;c.beginPath();c.moveTo(X(v),my-(big?8:4));c.lineTo(X(v),my+(big?8:4));c.stroke();if(big)text(c,third(k),X(v),my+22,14,C.ink,700);}
+  emoji(c,'🎯',X(l.ch),my-22,18);text(c,'מטען',392,my,14,C.muted,700);
+  if(P.qs.length){const v=qCharge(P.qs)/3,mx=X(v);c.fillStyle=l.col;c.beginPath();c.moveTo(mx,my-4);c.lineTo(mx-8,my-16);c.lineTo(mx+8,my-16);c.closePath();c.fill();}}
+partLoad();
+
+// אלבום החלקיקים: טבלת החלקיקים הבסיסיים, ובכל בחירה מודגשות המשבצות שלה
+const SMC=[['u',0,0,'q'],['c',1,0,'q'],['t',2,0,'q'],['d',0,1,'q'],['s',1,1,'q'],['b',2,1,'q'],['e',0,2,'l'],['μ',1,2,'l'],['τ',2,2,'l'],['νe',0,3,'l'],['νμ',1,3,'l'],['ντ',2,3,'l'],['g',3,0,'b'],['γ',3,1,'b'],['Z',3,2,'b'],['W',3,3,'b'],['H',4,1.5,'h']];
+const SMF={q:['#d7c8f5','קווארקים'],l:['#c4e8cb','לפטונים'],b:['#f8cdbb','בוזונים'],h:['#f4e2a0','היגס']};
+const XPART=[
+ {k:'קווארק למעלה',on:['u'],x:'משפחה: קווארקים. מטען: <b>+⅔</b>. שניים כאלה יש בכל פרוטון, ואחד בכל נייטרון.'},
+ {k:'קווארק למטה',on:['d'],x:'משפחה: קווארקים. מטען: <b>−⅓</b>. אחד כזה יש בכל פרוטון, ושניים בכל נייטרון.'},
+ {k:'קווארקים כבדים',on:['c','s','t','b'],x:'מקסים (c), מוזר (s), עליון (t) ותחתון (b). הם כבדים ונעלמים מהר, ולכן פוגשים אותם רק במאיצי חלקיקים. הקווארק העליון כבד כמו אטום שלם של זהב!'},
+ {k:'אלקטרון',on:['e'],x:'משפחה: לפטונים. מטען: <b>−1</b>. הוא מסתובב סביב הגרעין, והוא זה שזורם בחוטי חשמל. קל פי 1,836 מפרוטון.'},
+ {k:'ניטרינו',on:['νe','νμ','ντ'],x:'משפחה: לפטונים. בלי מטען וכמעט בלי משקל, ולכן הוא עובר דרך כמעט הכול, אפילו דרך כל כדור הארץ. יש שלושה סוגים שלו.'},
+ {k:'מיואון וטאו',on:['μ','τ'],x:'משפחה: לפטונים. "האחים הכבדים" של האלקטרון, עם אותו מטען <b>−1</b>. מיואונים נוצרים גבוה באוויר, וחלק מהם מגיעים עד אלינו לקרקע.'},
+ {k:'פוטון',on:['γ'],x:'משפחה: בוזונים. החלקיק של <b>האור</b> ושל הכוח החשמלי והמגנטי. אין לו משקל ואין לו מטען, והוא הדבר המהיר ביותר ביקום.'},
+ {k:'גלואון',on:['g'],x:'משפחה: בוזונים. "הדבק" של הקווארקים: הוא מעביר את <b>הכוח החזק</b> שמחזיק את הקווארקים בתוך הפרוטון ואת הגרעין שלם.'},
+ {k:'בוזוני W ו־Z',on:['W','Z'],x:'משפחה: בוזונים. הם מעבירים את <b>הכוח החלש</b>, שאחראי לקרינה רדיואקטיבית ועוזר לשמש לבעור.'},
+ {k:'בוזון היגס',on:['H'],x:'החלקיק שקשור לכך שלחלקיקים יש <b>מסה</b>. מדענים חיפשו אותו כמעט 50 שנה, ומצאו אותו בשנת 2012 במאיץ הענק במעבדת CERN.'}];
+explorer('xPart',XPART,p=>p.k,(c,p)=>{const x0=34,y0=18,w=64,h=50;
+  SMC.forEach(([s,col,row,f])=>{const on=p.on.includes(s),x=x0+col*(w+4),y=y0+row*(h+4);c.globalAlpha=on?1:.35;c.fillStyle=SMF[f][0];rr(c,x,y,w,h,8);c.fill();
+    c.strokeStyle=on?C.ink:C.line;c.lineWidth=on?3:1;c.stroke();c.fillStyle=C.ink;c.font='700 22px Rubik,sans-serif';c.textAlign='center';c.textBaseline='middle';c.direction='ltr';c.fillText(s,x+w/2,y+h/2);c.globalAlpha=1;});
+  let lx=XW-12;Object.values(SMF).forEach(([col,n])=>{c.font='600 13px Rubik,sans-serif';const tw=c.measureText(n).width;c.fillStyle=col;c.fillRect(lx-12,236,12,12);c.fillStyle=C.ink;c.textAlign='right';c.textBaseline='middle';c.direction='rtl';c.fillText(n,lx-16,242);lx-=tw+34;});},
+ p=>`<b>${p.k}</b>: ${p.x}`);
+
+/* ---------- תרגול: שאלות בחירה מתחת לתחנה. התשובה הנכונה היא תמיד הראשונה ברשימה, והן מעורבבות בתצוגה ---------- */
+function makeQuiz(st,title,qs){const sec=document.createElement('section');sec.className='card quiz';sec.dataset.for=st;sec.hidden=true;
+  sec.innerHTML=`<div class="lhead"><h2>${title}</h2><div class="progress"></div></div><p class="qq"></p><div class="qopts"></div><p class="pt-info"></p><button class="go glow" hidden></button>`;
+  document.querySelector('.wrap').appendChild(sec);const[pg,qq,op,why,nx]=['.progress','.qq','.qopts','.pt-info','button.go'].map(s=>sec.querySelector(s)),key='q'+st;
+  let i=Math.max(0,qs.findIndex((_,k)=>!hasStar(key,k)));
+  const mix=a=>{for(let k=a.length-1;k>0;k--){const j=Math.floor(Math.random()*(k+1));[a[k],a[j]]=[a[j],a[k]];}return a;};
+  function show(){const q=qs[i];qq.innerHTML=`${i+1}. ${q.q}`;why.innerHTML='';nx.hidden=true;op.innerHTML='';
+    mix(q.o.map((t,k)=>[t,k])).forEach(([t,k])=>{const b=document.createElement('button');b.type='button';b.innerHTML=t;
+      b.onclick=()=>{if(k===0){b.classList.add('ok');[...op.children].forEach(x=>x.disabled=true);why.innerHTML='✅ נכון! '+q.w;addStar(key,i);beep(880,.15,'triangle',.06);burstEl(b,40);
+        nx.textContent=i<qs.length-1?'לשאלה הבאה ←':'🎉 סיימת את כל השאלות! מתחילים מההתחלה';nx.hidden=false;prog(pg,qs.length,k2=>hasStar(key,k2),i);}
+        else{b.classList.add('no');b.disabled=true;buzz();why.innerHTML='לא בדיוק. נסי תשובה אחרת 🙂';}};op.appendChild(b);});
+    prog(pg,qs.length,k=>hasStar(key,k),i);}
+  nx.onclick=()=>{i=(i+1)%qs.length;show();};show();}
+makeQuiz('mol','תרגול: מולקולות וקשרים',[
+ {q:'מה זו מולקולה?',o:['כמה אטומים שמחוברים יחד','אטום אחד לבד','סוג של חיידק'],w:'מולקולה היא קבוצה של אטומים שמחזיקים זה בזה בקשרים.'},
+ {q:'כמה אטומי מימן יש במולקולת מים, H₂O?',o:['2','1','3','0'],w:'המספר הקטן 2 אחרי ה־H אומר שיש שני מימנים.'},
+ {q:'מה הנוסחה של פחמן דו־חמצני?',o:['CO₂','CO','C₂O','H₂O'],w:'C לפחמן אחד, ו־O₂ לשני חמצנים. "דו" פירושו שניים.'},
+ {q:'כמה אטומים יש בסך הכול במתאן, CH₄?',o:['5','4','1','3'],w:'פחמן אחד ועוד 4 מימנים, ביחד 5.'},
+ {q:'בקשר כפול, האטומים משתפים...',o:['שני זוגות של אלקטרונים','זוג אחד של אלקטרונים','שלושה זוגות של אלקטרונים','אף אלקטרון'],w:'זוג אחד הוא קשר יחיד, שני זוגות קשר כפול ושלושה זוגות קשר משולש.'},
+ {q:'באיזו מולקולה יש קשר משולש?',o:['גז חנקן, N₂','מים, H₂O','מלח, NaCl'],w:'שני אטומי החנקן משתפים שלושה זוגות של אלקטרונים.'},
+ {q:'מה קורה בקשר יוני, כמו במלח?',o:['אטום אחד נותן אלקטרון לאטום אחר','שני אטומים משתפים זוג אלקטרונים','האטומים נעלמים'],w:'הנתרן נותן אלקטרון לכלור, ופלוס ומינוס נמשכים זה לזה.'},
+ {q:'מאיזה גז עשוי רוב האוויר?',o:['חנקן','חמצן','מימן','פחמן דו־חמצני'],w:'כמעט 8 מכל 10 חלקים באוויר הם חנקן.'},
+ {q:'אוזון, O₃, בנוי מ...',o:['שלושה אטומי חמצן','שלושה אטומי מימן','חמצן אחד ושלושה מימנים'],w:'O הוא חמצן, והמספר 3 אומר שיש שלושה כאלה.'},
+ {q:'כמה "ידיים" (קשרים) יש בדרך כלל לאטום פחמן?',o:['4','1','2','8'],w:'לכן פחמן מחזיק 4 מימנים במתאן.'}]);
+makeQuiz('acid','תרגול: חומצות ובסיסים',[
+ {q:'איזה טעם יש בדרך כלל לחומצות?',o:['חמוץ','מתוק','מר','חלקלק'],w:'לימון, חומץ ותפוז חמוצים כי הם חומציים.'},
+ {q:'סבון הוא...',o:['בסיסי','חומצי','ניטרלי'],w:'סבון בסיסי, ולכן הוא מרגיש חלקלק.'},
+ {q:'מה ה־pH של מים טהורים?',o:['7','0','14','3'],w:'7 הוא בדיוק באמצע הסולם: ניטרלי.'},
+ {q:'איזה מספר pH מתאים לחומר הכי חומצי?',o:['1','7','10','14'],w:'ככל שהמספר קטן יותר, החומר חומצי יותר.'},
+ {q:'לאיזה צבע יהפוך מיץ כרוב סגול בתוך חומץ?',o:['ורוד־אדום','כחול־ירוק','יישאר סגול'],w:'חומץ הוא חומצה, ובחומצה מיץ הכרוב נהיה ורוד־אדום.'},
+ {q:'לאיזה צבע יהפוך מיץ כרוב סגול במי סבון?',o:['כחול־ירוק','ורוד־אדום','יישאר סגול'],w:'סבון בסיסי, ובבסיס מיץ הכרוב נהיה כחול־ירוק.'},
+ {q:'מה נוצר כשמערבבים חומצה ובסיס בכמות הנכונה?',o:['מים ומלח','עוד חומצה','זהב','אש'],w:'זה נקרא נטרול: החומצה והבסיס מבטלים זה את זה.'},
+ {q:'איך קוראים לחומר שמשנה צבע ומגלה אם משהו חומצי או בסיסי?',o:['מחוון','מגנט','מדחום','מיקרוסקופ'],w:'מיץ כרוב סגול הוא מחוון טבעי.'},
+ {q:'מה נכון לעשות במעבדה אמיתית?',o:['לא לטעום חומרים, ולעבוד רק עם מבוגר','לטעום כדי לבדוק אם זה חמוץ','לערבב חומרי ניקוי ולראות מה יקרה'],w:'כימאים אמיתיים אף פעם לא טועמים ולא מערבבים חומרי ניקוי.'},
+ {q:'איזה חומר בסיסי עוזר להגן על השיניים מפני חומצות?',o:['משחת שיניים','מיץ לימון','קולה'],w:'משחת שיניים קצת בסיסית ומנטרלת חומצות.'},
+ {q:'חומצת הקיבה עוזרת לנו...',o:['לעכל אוכל','לראות בחושך','לגדול גבוה'],w:'בקיבה יש חומצה חזקה שמפרקת את האוכל.'}]);
+makeQuiz('part','תרגול: עולם החלקיקים',[
+ {q:'ממה בנויים פרוטונים ונייטרונים?',o:['מקווארקים','מאלקטרונים','מפוטונים','ממולקולות'],w:'בכל פרוטון ובכל נייטרון יש שלושה קווארקים.'},
+ {q:'כמה קווארקים יש בפרוטון?',o:['3','2','1','6'],w:'שניים "למעלה" ואחד "למטה".'},
+ {q:'מה המטען של קווארק "למעלה"?',o:['+⅔','+1','−⅓','0'],w:'שני שלישים ממטען של פרוטון. לקווארק "למטה" יש −⅓.'},
+ {q:'מאילו קווארקים בנוי נייטרון?',o:['למעלה, למטה, למטה','למעלה, למעלה, למטה','שלושה למעלה'],w:'⅔ − ⅓ − ⅓ = 0, ולכן לנייטרון אין מטען.'},
+ {q:'איזה חלקיק מדביק את הקווארקים זה לזה?',o:['גלואון','פוטון','ניטרינו','אלקטרון'],w:'הגלואון מעביר את הכוח החזק.'},
+ {q:'ממה עשוי האור?',o:['מפוטונים','מקווארקים','מגלואונים','מאטומים'],w:'פוטונים הם חלקיקים של אור, בלי משקל ובלי מטען.'},
+ {q:'כמה זמן לוקח לאור להגיע מהשמש לכדור הארץ?',o:['בערך 8 דקות','שנייה אחת','שנה שלמה','יום שלם'],w:'האור עובר 300,000 קילומטר בכל שנייה, ובכל זאת הדרך מהשמש לוקחת 8 דקות.'},
+ {q:'איזה חלקיק עובר דרך הגוף שלנו בטריליונים בכל שנייה בלי שנרגיש?',o:['ניטרינו','פרוטון','גלואון','בוזון היגס'],w:'לניטרינו אין מטען והוא כמעט בלי משקל, ולכן הוא עובר דרך כמעט הכול.'},
+ {q:'לאיזו משפחה שייך האלקטרון?',o:['לפטונים','קווארקים','בוזונים'],w:'גם הניטרינו, המיואון והטאו הם לפטונים.'},
+ {q:'איזה חלקיק התגלה בשנת 2012, וקשור לכך שלחלקיקים יש מסה?',o:['בוזון היגס','פוטון','אלקטרון','נייטרון'],w:'הוא התגלה במאיץ הענק במעבדת CERN.'}]);
 
 // סולם החומציות: החומרים מהמשחק ועוד כמה, מסודרים מהחומצי ביותר לבסיסי ביותר
 const XSUBS=SUBS.map(s=>({e:s.e,n:s.n,ph:s.ph,f:s.f})).concat([
@@ -1199,7 +1379,7 @@ explorer('xHeat',XHEAT,s=>`${s.e} ${s.n}`,(c,s)=>{const top=Math.max(s.b==null?s
 let seen={};try{seen=JSON.parse(localStorage.getItem('chemLessons')||'{}')||{};}catch(e){}
 const L={st:null,i:0,t:0,sim:null};
 let active='atom',mode='lesson';
-function setView(){ $('lesson').hidden=mode!=='lesson';['atom','mol','acid','heat'].forEach(k=>$('st-'+k).hidden=(mode==='lesson'||k!==active));['ptable','x-inside','x-amount'].forEach(id=>$(id).hidden=active!=='atom');['mol','acid','heat'].forEach(k=>$('x-'+k).hidden=active!==k);$('x-bond').hidden=active!=='mol'; }
+function setView(){ $('lesson').hidden=mode!=='lesson';['atom','mol','acid','heat','part'].forEach(k=>$('st-'+k).hidden=(mode==='lesson'||k!==active));document.querySelectorAll('[data-for]').forEach(e=>e.hidden=e.dataset.for!==active); }
 function openLesson(st,i){stopSpeak();L.st=st;L.i=i||0;mode='lesson';renderSlide();renderChat();setView();}
 function renderSlide(){const les=LES[L.st],s=les.slides[L.i];L.t=0;L.sim=s.sim?makeSim(s.sim,s.sim==='solid'?15:14):null;
   $('lTitle').textContent=les.name+': '+s.t;const tx=$('lText');tx.innerHTML=s.x;tx.classList.remove('pop');void tx.offsetWidth;tx.classList.add('pop');
@@ -1213,7 +1393,7 @@ $('lNext').onclick=()=>{const n=LES[L.st].slides.length;if(L.i<n-1){L.i++;stopSp
 $('lPrev').onclick=()=>{if(L.i>0){L.i--;stopSpeak();renderSlide();}};
 $('lSkip').onclick=toGame;
 function drawLesson(){L.t++;const c=lctx;c.clearRect(0,0,LW,LH);const s=LES[L.st].slides[L.i];if(L.sim)L.sim(c,L.t);else if(s.a)s.a(c,L.t);}
-document.querySelectorAll('.coach').forEach((co,i)=>{const b=document.createElement('button');b.className='helpbtn';b.textContent='📖 הסבר ושאלות';b.onclick=()=>openLesson(['atom','mol','acid','heat'][i],0);co.appendChild(b);});
+document.querySelectorAll('.coach').forEach((co,i)=>{const b=document.createElement('button');b.className='helpbtn';b.textContent='📖 הסבר ושאלות';b.onclick=()=>openLesson(['atom','mol','acid','heat','part'][i],0);co.appendChild(b);});
 
 /* speech out */
 const heVoice=null,autoRead=false;
@@ -1221,7 +1401,7 @@ function speak(){}
 function stopSpeak(){}
 
 /* ask the guide */
-const chats={atom:[],mol:[],acid:[],heat:[]};
+const chats={atom:[],mol:[],acid:[],heat:[],part:[]};
 let busy=false;
 function addMsg(who,txt){const d=document.createElement('div');d.className='msg '+who;const sp=document.createElement('span');sp.textContent=txt;d.appendChild(sp);
   if(who==='bot'&&heVoice){const b=document.createElement('button');b.className='say';b.type='button';b.textContent='🔈';b.setAttribute('aria-label','הקראת התשובה');b.onclick=()=>speak(sp.textContent);d.appendChild(b);}
@@ -1283,6 +1463,7 @@ function loop(){
   else if(active==='atom'){updAtom();drawAtom();}
   else if(active==='mol'){updMol();drawMol();}
   else if(active==='acid'){updAcid();drawAcid();}
+  else if(active==='part'){drawPart();}
   else{updHeat();drawHeat();}
   fxStep();requestAnimationFrame(loop);
 }
