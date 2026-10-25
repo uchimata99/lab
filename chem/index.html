@@ -439,12 +439,26 @@ canvas.xcv{touch-action:auto;cursor:default}
     </div>
   </section>
 
+  <!-- ATOM INSIDE: ממה בנוי אטום -->
+  <section class="card" id="x-inside">
+    <div class="lhead"><h2>ממה בנוי אטום?</h2><p class="small">לחצי כדי לעשות זום פנימה, שלב אחרי שלב</p></div>
+    <div class="xstage"><canvas class="cv xcv" id="xInsideCv" aria-label="ציור של חלקי האטום"></canvas>
+      <div class="side"><div class="xchips" id="xInsideChips"></div><p class="pt-info" id="xInsideInfo"></p></div></div>
+  </section>
+
   <!-- PERIODIC TABLE -->
   <section class="card" id="ptable">
     <div class="lhead"><h2>הטבלה המחזורית</h2><p class="small">לחצי על יסוד כדי לראות את האטום שלו</p></div>
     <div class="pt-scroll" dir="ltr"><div class="pt" id="ptGrid"></div></div>
     <p class="pt-info" id="ptInfo">כל משבצת היא יסוד אחר. המספר הקטן הוא המספר האטומי: כמה פרוטונים יש בגרעין.</p>
     <div class="pt-legend" id="ptLegend"></div>
+  </section>
+
+  <!-- ATOM AMOUNTS: כמה מכל אטום -->
+  <section class="card" id="x-amount">
+    <div class="lhead"><h2>כמה מכל אטום?</h2><p class="small">לחצי על מקום או חפץ כדי לראות מאילו אטומים הוא עשוי</p></div>
+    <div class="xstage"><canvas class="cv xcv" id="xAmountCv" aria-label="גרף עמודות של כמות כל יסוד"></canvas>
+      <div class="side"><div class="xchips" id="xAmountChips"></div><p class="pt-info" id="xAmountInfo"></p></div></div>
   </section>
 
   <!-- EXPLORERS: פינת הסבר לכל תחנה -->
@@ -1101,6 +1115,49 @@ explorer('xBond',XBONDS,b=>b.k,(c,b)=>{const y=112,R=66,ion=!b.o,xa=ion?118:162,
   c.fillStyle=C.ink;c.font='700 26px Rubik,sans-serif';c.textAlign='center';c.textBaseline='alphabetic';c.direction='ltr';c.fillText(b.s,XW/2,XH-12);},
  b=>`<b>${b.k}</b>: ${b.x}`);
 
+// ממה בנוי אטום: זום פנימה מהאטום עד הקווארקים
+function quarks(c,x,y,R,col,kinds){c.fillStyle=col;c.globalAlpha=.18;c.beginPath();c.arc(x,y,R,0,PI2);c.fill();c.globalAlpha=1;c.strokeStyle=col;c.lineWidth=3;c.beginPath();c.arc(x,y,R,0,PI2);c.stroke();
+  c.strokeStyle=C.muted;c.lineWidth=2;c.setLineDash([3,4]);kinds.forEach((_,i)=>{const a1=-Math.PI/2+i*PI2/3,a2=-Math.PI/2+(i+1)*PI2/3;c.beginPath();c.moveTo(x+Math.cos(a1)*R*.45,y+Math.sin(a1)*R*.45);c.lineTo(x+Math.cos(a2)*R*.45,y+Math.sin(a2)*R*.45);c.stroke();});c.setLineDash([]);
+  kinds.forEach((k,i)=>{const a=-Math.PI/2+i*PI2/3,qx=x+Math.cos(a)*R*.45,qy=y+Math.sin(a)*R*.45;ball(c,qx,qy,R*.24,k==='u'?'#e07a1f':'#2a8f6a',k,'#fff');});}
+const XINSIDE=[
+ {k:'האטום',d:c=>{c.fillStyle='rgba(47,111,208,.08)';c.beginPath();c.arc(210,118,100,0,PI2);c.fill();[60,100].forEach(r=>{c.setLineDash([4,6]);c.strokeStyle=C.line;c.lineWidth=2;c.beginPath();c.arc(210,118,r,0,PI2);c.stroke();});c.setLineDash([]);
+   [[0,60],[3.1,60],[1.2,100],[2.6,100],[4.4,100],[5.6,100]].forEach(([a,r])=>ball(c,210+Math.cos(a)*r,118+Math.sin(a)*r,6,C.e,'',''));ball(c,210,118,3.5,C.p,'','');arrowLbl(c,330,236,214,124,'הגרעין: נקודה זעירה במרכז');},
+  x:'אטום הוא כמעט כולו <b>מקום ריק</b>! אם אטום היה גדול כמו אצטדיון כדורגל, הגרעין שלו היה בגודל של <b>גרגר אפונה</b> במרכז המגרש, והאלקטרונים היו מסתובבים רחוק־רחוק, ביציעים.'},
+ {k:'הגרעין',d:c=>{nucleus(c,210,108,6,6,0,14);ball(c,268,224,10,C.p,'+','#fff');text(c,'פרוטון',230,224,15,C.ink,700);ball(c,168,224,10,C.n,'','');text(c,'נייטרון',128,224,15,C.ink,700);},
+  x:'בגרעין צפופים יחד <b style="color:var(--p)">פרוטונים</b> ו<b style="color:var(--n)">נייטרונים</b>. כמעט <b>כל המשקל</b> של האטום נמצא בגרעין הקטנטן. פרוטונים דוחים זה את זה כי לכולם מטען פלוס, אבל כוח חזק במיוחד, שנקרא <b>הכוח החזק</b>, מחזיק את כולם צמודים.'},
+ {k:'פרוטון',d:c=>{quarks(c,210,112,82,C.p,['u','u','d']);text(c,'u = קווארק למעלה · d = קווארק למטה',210,232,15,C.ink,700);},
+  x:'גם הפרוטון בנוי מחלקיקים קטנים עוד יותר, שנקראים <b>קווארקים</b>. בכל פרוטון יש שלושה: <b>שניים "למעלה"</b> ו<b>אחד "למטה"</b>. אלה רק שמות, לא כיוונים באמת. הקווארקים מחוברים כל כך חזק, שאי אפשר לשלוף אחד מהם החוצה לבד.'},
+ {k:'נייטרון',d:c=>{quarks(c,210,112,82,C.n,['u','d','d']);text(c,'u = קווארק למעלה · d = קווארק למטה',210,232,15,C.ink,700);},
+  x:'הנייטרון בנוי כמעט כמו הפרוטון, אבל הפוך: <b>אחד "למעלה"</b> ו<b>שניים "למטה"</b>. בגלל השינוי הקטן הזה המטענים מתקזזים, ולנייטרון אין מטען בכלל.'},
+ {k:'אלקטרון',d:c=>{// נדנדה מאוזנת: פרוטון אחד מול ערימה שמייצגת 1,836 אלקטרונים
+   c.fillStyle=C.ink;c.fillRect(60,166,300,8);c.fillStyle=C.muted;c.beginPath();c.moveTo(192,206);c.lineTo(228,206);c.lineTo(210,174);c.closePath();c.fill();
+   ball(c,320,140,24,C.p,'+','#fff');text(c,'פרוטון אחד',320,92,15,C.p,700);
+   for(let i=0;i<40;i++){const px=64+(i%10)*9,py=160-Math.floor(i/10)*9;ball(c,px+4,py,4.2,C.e,'','');}text(c,'1,836 אלקטרונים',108,92,15,C.e,700);text(c,'שוקלים אותו דבר',210,232,16,C.ink,700);},
+  x:'האלקטרון <b>קל מאוד</b>: צריך בערך <b>1,836 אלקטרונים</b> כדי לשקול כמו פרוטון אחד! הוא נע מהר מאוד מסביב לגרעין, ועד היום מדענים לא מצאו שהוא בנוי ממשהו קטן יותר.'},
+ {k:'כמה זה קטן?',d:c=>{emoji(c,'💧',110,110,90);c.fillStyle=C.ink;c.font='700 21px Rubik,sans-serif';c.textAlign='center';c.textBaseline='middle';c.direction='ltr';c.fillText('5,000,000,000,000,000,000,000',210,206);text(c,'אטומים בטיפת מים אחת',300,110,17,C.ink,700);text(c,'בערך:',300,82,16,C.muted,600);},
+  x:'בטיפת מים אחת יש בערך <b>5,000 מיליארד מיליארד</b> אטומים, יותר מכל גרגרי החול בכל החופים בעולם. ואם נסדר <b>מיליון אטומים</b> בשורה אחת, היא תהיה בערך בעובי של <b>שערה</b>.'}];
+explorer('xInside',XINSIDE,s=>s.k,(c,s)=>s.d(c,0),s=>`<b>${s.k}</b>: ${s.x}`);
+
+// כמה מכל אטום: לכל מקום חמשת היסודות הנפוצים ועוד "כל השאר", באחוזים
+const XAMT=[
+ {k:'🌌 ביקום',by:'מתוך 100 אטומים',v:[['מימן',92],['הליום',7.9],['כל השאר',.1]],x:'ביקום כמעט הכול <b>מימן והליום</b>, היסודות הפשוטים ביותר. כל שאר היסודות, כמו הפחמן שבגוף שלך, נוצרו בתוך כוכבים. לכן אומרים שאנחנו עשויים מ<b>אבק כוכבים</b>.'},
+ {k:'🌍 כדור הארץ כולו',by:'לפי משקל, מתוך 100',v:[['ברזל',32],['חמצן',30],['צורן',15],['מגנזיום',14],['גופרית',3],['כל השאר',6]],x:'במרכז כדור הארץ יש ליבה ענקית של <b>ברזל</b> וניקל. לכן כשסופרים את כל כדור הארץ, הברזל במקום הראשון.'},
+ {k:'🪨 קרום כדור הארץ',by:'לפי משקל, מתוך 100',v:[['חמצן',46],['צורן',28],['אלומיניום',8],['ברזל',6],['סידן',4],['כל השאר',8]],x:'הסלעים והאדמה שעליהם אנחנו הולכים עשויים בעיקר מ<b>חמצן וצורן</b>, כמו חול. כן, יש המון חמצן בתוך האבנים!'},
+ {k:'💨 האוויר',by:'מתוך 100 חלקיקים',v:[['חנקן',78],['חמצן',21],['ארגון',.9],['כל השאר',.1]],x:'רוב האוויר הוא <b>חנקן</b>! את החמצן, רק בערך חמישית מהאוויר, אנחנו צריכים כדי לנשום. ב"כל השאר" יש גם פחמן דו־חמצני ואדי מים.'},
+ {k:'🧒 גוף האדם',by:'מתוך 100 אטומים',v:[['מימן',62],['חמצן',24],['פחמן',12],['חנקן',1],['כל השאר',1]],x:'בגוף יש המון מים, ולכן כל כך הרבה <b>מימן וחמצן</b>. הפחמן בונה את השרירים, העור והשיער. ב"כל השאר" יש גם סידן לעצמות וברזל לדם.'},
+ {k:'💧 מים',by:'מתוך 100 אטומים',v:[['מימן',67],['חמצן',33]],x:'בכל מולקולת מים יש 2 מימנים וחמצן אחד, ולכן <b>2 מכל 3 אטומים</b> הם מימן.'},
+ {k:'🏖️ חול',by:'מתוך 100 אטומים',v:[['חמצן',67],['צורן',33]],x:'חול עשוי בעיקר מצורן דו־חמצני: צורן אחד ושני חמצנים. ומחול מתיכים עושים <b>זכוכית</b>!'},
+ {k:'🍬 סוכר',by:'מתוך 100 אטומים',v:[['מימן',49],['פחמן',27],['חמצן',24]],x:'מולקולת סוכר בנויה מ־12 פחמנים, 22 מימנים ו־11 חמצנים. אותם יסודות כמו במים ובפחמן דו־חמצני, רק מסודרים אחרת.'},
+ {k:'🧂 מלח',by:'מתוך 100 אטומים',v:[['נתרן',50],['כלור',50]],x:'בכל גרגר מלח יש <b>בדיוק אותו מספר</b> של אטומי נתרן ושל אטומי כלור.'}];
+const pctTxt=v=>v<1?'פחות מ־1':String(v);
+explorer('xAmount',XAMT,s=>s.k,(c,s)=>{text(c,s.by,210,22,16,C.muted,600);const n=s.v.length,step=Math.min(36,190/n),y0=48,xr=318,W=250;
+  s.v.forEach(([nm,v],i)=>{const y=y0+i*step,bw=Math.max(3,v/100*W),other=nm==='כל השאר';c.fillStyle=other?C.n:C.lab;
+    c.beginPath();c.moveTo(xr,y);c.lineTo(xr-bw+4,y);c.arcTo(xr-bw,y,xr-bw,y+4,4);c.lineTo(xr-bw,y+step-14);c.arcTo(xr-bw,y+step-10,xr-bw+4,y+step-10,4);c.lineTo(xr,y+step-10);c.closePath();c.fill();
+    c.fillStyle=C.ink;c.font='700 15px Rubik,sans-serif';c.textBaseline='middle';c.direction='rtl';c.textAlign='right';c.fillText(nm,XW-8,y+(step-10)/2);
+    c.textAlign='right';c.fillText(pctTxt(v),xr-bw-6,y+(step-10)/2);});
+  c.strokeStyle=C.line;c.lineWidth=2;c.beginPath();c.moveTo(xr+1,y0-4);c.lineTo(xr+1,y0+n*step-6);c.stroke();},
+ s=>`<b>${s.k}</b> (${s.by}): ${andJoin(s.v.map(([nm,v])=>`${nm} ${pctTxt(v)}`))}. ${s.x}`);
+
 // סולם החומציות: החומרים מהמשחק ועוד כמה, מסודרים מהחומצי ביותר לבסיסי ביותר
 const XSUBS=SUBS.map(s=>({e:s.e,n:s.n,ph:s.ph,f:s.f})).concat([
  {e:'🥤',n:'קולה',ph:2.5,f:'קולה חומצית למדי. לכן כדאי לשטוף את הפה במים אחרי שותים אותה.'},
@@ -1142,7 +1199,7 @@ explorer('xHeat',XHEAT,s=>`${s.e} ${s.n}`,(c,s)=>{const top=Math.max(s.b==null?s
 let seen={};try{seen=JSON.parse(localStorage.getItem('chemLessons')||'{}')||{};}catch(e){}
 const L={st:null,i:0,t:0,sim:null};
 let active='atom',mode='lesson';
-function setView(){ $('lesson').hidden=mode!=='lesson';['atom','mol','acid','heat'].forEach(k=>$('st-'+k).hidden=(mode==='lesson'||k!==active));$('ptable').hidden=active!=='atom';['mol','acid','heat'].forEach(k=>$('x-'+k).hidden=active!==k);$('x-bond').hidden=active!=='mol'; }
+function setView(){ $('lesson').hidden=mode!=='lesson';['atom','mol','acid','heat'].forEach(k=>$('st-'+k).hidden=(mode==='lesson'||k!==active));['ptable','x-inside','x-amount'].forEach(id=>$(id).hidden=active!=='atom');['mol','acid','heat'].forEach(k=>$('x-'+k).hidden=active!==k);$('x-bond').hidden=active!=='mol'; }
 function openLesson(st,i){stopSpeak();L.st=st;L.i=i||0;mode='lesson';renderSlide();renderChat();setView();}
 function renderSlide(){const les=LES[L.st],s=les.slides[L.i];L.t=0;L.sim=s.sim?makeSim(s.sim,s.sim==='solid'?15:14):null;
   $('lTitle').textContent=les.name+': '+s.t;const tx=$('lText');tx.innerHTML=s.x;tx.classList.remove('pop');void tx.offsetWidth;tx.classList.add('pop');
