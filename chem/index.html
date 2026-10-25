@@ -1252,14 +1252,24 @@ $('ask').hidden=false;
 
 /* speech in */
 const SR=window.SpeechRecognition||window.webkitSpeechRecognition;let rec=null,recOn=false;
+// ההקלטה נמשכת עד 3.5 שניות של שקט אחרי הדיבור (או עד לחיצה נוספת), עם 8 שניות להתחיל לדבר ומקסימום 30 שניות.
+// אם הדפדפן עוצר באמצע (קורה באנדרואיד), ממשיכים להקשיב והטקסט נשמר.
+const REC_SILENCE=3500,REC_FIRST=8000,REC_MAX=30000,NOMIC='המיקרופון לא זמין כאן. אפשר ללחוץ על המיקרופון שבמקלדת של הטלפון ולהגיד את השאלה.';
+let recWanted=false,recText='',recTimer=null,recStart=0;
+function recArm(ms){clearTimeout(recTimer);recTimer=setTimeout(recFinish,Math.min(ms,Math.max(0,REC_MAX-(Date.now()-recStart))));}
+function recFinish(){if(!recWanted)return;recWanted=false;clearTimeout(recTimer);try{rec&&rec.stop();}catch(e){}
+  const s=$('askIn').value.trim();if(s)ask(s);else $('askNote').textContent='לא שמעתי שאלה. נסי שוב.';}
+function recStartOne(){const base=recText;rec=new SR();rec.lang='he-IL';rec.interimResults=true;rec.continuous=true;rec.maxAlternatives=1;
+  rec.onresult=ev=>{let fin='',mid='';for(let i=0;i<ev.results.length;i++){const r=ev.results[i];if(r.isFinal)fin+=r[0].transcript;else mid+=r[0].transcript;}
+    recText=(base+' '+fin).trim();$('askIn').value=(recText+' '+mid).trim();recArm(REC_SILENCE);};
+  rec.onerror=ev=>{if(ev.error==='not-allowed'||ev.error==='service-not-allowed'){recWanted=false;clearTimeout(recTimer);$('askNote').textContent=NOMIC;}};
+  rec.onend=()=>{if(recWanted&&Date.now()-recStart<REC_MAX){try{recStartOne();return;}catch(e){}}if(recWanted)recFinish();recOn=false;$('mic').classList.remove('rec');};
+  rec.start();recOn=true;$('mic').classList.add('rec');}
 if(SR){$('mic').hidden=false;
-  $('mic').onclick=()=>{if(recOn){try{rec.stop();}catch(e){}return;}
-    try{rec=new SR();rec.lang='he-IL';rec.interimResults=true;rec.maxAlternatives=1;
-      rec.onresult=ev=>{let s='';for(const r of ev.results)s+=r[0].transcript;$('askIn').value=s;if(ev.results[ev.results.length-1].isFinal){ask(s);}};
-      rec.onerror=ev=>{$('askNote').textContent=ev.error==='not-allowed'||ev.error==='service-not-allowed'?'המיקרופון לא זמין כאן. אפשר ללחוץ על המיקרופון שבמקלדת של הטלפון ולהגיד את השאלה.':'לא שמעתי טוב. נסי שוב.';};
-      rec.onend=()=>{recOn=false;$('mic').classList.remove('rec');};
-      rec.start();recOn=true;$('mic').classList.add('rec');$('askNote').textContent='אני מקשיבה... 👂';}
-    catch(e){$('askNote').textContent='המיקרופון לא זמין כאן. אפשר ללחוץ על המיקרופון שבמקלדת של הטלפון ולהגיד את השאלה.';}};}
+  $('mic').onclick=()=>{if(recWanted){recFinish();return;}
+    try{recWanted=true;recText='';recStart=Date.now();$('askIn').value='';recStartOne();recArm(REC_FIRST);
+      $('askNote').textContent='אני מקשיבה... 👂 כשתסיימי, לחצי שוב על המיקרופון או פשוט חכי רגע.';}
+    catch(e){recWanted=false;$('askNote').textContent=NOMIC;}};}
 else{$('mic').hidden=false;$('mic').onclick=()=>{$('askIn').focus();$('askNote').textContent='כדי לשאול בקול: לחצי על המיקרופון שבמקלדת של הטלפון או המחשב, ואז הגידי את השאלה.';};}
 
 /* ---------- tabs & loop ---------- */
