@@ -1247,10 +1247,10 @@ function titLoad(){T.base=0;T.acid=0;T.drops=[];T.bub=[];T.done=false;T.ph=tPh()
 function tUI(){$('tBase').disabled=$('tAcid').disabled=T.done;prog($('tProg'),TLV.length,i=>hasStar('tit',i),T.lv);}
 function tDrop(kind){if(T.done)return;T.drops.push({kind,y:46,vy:0});beep(kind==='b'?520:620,.05,'sine',.05);}
 $('tBase').onclick=()=>tDrop('b');$('tAcid').onclick=()=>tDrop('a');$('tNext').onclick=()=>{T.lv=(T.lv+1)%TLV.length;titLoad();};
-function tLand(kind){if(kind==='b')T.base++;else T.acid++;const e=tEx(),ph=tPh(),l=TLV[T.lv];
+function tLand(kind){if(T.done)return;if(kind==='b')T.base++;else T.acid++;const e=tEx(),ph=tPh(),l=TLV[T.lv];
   if(kind==='b')for(let i=0;i<8;i++)T.bub.push({x:170+Math.random()*80,y:250,v:.6+Math.random()*1.2,r:2+Math.random()*3});
   if(e===0){T.done=true;addStar('tit',T.lv);burstEl(tcv,80);beep(880,.2,'triangle',.07);$('tNext').hidden=false;
-    $('tSay').innerHTML=`🎉 <b>מושלם!</b> הצבע סגול ו־pH הוא <bdi dir="ltr">7</bdi>, בדיוק ניטרלי. היו צריך <b>${l.a} טיפות</b> של בסיס כדי לנטרל את ה${l.n}. ${kind==='b'?'שמת לב לבועות? כשחומצה ובסיס כמו חומץ וסודה לשתייה נפגשים, יוצא גז פחמן דו־חמצני.':''}`;}
+    $('tSay').innerHTML=`🎉 <b>מושלם!</b> הצבע סגול ו־pH הוא <bdi dir="ltr">7</bdi>, בדיוק ניטרלי. היה צריך <b>${l.a} טיפות</b> של בסיס כדי לנטרל את ה${l.n}. ${kind==='b'?'שמת לב לבועות? כשחומצה ובסיס כמו חומץ וסודה לשתייה נפגשים, יוצא גז פחמן דו־חמצני.':''}`;}
   else if(e<0)$('tSay').innerHTML=`אופס, יותר מדי בסיס! עכשיו זה <b>בסיסי</b> (כחול־ירוק, pH <bdi dir="ltr">${ph.toFixed(1)}</bdi>). הוסיפי <b>טיפת חומצה</b> כדי לחזור לאמצע.`;
   else $('tSay').innerHTML=e<=2?`כמעט! הצבע מתחיל להשתנות (pH <bdi dir="ltr">${ph.toFixed(1)}</bdi>). עוד קצת...`:`עדיין <b>חומצי</b> (pH <bdi dir="ltr">${ph.toFixed(1)}</bdi>). המשיכי לטפטף בסיס.`;
   tUI();}
