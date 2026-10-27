@@ -485,6 +485,8 @@ canvas.xcv{touch-action:auto;cursor:default}
           <li id="em0">על עץ בהיר: להגיע לפרפרים מוסווים ובהירים</li>
           <li id="em1">אחרי שהעץ מושחר: להגיע לפרפרים כהים</li>
         </ul>
+        <div class="fact" id="eSum" hidden></div>
+        <button class="go alt" id="eAgain" hidden>🔄 לשחק שוב מההתחלה</button>
       </div>
     </div>
   </section>
@@ -543,6 +545,32 @@ canvas.xcv{touch-action:auto;cursor:default}
     <div class="lhead"><h2>מתי חומרים נמסים ורותחים?</h2><p class="small">לחצי על חומר כדי לראות את המצבים שלו</p></div>
     <div class="xstage"><canvas class="cv xcv" id="xHeatCv" aria-label="ציר טמפרטורה עם מוצק, נוזל וגז"></canvas>
       <div class="side"><div class="xchips" id="xHeatChips"></div><p class="pt-info" id="xHeatInfo"></p></div></div>
+  </section>
+  <section class="card" id="x-finch" data-for="evo" hidden>
+    <div class="lhead"><h2>המקורים של דרווין</h2><p class="small">בחרי מה יש לאכול באי, וראי איך המקורים משתנים</p></div>
+    <div class="xstage"><canvas class="cv xcv" id="finchCv" aria-label="שנים עשר פרושים עם מקורים בעובי שונה, וגרף של עובי המקור הממוצע"></canvas>
+      <div class="side">
+        <div class="mname" id="fGen"></div>
+        <p class="pt-info" id="fSay"></p>
+        <div class="row qbtns">
+          <button class="go alt" id="fSeed">☀️ בצורת<small>רק זרעים קשים</small></button>
+          <button class="go alt" id="fBug">🌧️ גשמים<small>הרבה חרקים</small></button>
+        </div>
+        <ul class="missions"><li id="fm0">להגיע לפרושים עם מקורים עבים</li><li id="fm1">להגיע לפרושים עם מקורים דקים</li></ul>
+      </div></div>
+  </section>
+  <section class="card" id="x-bact" data-for="evo" hidden>
+    <div class="lhead"><h2>חיידקים ותרופה</h2><p class="small">תני תרופה או חכי, וראי מי שורד</p></div>
+    <div class="xstage"><canvas class="cv xcv" id="bactCv" aria-label="צלחת עם חיידקים רגישים ועמידים, וגרף של כמה יש מכל סוג"></canvas>
+      <div class="side">
+        <p class="pt-info" id="bSay"></p>
+        <div class="row qbtns">
+          <button class="go alt" id="bDose">💊 מנת תרופה<small>הורגת חיידקים רגישים</small></button>
+          <button class="go alt" id="bWait">⏳ לחכות יום<small>החיידקים מתרבים</small></button>
+        </div>
+        <button class="go alt" id="bReset">🧫 צלחת חדשה</button>
+        <ul class="missions"><li id="bm0">ריפוי מלא: לחסל את כל החיידקים</li><li id="bm1">לגלות מה קורה כשמפסיקים את התרופה באמצע</li></ul>
+      </div></div>
   </section>
   <section class="card" id="x-tree" data-for="evo" hidden>
     <div class="lhead"><h2>עץ החיים</h2><p class="small">לחצי על יצור כדי לראות את הדרך שלו בעץ ומי הקרוב אליו ביותר</p></div>
@@ -1466,8 +1494,8 @@ function barkTex(v){const k=document.createElement('canvas');k.width=EW;k.height
 const BARK=[barkTex(EBG[0]),barkTex(EBG[1])];
 const E={gen:1,pop:[],caught:0,bg:0,hist:[],t:0,envChanged:false};
 const ePlace=v=>({v,x:24+Math.random()*(EW-48),y:22+Math.random()*(BH-44),r:(Math.random()-.5)*.8,alive:true});
-const eAvg=()=>E.pop.reduce((s,m)=>s+m.v,0)/E.pop.length;
-function evoStart(){E.gen=1;E.bg=0;E.envChanged=false;E.pop=Array.from({length:EN},()=>ePlace(.05+Math.random()*.9));E.caught=0;E.hist=[eAvg()];evoUI();
+const eAvg=()=>E.pop.reduce((s,m)=>s+m.v,0)/E.pop.length,eLight=()=>E.pop.filter(m=>m.v>.5).length;
+function evoStart(){E.gen=1;E.bg=0;E.envChanged=false;E.pop=Array.from({length:EN},()=>ePlace(.05+Math.random()*.9));E.caught=0;E.hist=[eAvg()];E.l0=eLight();E.g1=0;E.l1=0;E.gEnv=0;$('eSum').hidden=true;$('eAgain').hidden=true;evoUI();
   say($('eSay'),'את <b>ציפור רעבה</b> 🐦! על גזע העץ נחים פרפרים בגוונים שונים. הקישי על <b>הפרפרים שהכי קל לראות</b>. בכל דור אפשר לאכול עד <b>10</b>. מי שלא נאכל, ישרוד ויביא צאצאים.');}
 function evoUI(){$('eGen').textContent=`דור ${E.gen}`;
   $('eInfo').innerHTML=E.caught<EMIN?`אכלת <b>${E.caught}</b> פרפרים. אחרי ${EMIN} אפשר כבר לעבור לדור הבא.`:E.caught<EBITE?`אכלת <b>${E.caught}</b> מתוך ${EBITE}. אפשר להמשיך לצוד, או ללחוץ "הדור הבא". את השאר יאכלו ציפורים אחרות.`:'השורדים מוכנים להטיל ביצים. לחצי "הדור הבא".';
@@ -1482,11 +1510,12 @@ $('eNext').onclick=()=>{if(E.caught<EMIN)return;const kids=[],bg0=EBG[E.bg],more
   E.pop.filter(m=>m.alive).map(m=>({m,s:Math.abs(m.v-bg0)+(Math.random()-.5)*.3})).sort((a,b)=>b.s-a.s).slice(0,more).forEach(o=>o.m.alive=false);
   E.pop.filter(m=>m.alive).forEach(m=>{for(let k=0;k<2;k++){const jump=Math.random()<.1?(Math.random()-.5)*.7:(Math.random()-.5)*.24;kids.push(ePlace(clamp(m.v+jump,0,1)));}});
   E.pop=kids;E.caught=0;E.gen++;E.hist.push(eAvg());beep(600,.1,'sine',.05);const a=eAvg(),bg=EBG[E.bg];
+  if(!E.g1&&!E.bg&&E.gen>=3&&a>.62){E.g1=E.gen;E.l1=eLight();}
   if(!E.bg&&E.gen>=3&&a>.62&&!hasStar('evo',0)){addStar('evo',0);burstEl(ecv,80);say($('eSay'),'🎉 ראי! רוב הפרפרים <b>בהירים</b> עכשיו, כמו העץ. הם מוסווים, ולכן קשה למצוא אותם. זו <b>ברירה טבעית</b>! עכשיו נסי ללחוץ על "שינוי הסביבה".','ok');}
-  else if(E.bg&&E.envChanged&&a<.42&&!hasStar('evo',1)){addStar('evo',1);burstEl(ecv,80);say($('eSay'),'🎉 מדהים! אחרי שהעץ השחיר, הפרפרים הכהים שרדו, ועכשיו רובם <b>כהים</b>. בדיוק כך קרה באנגליה לפני כ־200 שנה, לעש שנקרא עש הכסוף!','ok');}
+  else if(E.bg&&E.envChanged&&a<.42&&$('eSum').hidden){addStar('evo',1);evoSummary();burstEl(ecv,80);say($('eSay'),'🎉 מדהים! אחרי שהעץ השחיר, הפרפרים הכהים שרדו, ועכשיו רובם <b>כהים</b>. בדיוק כך קרה באנגליה לפני כ־200 שנה, לעש שנקרא עש הכסוף!','ok');}
   else say($('eSay'),`${more?`ציפורים אחרות אכלו עוד ${more}. `:''}דור ${E.gen}: הגוון הממוצע ${Math.abs(a-bg)<.15?'כבר קרוב מאוד לצבע העץ':'עוד רחוק מהצבע של העץ'}. המשיכי לצוד את מי שבולט.`);
   evoUI();};
-$('eEnv').onclick=()=>{E.bg=1-E.bg;if(E.bg)E.envChanged=true;beep(300,.2,'square',.03);
+$('eEnv').onclick=()=>{E.bg=1-E.bg;if(E.bg){E.envChanged=true;if(!E.gEnv)E.gEnv=E.gen;}beep(300,.2,'square',.03);
   say($('eSay'),E.bg?'🏭 עשן מפעלים השחיר את גזעי העצים! עכשיו מי בולט? המשיכי לצוד ובדקי מה קורה לגוון של הפרפרים לאורך הדורות.':'🌳 העצים נקיים ובהירים שוב. מה יקרה עכשיו?');evoUI();};
 function drawEvo(){E.t++;const c=ectx;c.clearRect(0,0,EW,EH);c.drawImage(BARK[E.bg],0,0,EW,BH);
   for(const m of E.pop)if(m.alive)moth(c,m.x,m.y,m.v,m.r+Math.sin(E.t*.04+m.x)*.04,1);
@@ -1534,6 +1563,85 @@ makeQuiz('evo','תרגול: אבולוציה',[
  {q:'כמה זמן לוקח בדרך כלל למין חדש להתפתח?',o:['הרבה מאוד דורות, אלפי עד מיליוני שנים','יום אחד','שבוע'],w:'השינויים קטנים בכל דור, ומצטברים לאט.'},
  {q:'למה תרופה נגד חיידקים לפעמים מפסיקה לעבוד?',o:['החיידקים העמידים שורדים ומתרבים','החיידקים מתעייפים','התרופה מתקלקלת בבקבוק'],w:'זו אבולוציה שקורה ממש מול העיניים, כי לחיידקים יש דור חדש בערך כל 20 דקות!'},
  {q:'מה זו "שונות"?',o:['ההבדלים הקטנים בין פרטים מאותו מין','מין חדש','סוג של מאובן'],w:'בלי שונות לא הייתה ברירה טבעית: כולם היו זהים.'}]);
+
+// סיכום של הציפור הרעבה, עם המספרים מהמשחק עצמו
+function evoSummary(){const dark=E.pop.filter(m=>m.v<=.5).length,g=E.gen-(E.gEnv||E.gen);
+  $('eSum').innerHTML=`<b>מה קרה כאן?</b><br>
+1️⃣ <b>שונות:</b> בדור 1 היו פרפרים בהירים וכהים: ${E.l0} בהירים ו־${20-E.l0} כהים.<br>
+2️⃣ <b>ברירה:</b> הציפורים, כלומר את, אכלו קודם את מי שבלט על העץ.<br>
+3️⃣ <b>תורשה:</b> השורדים הביאו צאצאים שדומים להם.${E.g1?` בדור ${E.g1} כבר ${E.l1} מתוך 20 היו בהירים.`:''}<br>
+4️⃣ <b>הסביבה השתנתה:</b> כשהעשן השחיר את העץ, דווקא הבהירים בלטו. ${g?`אחרי ${g} דורות`:'בסוף'} ${dark} מתוך 20 היו כהים.<br>
+אף פרפר לא שינה צבע בעצמו! מה שהשתנה הוא <b>מי שרד והביא צאצאים</b>. זו אבולוציה.`;
+  $('eSum').hidden=false;$('eAgain').hidden=false;}
+$('eAgain').onclick=()=>{evoStart();beep(600,.08,'sine',.05);};
+
+/* ---------- המקורים של דרווין: בצורת מעדיפה מקור עבה, גשמים מעדיפים מקור דק ---------- */
+const FW=420,FH=340,fiCv=$('finchCv'),fiCtx=setup(fiCv,FW,FH),FN=12;
+const F={birds:[],food:null,phase:'idle',timer:0,gen:1,hist:[],t:0};
+const fAvg=()=>F.birds.reduce((s,b)=>s+b.b,0)/F.birds.length;
+function finchNew(list){F.birds=list.map(b=>({b,ok:true,fade:1}));}
+function finchStart(){finchNew(Array.from({length:FN},()=>.2+Math.random()*.6));F.gen=1;F.hist=[fAvg()];F.phase='idle';F.food=null;finchUI();
+  $('fSay').innerHTML='באי חיים פרושים עם מקורים בעובי שונה. מקור <b>עבה</b> טוב לפיצוח זרעים קשים, ומקור <b>דק</b> טוב לתפיסת חרקים. בחרי מה יקרה באי השנה, וצפי מי מצליח לאכול.';}
+function finchUI(){$('fGen').textContent=`דור ${F.gen}`;$('fSeed').disabled=$('fBug').disabled=F.phase!=='idle';$('fm0').classList.toggle('ok',hasStar('fin',0));$('fm1').classList.toggle('ok',hasStar('fin',1));}
+function finchYear(food){if(F.phase!=='idle')return;F.food=food;F.phase='feed';F.timer=0;
+  F.birds.forEach(b=>{const fit=food==='seed'?b.b:1-b.b;b.ok=Math.random()<.1+.85*fit;});
+  // תמיד שורדים לפחות שלושה, המתאימים ביותר
+  if(F.birds.filter(b=>b.ok).length<3)F.birds.slice().sort((x,y)=>food==='seed'?y.b-x.b:x.b-y.b).slice(0,3).forEach(b=>b.ok=true);
+  beep(food==='seed'?300:700,.15,'sine',.05);finchUI();
+  $('fSay').innerHTML=food==='seed'?'☀️ <b>בצורת!</b> נשארו רק זרעים קשים. מי שיש לו מקור עבה מצליח לפצח אותם. מי שלא, נשאר רעב...':'🌧️ <b>שנה גשומה!</b> יש המון חרקים. מקור דק וחד תופס אותם בקלות.';}
+$('fSeed').onclick=()=>finchYear('seed');$('fBug').onclick=()=>finchYear('bug');
+function finchBreed(){const surv=F.birds.filter(b=>b.ok).map(b=>b.b),kids=[];
+  for(let i=0;kids.length<FN;i++){const p=surv[i%surv.length],j=Math.random()<.1?(Math.random()-.5)*.5:(Math.random()-.5)*.2;kids.push(clamp(p+j,0,1));}
+  const n=surv.length;finchNew(kids);F.gen++;F.hist.push(fAvg());F.phase='idle';const a=fAvg();
+  if(a>.7&&!hasStar('fin',0)){addStar('fin',0);burstEl(fiCv,70);$('fSay').innerHTML='🎉 רוב הפרושים עם <b>מקור עבה</b>! בדיוק את זה מדדו חוקרים בשם פיטר ורוזמרי גרנט באיי גלפגוס: אחרי בצורת קשה בשנת 1977, לפרושים של הדור הבא היו מקורים עבים יותר!';}
+  else if(a<.3&&!hasStar('fin',1)){addStar('fin',1);burstEl(fiCv,70);$('fSay').innerHTML='🎉 עכשיו רוב המקורים <b>דקים</b>. אותו מין של ציפור, אוכל אחר, ותוך כמה דורות המקורים השתנו.';}
+  else $('fSay').innerHTML=`רק ${n} מתוך ${FN} פרושים מצאו מספיק אוכל, והם הביאו את הצאצאים. לצאצאים יש מקורים <b>דומים להורים</b>. ${a>.55?'המקורים נעשים עבים יותר.':a<.45?'המקורים נעשים דקים יותר.':'בחרי שוב מה יקרה באי.'}`;
+  finchUI();}
+function finchDraw(c,x,y,b,alpha,food,ok){c.globalAlpha=alpha;c.fillStyle='#8a6d4b';c.beginPath();c.ellipse(x-6,y+8,24,17,0,0,PI2);c.fill();c.beginPath();c.arc(x+12,y-8,12,0,PI2);c.fill();
+  c.fillStyle='#fff';c.beginPath();c.arc(x+16,y-11,3.2,0,PI2);c.fill();c.fillStyle='#222';c.beginPath();c.arc(x+17,y-11,1.6,0,PI2);c.fill();
+  const h=2+b*9,L=24-b*9;c.fillStyle='#e0a030';c.beginPath();c.moveTo(x+21,y-8-h);c.lineTo(x+21+L,y-7);c.lineTo(x+21,y-8+h);c.closePath();c.fill();c.strokeStyle='rgba(0,0,0,.25)';c.lineWidth=1;c.stroke();
+  if(food)emoji(c,ok?(food==='seed'?'🌰':'🐛'):'💤',x+6,y-30,ok?18:16);c.globalAlpha=1;}
+function drawFinch(){F.t++;const c=fiCtx;c.clearRect(0,0,FW,FH);c.fillStyle=F.food==='seed'?'#efe2c4':F.food==='bug'?'#d9ecd2':C.well;c.fillRect(0,0,FW,262);
+  if(F.phase==='feed'&&++F.timer>110)finchBreed();
+  F.birds.forEach((b,i)=>{const x=60+(i%4)*100,y=52+Math.floor(i/4)*80,bob=Math.sin(F.t*.07+i)*2;
+    const fade=F.phase==='feed'&&!b.ok?Math.max(.25,1-F.timer/60):1;finchDraw(c,x,y+bob,b.b,fade,F.phase==='feed'?F.food:null,b.ok);});
+  // גרף: עובי המקור הממוצע בכל דור
+  const y0=282,y1=FH-12,X=i=>40+i*((FW-80)/11),Y=v=>y1-v*(y1-y0),h=F.hist.slice(-12);c.fillStyle=C.paper;c.fillRect(0,264,FW,FH-264);
+  c.strokeStyle=C.lab;c.lineWidth=2;c.beginPath();h.forEach((v,i)=>i?c.lineTo(X(i),Y(v)):c.moveTo(X(i),Y(v)));c.stroke();h.forEach((v,i)=>{c.fillStyle=C.lab;c.beginPath();c.arc(X(i),Y(v),4.5,0,PI2);c.fill();});
+  text(c,'עבה',FW-18,y0,12,C.muted,700);text(c,'דק',FW-18,y1,12,C.muted,700);text(c,'עובי המקור הממוצע בכל דור',120,y0-10,12,C.muted,700);}
+finchStart();
+
+/* ---------- חיידקים ותרופה: מנה הורגת בעיקר רגישים, וחיכוי נותן לשורדים להתחלק ---------- */
+const BW=420,BHH=340,bcv=$('bactCv'),bctx=setup(bcv,BW,BHH),BCX=210,BCY=128,BR=112,BMAX=80;
+const B={cells:[],hist:[],doses:0,waitsAfterDose:0,t:0};
+const bInDish=()=>{const a=Math.random()*PI2,r=Math.sqrt(Math.random())*(BR-12);return{x:BCX+Math.cos(a)*r,y:BCY+Math.sin(a)*r};};
+const bAlive=()=>B.cells.filter(c=>c.alive),bRes=c=>c.r>=.5;
+function bSnap(){const a=bAlive();B.hist.push([a.filter(c=>!bRes(c)).length,a.filter(bRes).length]);if(B.hist.length>12)B.hist.shift();}
+function bactStart(){B.cells=[];for(let i=0;i<30;i++){const p=bInDish();B.cells.push({...p,r:i<3?.7+Math.random()*.25:.05+Math.random()*.3,ang:Math.random()*PI2,alive:true,die:0});}
+  B.hist=[];B.doses=0;B.waitsAfterDose=0;bSnap();bactUI();
+  $('bSay').innerHTML='בצלחת יש חיידקים שגורמים למחלה. רובם <b style="color:#2e8b57">ירוקים: רגישים</b> לתרופה, ויש כמה <b style="color:#8e44ad">סגולים: עמידים</b>, שקשה יותר להרוג. תני תרופה או חכי, וראי מה קורה.';}
+function bactUI(){const n=bAlive().length;$('bDose').disabled=!n;$('bWait').disabled=!n;$('bm0').classList.toggle('ok',hasStar('bac',0));$('bm1').classList.toggle('ok',hasStar('bac',1));}
+$('bDose').onclick=()=>{let k=0;bAlive().forEach(c=>{if(Math.random()<(bRes(c)?.35:.95)){c.alive=false;c.die=1;k++;}});B.doses++;B.waitsAfterDose=0;bSnap();buzz();
+  const a=bAlive(),r=a.filter(bRes).length;
+  if(!a.length){if(!hasStar('bac',0))addStar('bac',0);burstEl(bcv,80);$('bSay').innerHTML=`🎉 <b>הצלחת!</b> כל החיידקים מתו אחרי ${B.doses} מנות. בגלל זה רופאים אומרים לקחת את <b>כל</b> הטיפול עד הסוף, גם כשכבר מרגישים טוב.`;}
+  else $('bSay').innerHTML=`💊 התרופה הרגה ${k} חיידקים. נשארו ${a.length}${r?`, ומהם ${r} <b style="color:#8e44ad">עמידים</b>`:''}. ${r>a.length/2?'שימי לב: רוב מי שנשאר עמיד!':''}`;
+  bactUI();};
+$('bWait').onclick=()=>{const a=bAlive();a.forEach(c=>{if(B.cells.filter(x=>x.alive).length>=BMAX)return;const p=bInDish();B.cells.push({x:clamp(c.x+(p.x-BCX)*.25,BCX-BR+12,BCX+BR-12),y:clamp(c.y+(p.y-BCY)*.25,BCY-BR+12,BCY+BR-12),r:clamp(c.r+(Math.random()-.5)*.1,0,1),ang:Math.random()*PI2,alive:true,die:0});});
+  B.cells=B.cells.filter(c=>c.alive||c.die>0);if(B.doses)B.waitsAfterDose++;bSnap();pop();
+  const n=bAlive().length,r=bAlive().filter(bRes).length;
+  if(B.doses&&r>n*.6&&n>=10){if(!hasStar('bac',1))addStar('bac',1);burstEl(bcv,60);$('bSay').innerHTML=`😮 ראי: כמעט כל החיידקים עכשיו <b style="color:#8e44ad">סגולים, עמידים</b>! הפסקנו את התרופה באמצע: הרגישים מתו, והעמידים שרדו והתרבו. ככה נוצרים חיידקים שתרופה כבר לא עוזרת נגדם. זו אבולוציה מהירה, כי לחיידקים יש דור חדש בערך כל 20 דקות.`;}
+  else $('bSay').innerHTML=`⏳ עבר יום. החיידקים שנשארו התחלקו לשניים, ועכשיו יש ${n}${n>=BMAX?' (הצלחת מלאה!)':''}. הצאצאים דומים להורים: מעמיד יוצא עמיד.`;
+  bactUI();};
+$('bReset').onclick=()=>{bactStart();beep(500,.08,'sine',.05);};
+function drawBact(){B.t++;const c=bctx;c.clearRect(0,0,BW,BHH);
+  c.fillStyle='#f3efd9';c.beginPath();c.arc(BCX,BCY,BR,0,PI2);c.fill();c.strokeStyle='#b8b39a';c.lineWidth=5;c.stroke();c.strokeStyle='rgba(255,255,255,.6)';c.lineWidth=3;c.beginPath();c.arc(BCX,BCY,BR-8,-2.4,-1.2);c.stroke();
+  B.cells.forEach(b=>{if(!b.alive){b.die=Math.max(0,b.die-.03);if(!b.die)return;}const g=hexRgb('#3fae6a'),p=hexRgb('#8e44ad'),col=`rgb(${g.map((v,i)=>Math.round(lerp(v,p[i],b.r))).join(',')})`;
+    c.save();c.translate(b.x,b.y);c.rotate(b.ang+Math.sin(B.t*.03+b.x)*.1);c.globalAlpha=b.alive?1:b.die*.6;c.fillStyle=col;rr(c,-8,-3.5,16,7,3.5);c.fill();c.restore();c.globalAlpha=1;});
+  // גרף עמודות: כמה רגישים וכמה עמידים אחרי כל צעד
+  const y1=BHH-14,Hm=70,bw=Math.min(24,(BW-80)/12-4);B.hist.forEach(([w,r],i)=>{const x=46+i*(bw+4),hw=w/BMAX*Hm,hr=r/BMAX*Hm;c.fillStyle='#3fae6a';c.fillRect(x,y1-hw,bw,hw);c.fillStyle='#8e44ad';c.fillRect(x,y1-hw-hr-(hr&&hw?2:0),bw,hr);});
+  c.fillStyle='#3fae6a';c.fillRect(BW-26,BHH-62,12,12);text(c,'רגישים',BW-58,BHH-56,12,C.ink,700);c.fillStyle='#8e44ad';c.fillRect(BW-26,BHH-42,12,12);text(c,'עמידים',BW-58,BHH-36,12,C.ink,700);}
+bactStart();
+
 
 
 // סולם החומציות: החומרים מהמשחק ועוד כמה, מסודרים מהחומצי ביותר לבסיסי ביותר
@@ -1662,7 +1770,7 @@ function loop(){
   else if(active==='mol'){updMol();drawMol();}
   else if(active==='acid'){updAcid();drawAcid();drawTit();}
   else if(active==='part'){drawPart();}
-  else if(active==='evo'){drawEvo();}
+  else if(active==='evo'){drawEvo();drawFinch();drawBact();}
   else{updHeat();drawHeat();}
   fxStep();requestAnimationFrame(loop);
 }
