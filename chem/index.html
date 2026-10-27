@@ -1458,7 +1458,7 @@ function moth(c,x,y,v,rot,s){s=s||1;const g=Math.round(30+v*205),col=`rgb(${g},$
   c.fillStyle=col;c.strokeStyle='rgba(40,30,20,.28)';c.lineWidth=1;[[-1,-.35],[1,.35]].forEach(([d,a])=>{c.beginPath();c.ellipse(d*8,-2,10,7,a,0,PI2);c.fill();c.stroke();c.beginPath();c.ellipse(d*6,6,6,5,-a,0,PI2);c.fill();c.stroke();});
   c.fillStyle=`rgb(${Math.round(g*.7)},${Math.round(g*.65)},${Math.round(g*.6)})`;c.beginPath();c.ellipse(0,0,2.5,9,0,0,PI2);c.fill();c.restore();}
 const EW=420,EH=370,BH=290,ecv=$('evoCv'),ectx=setup(ecv,EW,EH);
-const EBG=[.8,.2],EN=20,EBITE=10;
+const EBG=[.8,.2],EN=20,EBITE=10,EMIN=5;
 // מרקם של קליפת עץ, נבנה פעם אחת לכל צבע רקע
 function barkTex(v){const k=document.createElement('canvas');k.width=EW;k.height=BH;const c=k.getContext('2d');let seed=v>.5?7:13;const R=()=>(seed=(seed*16807)%2147483647)/2147483647;
   const g=Math.round(v*255);c.fillStyle=`rgb(${g},${Math.round(g*.95)},${Math.round(g*.88)})`;c.fillRect(0,0,EW,BH);
@@ -1468,20 +1468,23 @@ const E={gen:1,pop:[],caught:0,bg:0,hist:[],t:0,envChanged:false};
 const ePlace=v=>({v,x:24+Math.random()*(EW-48),y:22+Math.random()*(BH-44),r:(Math.random()-.5)*.8,alive:true});
 const eAvg=()=>E.pop.reduce((s,m)=>s+m.v,0)/E.pop.length;
 function evoStart(){E.gen=1;E.bg=0;E.envChanged=false;E.pop=Array.from({length:EN},()=>ePlace(.05+Math.random()*.9));E.caught=0;E.hist=[eAvg()];evoUI();
-  say($('eSay'),'את <b>ציפור רעבה</b> 🐦! על גזע העץ נחים פרפרים בגוונים שונים. הקישי על פרפרים שאת מצליחה לראות. יש לך <b>10 נגיסות</b> בכל דור. מי שלא תמצאי, ישרוד ויביא צאצאים.');}
-function evoUI(){$('eGen').textContent=`דור ${E.gen}`;$('eInfo').innerHTML=E.caught<EBITE?`אכלת <b>${E.caught}</b> מתוך ${EBITE} פרפרים בדור הזה.`:'השורדים מוכנים להטיל ביצים. לחצי "הדור הבא".';
-  $('eNext').disabled=E.caught<EBITE;$('em0').classList.toggle('ok',hasStar('evo',0));$('em1').classList.toggle('ok',hasStar('evo',1));
+  say($('eSay'),'את <b>ציפור רעבה</b> 🐦! על גזע העץ נחים פרפרים בגוונים שונים. הקישי על <b>הפרפרים שהכי קל לראות</b>. בכל דור אפשר לאכול עד <b>10</b>. מי שלא נאכל, ישרוד ויביא צאצאים.');}
+function evoUI(){$('eGen').textContent=`דור ${E.gen}`;
+  $('eInfo').innerHTML=E.caught<EMIN?`אכלת <b>${E.caught}</b> פרפרים. אחרי ${EMIN} אפשר כבר לעבור לדור הבא.`:E.caught<EBITE?`אכלת <b>${E.caught}</b> מתוך ${EBITE}. אפשר להמשיך לצוד, או ללחוץ "הדור הבא". את השאר יאכלו ציפורים אחרות.`:'השורדים מוכנים להטיל ביצים. לחצי "הדור הבא".';
+  $('eNext').disabled=E.caught<EMIN;$('em0').classList.toggle('ok',hasStar('evo',0));$('em1').classList.toggle('ok',hasStar('evo',1));
   $('eEnv').textContent=E.bg?'🌳 החזרת העץ הבהיר':'🏭 שינוי הסביבה: עשן מפעלים';}
-ecv.addEventListener('pointerdown',ev=>{if(E.caught>=EBITE)return;const p=pt(ecv,EW,EH,ev);let best=null,bd=20;
+ecv.addEventListener('pointerdown',ev=>{if(E.caught>=EBITE)return;const p=pt(ecv,EW,EH,ev);let best=null,bd=26;
   for(const m of E.pop)if(m.alive){const d=Math.hypot(m.x-p.x,m.y-p.y);if(d<bd){bd=d;best=m;}}
   if(!best)return;best.alive=false;E.caught++;pop();burstAt(ecv,EW,EH,best.x,best.y,12);
   if(E.caught>=EBITE)say($('eSay'),'שבעת! 😋 עכשיו <b>השורדים</b> מתרבים: לכל אחד שני צאצאים שדומים לו, עם שינויים קטנים. לחצי "הדור הבא" ושימי לב לגוונים.');evoUI();});
-$('eNext').onclick=()=>{if(E.caught<EBITE)return;const kids=[];
+$('eNext').onclick=()=>{if(E.caught<EMIN)return;const kids=[],bg0=EBG[E.bg],more=EBITE-E.caught;
+  // ציפורים אחרות אוכלות את השאר עד 10, וגם הן בוחרות בעיקר את מי שבולט על העץ
+  E.pop.filter(m=>m.alive).map(m=>({m,s:Math.abs(m.v-bg0)+(Math.random()-.5)*.3})).sort((a,b)=>b.s-a.s).slice(0,more).forEach(o=>o.m.alive=false);
   E.pop.filter(m=>m.alive).forEach(m=>{for(let k=0;k<2;k++){const jump=Math.random()<.1?(Math.random()-.5)*.7:(Math.random()-.5)*.24;kids.push(ePlace(clamp(m.v+jump,0,1)));}});
   E.pop=kids;E.caught=0;E.gen++;E.hist.push(eAvg());beep(600,.1,'sine',.05);const a=eAvg(),bg=EBG[E.bg];
   if(!E.bg&&E.gen>=3&&a>.62&&!hasStar('evo',0)){addStar('evo',0);burstEl(ecv,80);say($('eSay'),'🎉 ראי! רוב הפרפרים <b>בהירים</b> עכשיו, כמו העץ. הם מוסווים, ולכן קשה למצוא אותם. זו <b>ברירה טבעית</b>! עכשיו נסי ללחוץ על "שינוי הסביבה".','ok');}
   else if(E.bg&&E.envChanged&&a<.42&&!hasStar('evo',1)){addStar('evo',1);burstEl(ecv,80);say($('eSay'),'🎉 מדהים! אחרי שהעץ השחיר, הפרפרים הכהים שרדו, ועכשיו רובם <b>כהים</b>. בדיוק כך קרה באנגליה לפני כ־200 שנה, לעש שנקרא עש הכסוף!','ok');}
-  else say($('eSay'),`דור ${E.gen}: הגוון הממוצע ${Math.abs(a-bg)<.15?'כבר קרוב מאוד לצבע העץ':'עוד רחוק מהצבע של העץ'}. המשיכי לצוד את מי שבולט.`);
+  else say($('eSay'),`${more?`ציפורים אחרות אכלו עוד ${more}. `:''}דור ${E.gen}: הגוון הממוצע ${Math.abs(a-bg)<.15?'כבר קרוב מאוד לצבע העץ':'עוד רחוק מהצבע של העץ'}. המשיכי לצוד את מי שבולט.`);
   evoUI();};
 $('eEnv').onclick=()=>{E.bg=1-E.bg;if(E.bg)E.envChanged=true;beep(300,.2,'square',.03);
   say($('eSay'),E.bg?'🏭 עשן מפעלים השחיר את גזעי העצים! עכשיו מי בולט? המשיכי לצוד ובדקי מה קורה לגוון של הפרפרים לאורך הדורות.':'🌳 העצים נקיים ובהירים שוב. מה יקרה עכשיו?');evoUI();};
