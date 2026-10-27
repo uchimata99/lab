@@ -1583,7 +1583,7 @@ function finchNew(list){F.birds=list.map(b=>({b,ok:true,fade:1}));}
 function finchStart(){finchNew(Array.from({length:FN},()=>.2+Math.random()*.6));F.gen=1;F.hist=[fAvg()];F.phase='idle';F.food=null;finchUI();
   $('fSay').innerHTML='באי חיים פרושים עם מקורים בעובי שונה. מקור <b>עבה</b> טוב לפיצוח זרעים קשים, ומקור <b>דק</b> טוב לתפיסת חרקים. בחרי מה יקרה באי השנה, וצפי מי מצליח לאכול.';}
 function finchUI(){$('fGen').textContent=`דור ${F.gen}`;$('fSeed').disabled=$('fBug').disabled=F.phase!=='idle';$('fm0').classList.toggle('ok',hasStar('fin',0));$('fm1').classList.toggle('ok',hasStar('fin',1));}
-function finchYear(food){if(F.phase!=='idle')return;F.food=food;F.phase='feed';F.timer=0;
+function finchYear(food){if(F.phase!=='idle')return;F.food=food;F.phase='feed';F.start=performance.now();
   F.birds.forEach(b=>{const fit=food==='seed'?b.b:1-b.b;b.ok=Math.random()<.1+.85*fit;});
   // תמיד שורדים לפחות שלושה, המתאימים ביותר
   if(F.birds.filter(b=>b.ok).length<3)F.birds.slice().sort((x,y)=>food==='seed'?y.b-x.b:x.b-y.b).slice(0,3).forEach(b=>b.ok=true);
@@ -1602,9 +1602,9 @@ function finchDraw(c,x,y,b,alpha,food,ok){c.globalAlpha=alpha;c.fillStyle='#8a6d
   const h=2+b*9,L=24-b*9;c.fillStyle='#e0a030';c.beginPath();c.moveTo(x+21,y-8-h);c.lineTo(x+21+L,y-7);c.lineTo(x+21,y-8+h);c.closePath();c.fill();c.strokeStyle='rgba(0,0,0,.25)';c.lineWidth=1;c.stroke();
   if(food)emoji(c,ok?(food==='seed'?'🌰':'🐛'):'💤',x+6,y-30,ok?18:16);c.globalAlpha=1;}
 function drawFinch(){F.t++;const c=fiCtx;c.clearRect(0,0,FW,FH);c.fillStyle=F.food==='seed'?'#efe2c4':F.food==='bug'?'#d9ecd2':C.well;c.fillRect(0,0,FW,262);
-  if(F.phase==='feed'&&++F.timer>110)finchBreed();
+  const el=F.phase==='feed'?performance.now()-F.start:0;if(F.phase==='feed'&&el>2000)finchBreed();
   F.birds.forEach((b,i)=>{const x=60+(i%4)*100,y=52+Math.floor(i/4)*80,bob=Math.sin(F.t*.07+i)*2;
-    const fade=F.phase==='feed'&&!b.ok?Math.max(.25,1-F.timer/60):1;finchDraw(c,x,y+bob,b.b,fade,F.phase==='feed'?F.food:null,b.ok);});
+    const fade=F.phase==='feed'&&!b.ok?Math.max(.25,1-el/1100):1;finchDraw(c,x,y+bob,b.b,fade,F.phase==='feed'?F.food:null,b.ok);});
   // גרף: עובי המקור הממוצע בכל דור
   const y0=282,y1=FH-12,X=i=>40+i*((FW-80)/11),Y=v=>y1-v*(y1-y0),h=F.hist.slice(-12);c.fillStyle=C.paper;c.fillRect(0,264,FW,FH-264);
   c.strokeStyle=C.lab;c.lineWidth=2;c.beginPath();h.forEach((v,i)=>i?c.lineTo(X(i),Y(v)):c.moveTo(X(i),Y(v)));c.stroke();h.forEach((v,i)=>{c.fillStyle=C.lab;c.beginPath();c.arc(X(i),Y(v),4.5,0,PI2);c.fill();});
