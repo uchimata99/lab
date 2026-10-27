@@ -48,11 +48,12 @@ h1 span{color:var(--accent)}
 .stars b.bump{animation:bump .5s}
 @keyframes bump{40%{transform:scale(1.6) rotate(20deg)}}
 .icon-btn{width:42px;height:42px;border-radius:50%;border:2px solid var(--line);background:var(--paper);font-size:20px;cursor:pointer}
-nav{display:grid;grid-template-columns:repeat(5,1fr);gap:8px}
+nav{display:grid;grid-template-columns:repeat(6,1fr);gap:8px}
 nav button{font-family:var(--display);font-weight:600;font-size:16px;border:2px solid var(--line);background:var(--paper);color:var(--ink);border-radius:14px;padding:10px 6px;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:2px}
 nav button small{font-family:var(--body);font-weight:400;color:var(--muted);font-size:13px}
 nav button[aria-selected="true"]{border-color:var(--lab);background:var(--lab-soft)}
-@media (max-width:600px){nav{grid-template-columns:repeat(2,1fr)}nav button:last-child{grid-column:1/-1}}
+@media (max-width:600px){nav{grid-template-columns:repeat(2,1fr)}nav button:last-child:nth-child(odd){grid-column:1/-1}}
+@media (min-width:601px) and (max-width:900px){nav{grid-template-columns:repeat(3,1fr)}}
 .card{background:var(--paper);border:2px solid var(--line);border-radius:22px;padding:18px;display:flex;flex-direction:column;gap:14px}
 h2{font-family:var(--display);font-weight:600;font-size:24px;margin:0}
 .coach{display:flex;gap:12px;align-items:flex-start}
@@ -325,6 +326,7 @@ canvas.xcv{touch-action:auto;cursor:default}
     <button role="tab" aria-selected="false" data-st="acid">🥬 חומצה או בסיס?<small>ניסוי מיץ כרוב</small></button>
     <button role="tab" aria-selected="false" data-st="heat">🌡️ מעבדת החום<small>מוצק, נוזל, גז</small></button>
     <button role="tab" aria-selected="false" data-st="part">🔬 עולם החלקיקים<small>קווארקים, פוטונים ועוד</small></button>
+    <button role="tab" aria-selected="false" data-st="evo">🦋 חקר האבולוציה<small>איך מינים משתנים</small></button>
   </nav>
 
   <!-- LESSON -->
@@ -469,6 +471,24 @@ canvas.xcv{touch-action:auto;cursor:default}
     </div>
   </section>
 
+  <!-- EVOLUTION -->
+  <section class="card" id="st-evo" hidden>
+    <div class="coach"><div class="avatar">👩‍🔬</div><div class="bubble" id="eSay"></div></div>
+    <div class="stage">
+      <canvas class="cv" id="evoCv" aria-label="גזע עץ עם פרפרים בגוונים שונים. הקישי על פרפר כדי לאכול אותו"></canvas>
+      <div class="side">
+        <div class="mname" id="eGen"></div>
+        <p class="pt-info" id="eInfo"></p>
+        <button class="go" id="eNext" disabled>🥚 הדור הבא ←</button>
+        <button class="go alt" id="eEnv">🏭 שינוי הסביבה</button>
+        <ul class="missions">
+          <li id="em0">על עץ בהיר: להגיע לפרפרים מוסווים ובהירים</li>
+          <li id="em1">אחרי שהעץ מושחר: להגיע לפרפרים כהים</li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
   <!-- ATOM INSIDE: ממה בנוי אטום -->
   <section class="card" id="x-inside" data-for="atom">
     <div class="lhead"><h2>ממה בנוי אטום?</h2><p class="small">לחצי כדי לעשות זום פנימה, שלב אחרי שלב</p></div>
@@ -523,6 +543,11 @@ canvas.xcv{touch-action:auto;cursor:default}
     <div class="lhead"><h2>מתי חומרים נמסים ורותחים?</h2><p class="small">לחצי על חומר כדי לראות את המצבים שלו</p></div>
     <div class="xstage"><canvas class="cv xcv" id="xHeatCv" aria-label="ציר טמפרטורה עם מוצק, נוזל וגז"></canvas>
       <div class="side"><div class="xchips" id="xHeatChips"></div><p class="pt-info" id="xHeatInfo"></p></div></div>
+  </section>
+  <section class="card" id="x-tree" data-for="evo" hidden>
+    <div class="lhead"><h2>עץ החיים</h2><p class="small">לחצי על יצור כדי לראות את הדרך שלו בעץ ומי הקרוב אליו ביותר</p></div>
+    <div class="xstage"><canvas class="cv xcv" id="xTreeCv" aria-label="עץ משפחה של יצורים חיים"></canvas>
+      <div class="side"><div class="xchips" id="xTreeChips"></div><p class="pt-info" id="xTreeInfo"></p></div></div>
   </section>
   <section class="card" id="x-part" data-for="part" hidden>
     <div class="lhead"><h2>אלבום החלקיקים</h2><p class="small">כל החלקיקים הבסיסיים שמדענים מכירים. לחצי כדי להכיר אותם</p></div>
@@ -1104,7 +1129,27 @@ const LES={
    a:(c,t)=>{[['γ','פוטון','#e8b923'],['g','גלואון','#e07a1f'],['W Z','W ו־Z','#d9534f'],['H','היגס','#b8860b']].forEach(([s,n,col],i)=>{const x=70+i*94,y=130+Math.sin(t*.06+i)*6;ball(c,x,y,30,col,s,'#fff');text(c,n,x,y+52,16,C.ink,700);});}},
   {t:'הפוטון: חלקיק של אור',x:'האור עשוי מחלקיקים קטנים שנקראים <b>פוטונים</b>. אין להם משקל בכלל, והם הדבר המהיר ביותר ביקום: 300,000 קילומטר בשנייה! פוטון שיוצא מהשמש מגיע לכדור הארץ אחרי <b>בערך 8 דקות</b>.',
    a:(c,t)=>{emoji(c,'☀️',60,150,70);emoji(c,'🌍',360,150,60);c.strokeStyle='#e8b923';c.lineWidth=3;for(let k=0;k<3;k++){const x0=((t*2.4+k*110)%240)+95;c.beginPath();for(let x=0;x<40;x++){const yy=150+Math.sin((x+t*2)*.5)*9*Math.sin(x/40*Math.PI);x?c.lineTo(x0+x,yy):c.moveTo(x0+x,yy);}c.stroke();}text(c,'בערך 8 דקות מהשמש אלינו',210,240,17,C.ink,700);}}],
-  chips:['ממה עשוי קווארק?','למה אי אפשר לראות קווארק לבד?','איך גילו את בוזון היגס?']}
+  chips:['ממה עשוי קווארק?','למה אי אפשר לראות קווארק לבד?','איך גילו את בוזון היגס?']},
+ evo:{name:'חקר האבולוציה',slides:[
+  {t:'מה זו אבולוציה?',x:'<b>אבולוציה</b> היא השינוי האיטי של יצורים חיים לאורך <b>הרבה מאוד דורות</b>. במשך מיליוני שנים מינים משתנים, ומהם מתפתחים מינים חדשים. כך, מחיידקים זעירים לפני מיליארדי שנים, התפתחו כל היצורים שחיים היום.',
+   a:(c,t)=>{c.strokeStyle=C.line;c.lineWidth=4;c.beginPath();c.moveTo(30,200);c.lineTo(390,200);c.stroke();[['🦠',40],['🐟',110],['🐸',180],['🦎',250],['🐿️',320],['🧒',385]].forEach(([e,x],i)=>{const on=(t/40)%7>i;c.globalAlpha=on?1:.15;emoji(c,e,x,150+Math.sin(t*.05+i)*4,40);c.globalAlpha=1;});
+    text(c,'פעם, לפני מיליארדי שנים',90,230,15,C.muted,700);text(c,'היום',375,230,15,C.muted,700);}},
+  {t:'כל אחד קצת שונה',x:'גם אחים מאותם הורים לא זהים: אחד בהיר יותר, אחד גדול יותר. ההבדלים האלה נקראים <b>שונות</b>. הרבה מהם עוברים <b>בתורשה</b> מההורים לצאצאים, דרך הוראות שנמצאות בתוך כל תא ונקראות <b>DNA</b>.',
+   a:(c,t)=>{[.1,.3,.5,.7,.9].forEach((v,i)=>moth(c,60+i*75,140+Math.sin(t*.06+i)*5,v,Math.sin(t*.03+i)*.2,1.6));text(c,'פרפרים מאותו מין, בגוונים שונים',210,240,16,C.ink,700);}},
+  {t:'ברירה טבעית',x:'בטבע לא כולם שורדים. מי שמתאים יותר לסביבה, למשל מוסתר טוב יותר מציפורים, שורד ומביא יותר צאצאים. כך התכונה המועילה נהיית נפוצה יותר בכל דור. צ\'רלס דרווין קרא לזה <b>ברירה טבעית</b>.',
+   a:(c,t)=>{c.fillStyle='#6b5a46';c.fillRect(60,40,300,200);const k=Math.floor(t/90)%2;[[110,90,.35],[250,170,.4],[170,190,.85],[300,80,.9]].forEach(([x,y,v],i)=>{if(k&&v>.6)return;moth(c,x,y,v,.2*i,1.3);});
+    emoji(c,'🐦',k?350:70,k?60:250,40);text(c,k?'הבהירים בלטו ונאכלו. הכהים שרדו!':'מי יבלוט על הגזע הכהה?',210,270,16,C.ink,700);}},
+  {t:'צריך הרבה זמן',x:'כל דור משתנה רק קצת. אבל אחרי אלפי ומיליוני דורות השינויים מצטברים, ויכולים להיווצר <b>מינים חדשים</b>. <b>מאובנים</b>, שרידים של יצורים שהתאבנו בתוך סלעים, מראים לנו יצורים שחיו לפני מיליוני שנים.',
+   a:(c,t)=>{['#d9c7a3','#c9b48a','#b39d74','#9c8660','#85704e'].forEach((col,i)=>{c.fillStyle=col;c.fillRect(40,60+i*40,340,40);});[['🐚',100,100],['🦴',260,180],['🦕',170,220],['🌿',320,140]].forEach(([e,x,y],i)=>{c.globalAlpha=.85;emoji(c,e,x,y,28);c.globalAlpha=1;});
+    text(c,'שכבות עמוקות יותר = זמן רב יותר',210,276,15,C.ink,700);}},
+  {t:'הפרושים של דרווין',x:'באיי גלפגוס דרווין ראה ציפורים קטנות בשם <b>פרושים</b>, עם מקורים שונים: מקור עבה וחזק לפיצוח זרעים קשים, ומקור דק וחד לתפיסת חרקים. כל מקור התאים לאוכל שהיה באי שלו. מהם הוא הבין איך מינים משתנים.',
+   a:(c,t)=>{const bird=(x,thick)=>{c.fillStyle='#8a6d4b';c.beginPath();c.ellipse(x,140,48,34,0,0,PI2);c.fill();c.beginPath();c.arc(x+38,108,22,0,PI2);c.fill();c.fillStyle='#fff';c.beginPath();c.arc(x+44,102,5,0,PI2);c.fill();c.fillStyle='#222';c.beginPath();c.arc(x+45,102,2.5,0,PI2);c.fill();
+     c.fillStyle='#e0a030';c.beginPath();if(thick){c.moveTo(x+56,98);c.lineTo(x+86,110);c.lineTo(x+56,122);}else{c.moveTo(x+58,104);c.lineTo(x+100,110);c.lineTo(x+58,114);}c.closePath();c.fill();};
+    bird(70,1);bird(250,0);emoji(c,'🌰',130,210,30);emoji(c,'🐛',320,210,30);text(c,'מקור עבה: זרעים',110,256,15,C.ink,700);text(c,'מקור דק: חרקים',300,256,15,C.ink,700);}},
+  {t:'עץ החיים',x:'כל היצורים החיים הם קרובי משפחה! ככל שהולכים אחורה בזמן, מגיעים ל<b>אבות קדמונים משותפים</b>. בני אדם ושימפנזים, למשל, הם כמו בני דודים: היה לנו אב קדמון משותף לפני כ־6 עד 7 מיליון שנה. זה <b>לא</b> אומר שבני אדם באו מהשימפנזים של היום.',
+   a:(c,t)=>{const g=(x1,y1,x2,y2)=>{c.beginPath();c.moveTo(x1,y1);c.lineTo(x2,y2);c.stroke();};c.strokeStyle='#6b8f4e';c.lineWidth=6;g(210,280,210,200);g(210,200,110,120);g(210,200,310,120);c.lineWidth=4;g(110,120,70,60);g(110,120,150,60);g(310,120,270,60);g(310,120,350,60);
+    [['🐟',70],['🐸',150],['🐒',270],['🧒',350]].forEach(([e,x],i)=>emoji(c,e,x,40+Math.sin(t*.05+i)*3,32));text(c,'אב קדמון משותף',210,292,14,C.muted,700);}}],
+  chips:['איך נוצר מין חדש?','למה עדיין יש קופים?','מה זה DNA?']}
 };
 /* ---------- periodic table ---------- */
 const PSYM='H He Li Be B C N O F Ne Na Mg Al Si P S Cl Ar K Ca Sc Ti V Cr Mn Fe Co Ni Cu Zn Ga Ge As Se Br Kr Rb Sr Y Zr Nb Mo Tc Ru Rh Pd Ag Cd In Sn Sb Te I Xe Cs Ba La Ce Pr Nd Pm Sm Eu Gd Tb Dy Ho Er Tm Yb Lu Hf Ta W Re Os Ir Pt Au Hg Tl Pb Bi Po At Rn Fr Ra Ac Th Pa U Np Pu Am Cm Bk Cf Es Fm Md No Lr Rf Db Sg Bh Hs Mt Ds Rg Cn Nh Fl Mc Lv Ts Og'.split(' ');
@@ -1405,6 +1450,89 @@ makeQuiz('part','תרגול: עולם החלקיקים',[
  {q:'מה זה דלתא פלוס פלוס?',o:['חלקיק משלושה קווארקים למעלה, עם מטען <bdi dir="ltr">+2</bdi>','סוג של אטום','כוכב רחוק'],w:'<bdi dir="ltr">⅔ + ⅔ + ⅔ = 2</bdi>. הוא מתפרק מהר מאוד.'},
  {q:'מה קורה לנייטרון שנמצא לבד, מחוץ לגרעין?',o:['אחרי כרבע שעה הוא מתפרק לפרוטון, אלקטרון וניטרינו','הוא הופך לזהב','הוא נשאר כך לנצח'],w:'בתוך הגרעין הוא יציב, אבל לבד הוא מתפרק.'}]);
 
+/* =========================================================
+   STATION 6 — EVOLUTION: הציפור הרעבה (ברירה טבעית של עש הכסוף)
+   ========================================================= */
+// פרפר: v הוא הגוון, 0 כהה ו־1 בהיר
+function moth(c,x,y,v,rot,s){s=s||1;const g=Math.round(30+v*205),col=`rgb(${g},${Math.round(g*.96)},${Math.round(g*.9)})`;c.save();c.translate(x,y);c.rotate(rot||0);c.scale(s,s);
+  c.fillStyle=col;c.strokeStyle='rgba(40,30,20,.28)';c.lineWidth=1;[[-1,-.35],[1,.35]].forEach(([d,a])=>{c.beginPath();c.ellipse(d*8,-2,10,7,a,0,PI2);c.fill();c.stroke();c.beginPath();c.ellipse(d*6,6,6,5,-a,0,PI2);c.fill();c.stroke();});
+  c.fillStyle=`rgb(${Math.round(g*.7)},${Math.round(g*.65)},${Math.round(g*.6)})`;c.beginPath();c.ellipse(0,0,2.5,9,0,0,PI2);c.fill();c.restore();}
+const EW=420,EH=370,BH=290,ecv=$('evoCv'),ectx=setup(ecv,EW,EH);
+const EBG=[.8,.2],EN=20,EBITE=10;
+// מרקם של קליפת עץ, נבנה פעם אחת לכל צבע רקע
+function barkTex(v){const k=document.createElement('canvas');k.width=EW;k.height=BH;const c=k.getContext('2d');let seed=v>.5?7:13;const R=()=>(seed=(seed*16807)%2147483647)/2147483647;
+  const g=Math.round(v*255);c.fillStyle=`rgb(${g},${Math.round(g*.95)},${Math.round(g*.88)})`;c.fillRect(0,0,EW,BH);
+  for(let i=0;i<260;i++){const d=(R()-.5)*.35,gg=Math.max(0,Math.min(255,Math.round((v+d)*255)));c.fillStyle=`rgba(${gg},${Math.round(gg*.95)},${Math.round(gg*.88)},.7)`;c.fillRect(R()*EW,R()*BH,4+R()*40,1.5+R()*4);}return k;}
+const BARK=[barkTex(EBG[0]),barkTex(EBG[1])];
+const E={gen:1,pop:[],caught:0,bg:0,hist:[],t:0,envChanged:false};
+const ePlace=v=>({v,x:24+Math.random()*(EW-48),y:22+Math.random()*(BH-44),r:(Math.random()-.5)*.8,alive:true});
+const eAvg=()=>E.pop.reduce((s,m)=>s+m.v,0)/E.pop.length;
+function evoStart(){E.gen=1;E.bg=0;E.envChanged=false;E.pop=Array.from({length:EN},()=>ePlace(.05+Math.random()*.9));E.caught=0;E.hist=[eAvg()];evoUI();
+  say($('eSay'),'את <b>ציפור רעבה</b> 🐦! על גזע העץ נחים פרפרים בגוונים שונים. הקישי על פרפרים שאת מצליחה לראות. יש לך <b>10 נגיסות</b> בכל דור. מי שלא תמצאי, ישרוד ויביא צאצאים.');}
+function evoUI(){$('eGen').textContent=`דור ${E.gen}`;$('eInfo').innerHTML=E.caught<EBITE?`אכלת <b>${E.caught}</b> מתוך ${EBITE} פרפרים בדור הזה.`:'השורדים מוכנים להטיל ביצים. לחצי "הדור הבא".';
+  $('eNext').disabled=E.caught<EBITE;$('em0').classList.toggle('ok',hasStar('evo',0));$('em1').classList.toggle('ok',hasStar('evo',1));
+  $('eEnv').textContent=E.bg?'🌳 החזרת העץ הבהיר':'🏭 שינוי הסביבה: עשן מפעלים';}
+ecv.addEventListener('pointerdown',ev=>{if(E.caught>=EBITE)return;const p=pt(ecv,EW,EH,ev);let best=null,bd=20;
+  for(const m of E.pop)if(m.alive){const d=Math.hypot(m.x-p.x,m.y-p.y);if(d<bd){bd=d;best=m;}}
+  if(!best)return;best.alive=false;E.caught++;pop();burstAt(ecv,EW,EH,best.x,best.y,12);
+  if(E.caught>=EBITE)say($('eSay'),'שבעת! 😋 עכשיו <b>השורדים</b> מתרבים: לכל אחד שני צאצאים שדומים לו, עם שינויים קטנים. לחצי "הדור הבא" ושימי לב לגוונים.');evoUI();});
+$('eNext').onclick=()=>{if(E.caught<EBITE)return;const kids=[];
+  E.pop.filter(m=>m.alive).forEach(m=>{for(let k=0;k<2;k++){const jump=Math.random()<.1?(Math.random()-.5)*.7:(Math.random()-.5)*.24;kids.push(ePlace(clamp(m.v+jump,0,1)));}});
+  E.pop=kids;E.caught=0;E.gen++;E.hist.push(eAvg());beep(600,.1,'sine',.05);const a=eAvg(),bg=EBG[E.bg];
+  if(!E.bg&&E.gen>=3&&a>.62&&!hasStar('evo',0)){addStar('evo',0);burstEl(ecv,80);say($('eSay'),'🎉 ראי! רוב הפרפרים <b>בהירים</b> עכשיו, כמו העץ. הם מוסווים, ולכן קשה למצוא אותם. זו <b>ברירה טבעית</b>! עכשיו נסי ללחוץ על "שינוי הסביבה".','ok');}
+  else if(E.bg&&E.envChanged&&a<.42&&!hasStar('evo',1)){addStar('evo',1);burstEl(ecv,80);say($('eSay'),'🎉 מדהים! אחרי שהעץ השחיר, הפרפרים הכהים שרדו, ועכשיו רובם <b>כהים</b>. בדיוק כך קרה באנגליה לפני כ־200 שנה, לעש שנקרא עש הכסוף!','ok');}
+  else say($('eSay'),`דור ${E.gen}: הגוון הממוצע ${Math.abs(a-bg)<.15?'כבר קרוב מאוד לצבע העץ':'עוד רחוק מהצבע של העץ'}. המשיכי לצוד את מי שבולט.`);
+  evoUI();};
+$('eEnv').onclick=()=>{E.bg=1-E.bg;if(E.bg)E.envChanged=true;beep(300,.2,'square',.03);
+  say($('eSay'),E.bg?'🏭 עשן מפעלים השחיר את גזעי העצים! עכשיו מי בולט? המשיכי לצוד ובדקי מה קורה לגוון של הפרפרים לאורך הדורות.':'🌳 העצים נקיים ובהירים שוב. מה יקרה עכשיו?');evoUI();};
+function drawEvo(){E.t++;const c=ectx;c.clearRect(0,0,EW,EH);c.drawImage(BARK[E.bg],0,0,EW,BH);
+  for(const m of E.pop)if(m.alive)moth(c,m.x,m.y,m.v,m.r+Math.sin(E.t*.04+m.x)*.04,1);
+  // גרף קטן: הגוון הממוצע בכל דור, מול צבע העץ
+  const y0=BH+14,y1=EH-14,X=i=>40+i*((EW-80)/11),Y=v=>y1-v*(y1-y0),h=E.hist.slice(-12);
+  c.fillStyle=C.paper;c.fillRect(0,BH,EW,EH-BH);c.fillStyle='rgba(120,120,120,.18)';c.fillRect(36,Y(EBG[E.bg]+.1),EW-72,Y(EBG[E.bg]-.1)-Y(EBG[E.bg]+.1));
+  c.strokeStyle=C.lab;c.lineWidth=2;c.beginPath();h.forEach((v,i)=>i?c.lineTo(X(i),Y(v)):c.moveTo(X(i),Y(v)));c.stroke();h.forEach((v,i)=>{const g=Math.round(30+v*205);c.fillStyle=`rgb(${g},${Math.round(g*.96)},${Math.round(g*.9)})`;c.strokeStyle=C.ink;c.lineWidth=1.5;c.beginPath();c.arc(X(i),Y(v),5,0,PI2);c.fill();c.stroke();});
+  text(c,'בהיר',EW-18,y0+2,12,C.muted,700);text(c,'כהה',EW-18,y1-2,12,C.muted,700);text(c,'הגוון הממוצע בכל דור',110,y0-4,12,C.muted,700);}
+evoStart();
+
+// עץ החיים: עץ מקונן. כל צומת פנימי הוא אב קדמון משותף
+const LIFE=[[ ['🦠','חיידקים','יצורים זעירים מתא אחד. הם היו הראשונים על כדור הארץ, לפני יותר מ־3.5 מיליארד שנה.'],
+ [ ['🌳','צמחים','צמחים מייצרים את האוכל שלהם מאור השמש, ומשחררים את החמצן שאנחנו נושמים.'],
+  [ ['🍄','פטריות','מפתיע: פטריות קרובות יותר לבעלי חיים מאשר לצמחים!'],
+   [ ['🐟','דג','בעלי החוליות הראשונים היו דגים. מהם התפתחו כל בעלי החוליות, גם אנחנו.'],
+    [ ['🐸','צפרדע','דו־חיים: מתחילים את החיים במים כראשנים, ועוברים ליבשה.'],
+     [ [ ['🦎','לטאה','זוחלים מטילים ביצים עם קליפה, ולכן יכלו לחיות רחוק מהמים.'],['🐦','ציפור','הציפורים הן צאצאים של דינוזאורים! הקרובים אליהן ביותר כאן הם הזוחלים.'] ],
+       [ [ ['🐋','לווייתן','לווייתן הוא יונק שאבותיו חיו ביבשה וחזרו לים. הוא נושם אוויר ומניק את הגורים שלו.'],['🐕','כלב','מפתיע: הכלב קרוב יותר ללווייתן מאשר לעכבר!'] ],
+         [ ['🐭','עכבר','מכרסמים כמו עכברים קרובים יותר לקופים ולבני אדם מאשר לכלבים.'],
+           [ ['🐒','שימפנזה','הקרוב ביותר שלנו: כמעט 99% מה־DNA שלנו ושל השימפנזה זהה.'],['🧒','אדם','בני אדם הם יונקים ממשפחת הקופים הגדולים. האב הקדמון המשותף שלנו ושל השימפנזים חי לפני כ־6 עד 7 מיליון שנה.'] ] ] ] ] ] ] ] ] ]];
+const isLeaf=n=>typeof n[0]==='string';
+// פריסה: עלים בשורה העליונה, וכל צומת פנימי מתחת לאמצע הילדים שלו לפי העומק
+const TL=[];(function lay(n,depth,path){if(isLeaf(n)){TL.push({e:n[0],k:n[1],x:n[2],path,depth});return;}n.forEach((ch,i)=>lay(ch,depth+1,path.concat(i)));})(LIFE[0],0,[]);
+TL.forEach((l,i)=>{l.lx=24+i*((XW-48)/(TL.length-1));});
+const nodeX=(n,path)=>{if(isLeaf(n))return TL.find(l=>l.k===n[1]).lx;const xs=n.map((ch,i)=>nodeX(ch,path.concat(i)));return (Math.min(...xs)+Math.max(...xs))/2;};
+const MAXD=Math.max(...TL.map(l=>l.depth)),NY=d=>XH-16-d*((XH-16-74)/MAXD);
+function sibling(l){const parent=l.path.slice(0,-1).reduce((n,i)=>n[i],LIFE[0]);const others=[];(function walk(n){if(isLeaf(n))others.push(n[1]);else n.forEach(walk);})(parent);return others.filter(k=>k!==l.k);}
+explorer('xTree',TL,l=>`${l.e} ${l.k}`,(c,l)=>{
+  (function draw(n,path,depth,on){if(isLeaf(n))return;const px=nodeX(n,path),py=NY(depth);
+    n.forEach((ch,i)=>{const cp=path.concat(i),leaf=isLeaf(ch),cx=nodeX(ch,cp),cy=leaf?62:NY(depth+1),hl=on&&l.path.slice(0,cp.length).every((v,k)=>v===cp[k]);
+      c.strokeStyle=hl?C.lab:C.line;c.lineWidth=hl?5:2;c.beginPath();c.moveTo(px,py);c.lineTo(cx,py);c.lineTo(cx,cy);c.stroke();draw(ch,cp,depth+1,hl);});})(LIFE[0],[],0,true);
+  TL.forEach(t=>{c.globalAlpha=t===l?1:.55;emoji(c,t.e,t.lx,40,t===l?30:22);c.globalAlpha=1;});text(c,'אב קדמון משותף לכולם',Math.max(80,nodeX(LIFE[0],[])),XH-6,12,C.muted,700);},
+ l=>{const sib=sibling(l).map(k=>TL.find(t=>t.k===k)).map(t=>`${t.e} ${t.k}`);return `<b>${l.e} ${l.k}</b>: ${l.x} <span class="small">הקרוב ביותר כאן: ${sib.join(', ')}.</span>`;});
+
+makeQuiz('evo','תרגול: אבולוציה',[
+ {q:'מה זו אבולוציה?',o:['שינוי איטי של יצורים חיים לאורך הרבה דורות','שינוי שקורה ליצור אחד במהלך החיים שלו','סוג של מחלה'],w:'יצור אחד לא "מתפתח" במהלך חייו. האוכלוסייה כולה משתנה מדור לדור.'},
+ {q:'מי הסביר לראשונה את רעיון הברירה הטבעית?',o:['צ׳רלס דרווין','אלברט איינשטיין','יצחק ניוטון'],w:'דרווין פרסם את הרעיון בשנת 1859, אחרי מסע ארוך בספינה.'},
+ {q:'פרפר בהיר נח על עץ כהה. מה כנראה יקרה?',o:['ציפורים ימצאו אותו בקלות','הוא יהפוך לכהה באותו רגע','שום דבר'],w:'הוא בולט, ולכן בסכנה. לכן בסביבה כהה הפרפרים הכהים שורדים יותר.'},
+ {q:'למה צאצאים דומים להוריהם?',o:['בגלל תורשה, דרך ה־DNA','במקרה','כי הם אוכלים אותו אוכל'],w:'ה־DNA הוא ספר הוראות שעובר מההורים לצאצאים.'},
+ {q:'מה מראים לנו מאובנים?',o:['יצורים שחיו לפני מיליוני שנים','רק אבנים יפות','מה יקרה בעתיד'],w:'בשכבות עמוקות יותר של סלע נמצאים מאובנים עתיקים יותר.'},
+ {q:'ממי התפתחו הציפורים?',o:['מדינוזאורים','מדגים מעופפים','מעטלפים'],w:'לכמה דינוזאורים היו אפילו נוצות!'},
+ {q:'הלווייתן הוא...',o:['יונק שאבותיו חיו ביבשה','דג גדול מאוד','זוחל'],w:'הוא נושם אוויר ומניק את הגורים, כמו כל היונקים.'},
+ {q:'האם בני אדם התפתחו מהשימפנזים של היום?',o:['לא. יש לנו אב קדמון משותף מלפני מיליוני שנים','כן, לפני מאה שנה','כן, בגן החיות'],w:'שימפנזים ובני אדם הם כמו בני דודים: לשניהם סבא־רבא משותף רחוק.'},
+ {q:'למה לפרושים באיים שונים יש מקורים שונים?',o:['כל מקור התאים לאוכל שהיה באי','כי הם רבו זה עם זה','במקרה, בלי שום סיבה'],w:'ציפורים עם מקור שהתאים לאוכל שרדו והביאו יותר צאצאים.'},
+ {q:'כמה זמן לוקח בדרך כלל למין חדש להתפתח?',o:['הרבה מאוד דורות, אלפי עד מיליוני שנים','יום אחד','שבוע'],w:'השינויים קטנים בכל דור, ומצטברים לאט.'},
+ {q:'למה תרופה נגד חיידקים לפעמים מפסיקה לעבוד?',o:['החיידקים העמידים שורדים ומתרבים','החיידקים מתעייפים','התרופה מתקלקלת בבקבוק'],w:'זו אבולוציה שקורה ממש מול העיניים, כי לחיידקים יש דור חדש בערך כל 20 דקות!'},
+ {q:'מה זו "שונות"?',o:['ההבדלים הקטנים בין פרטים מאותו מין','מין חדש','סוג של מאובן'],w:'בלי שונות לא הייתה ברירה טבעית: כולם היו זהים.'}]);
+
+
 // סולם החומציות: החומרים מהמשחק ועוד כמה, מסודרים מהחומצי ביותר לבסיסי ביותר
 const XSUBS=SUBS.map(s=>({e:s.e,n:s.n,ph:s.ph,f:s.f})).concat([
  {e:'🥤',n:'קולה',ph:2.5,f:'קולה חומצית למדי. לכן כדאי לשטוף את הפה במים אחרי שותים אותה.'},
@@ -1446,7 +1574,7 @@ explorer('xHeat',XHEAT,s=>`${s.e} ${s.n}`,(c,s)=>{const top=Math.max(s.b==null?s
 let seen={};try{seen=JSON.parse(localStorage.getItem('chemLessons')||'{}')||{};}catch(e){}
 const L={st:null,i:0,t:0,sim:null};
 let active='atom',mode='lesson';
-function setView(){ $('lesson').hidden=mode!=='lesson';['atom','mol','acid','heat','part'].forEach(k=>$('st-'+k).hidden=(mode==='lesson'||k!==active));document.querySelectorAll('[data-for]').forEach(e=>e.hidden=e.dataset.for!==active); }
+function setView(){ $('lesson').hidden=mode!=='lesson';['atom','mol','acid','heat','part','evo'].forEach(k=>$('st-'+k).hidden=(mode==='lesson'||k!==active));document.querySelectorAll('[data-for]').forEach(e=>e.hidden=e.dataset.for!==active); }
 function openLesson(st,i){stopSpeak();L.st=st;L.i=i||0;mode='lesson';renderSlide();renderChat();setView();}
 function renderSlide(){const les=LES[L.st],s=les.slides[L.i];L.t=0;L.sim=s.sim?makeSim(s.sim,s.sim==='solid'?15:14):null;
   $('lTitle').textContent=les.name+': '+s.t;const tx=$('lText');tx.innerHTML=s.x;tx.classList.remove('pop');void tx.offsetWidth;tx.classList.add('pop');
@@ -1460,7 +1588,7 @@ $('lNext').onclick=()=>{const n=LES[L.st].slides.length;if(L.i<n-1){L.i++;stopSp
 $('lPrev').onclick=()=>{if(L.i>0){L.i--;stopSpeak();renderSlide();}};
 $('lSkip').onclick=toGame;
 function drawLesson(){L.t++;const c=lctx;c.clearRect(0,0,LW,LH);const s=LES[L.st].slides[L.i];if(L.sim)L.sim(c,L.t);else if(s.a)s.a(c,L.t);}
-document.querySelectorAll('.coach').forEach((co,i)=>{const b=document.createElement('button');b.className='helpbtn';b.textContent='📖 הסבר ושאלות';b.onclick=()=>openLesson(['atom','mol','acid','heat','part'][i],0);co.appendChild(b);});
+document.querySelectorAll('.coach').forEach((co,i)=>{const b=document.createElement('button');b.className='helpbtn';b.textContent='📖 הסבר ושאלות';b.onclick=()=>openLesson(['atom','mol','acid','heat','part','evo'][i],0);co.appendChild(b);});
 
 /* speech out */
 const heVoice=null,autoRead=false;
@@ -1468,7 +1596,7 @@ function speak(){}
 function stopSpeak(){}
 
 /* ask the guide */
-const chats={atom:[],mol:[],acid:[],heat:[],part:[]};
+const chats={atom:[],mol:[],acid:[],heat:[],part:[],evo:[]};
 let busy=false;
 function addMsg(who,txt){const d=document.createElement('div');d.className='msg '+who;const sp=document.createElement('span');sp.textContent=txt;d.appendChild(sp);
   if(who==='bot'&&heVoice){const b=document.createElement('button');b.className='say';b.type='button';b.textContent='🔈';b.setAttribute('aria-label','הקראת התשובה');b.onclick=()=>speak(sp.textContent);d.appendChild(b);}
@@ -1531,6 +1659,7 @@ function loop(){
   else if(active==='mol'){updMol();drawMol();}
   else if(active==='acid'){updAcid();drawAcid();drawTit();}
   else if(active==='part'){drawPart();}
+  else if(active==='evo'){drawEvo();}
   else{updHeat();drawHeat();}
   fxStep();requestAnimationFrame(loop);
 }
