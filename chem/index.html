@@ -1584,7 +1584,7 @@ function finchStart(){finchNew(Array.from({length:FN},()=>.2+Math.random()*.6));
   $('fSay').innerHTML='באי חיים פרושים עם מקורים בעובי שונה. מקור <b>עבה</b> טוב לפיצוח זרעים קשים, ומקור <b>דק</b> טוב לתפיסת חרקים. בחרי מה יקרה באי השנה, וצפי מי מצליח לאכול.';}
 function finchUI(){$('fGen').textContent=`דור ${F.gen}`;$('fSeed').disabled=$('fBug').disabled=F.phase!=='idle';$('fm0').classList.toggle('ok',hasStar('fin',0));$('fm1').classList.toggle('ok',hasStar('fin',1));}
 function finchYear(food){if(F.phase!=='idle')return;F.food=food;F.phase='feed';F.start=performance.now();
-  F.birds.forEach(b=>{const fit=food==='seed'?b.b:1-b.b;b.ok=Math.random()<.1+.85*fit;});
+  F.birds.forEach(b=>{const fit=food==='seed'?b.b:1-b.b;b.ok=Math.random()<.05+.95*fit*fit;});
   // תמיד שורדים לפחות שלושה, המתאימים ביותר
   if(F.birds.filter(b=>b.ok).length<3)F.birds.slice().sort((x,y)=>food==='seed'?y.b-x.b:x.b-y.b).slice(0,3).forEach(b=>b.ok=true);
   beep(food==='seed'?300:700,.15,'sine',.05);finchUI();
