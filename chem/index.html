@@ -1771,10 +1771,13 @@ function loop(){
   if(mode==='lesson'){safe(drawLesson);}
   else if(active==='atom'){safe(()=>{updAtom();drawAtom();});}
   else if(active==='mol'){safe(()=>{updMol();drawMol();});}
-  else if(active==='acid'){safe(()=>{updAcid();drawAcid();});safe(drawTit);}
+  else if(active==='acid'){safe(()=>{updAcid();drawAcid();});}
   else if(active==='part'){safe(drawPart);}
-  else if(active==='evo'){safe(drawEvo);safe(drawFinch);safe(drawBact);}
+  else if(active==='evo'){safe(drawEvo);}
   else{safe(()=>{updHeat();drawHeat();});}
+  // המשחקים שבכרטיסים מתחת לתחנה מוצגים גם כשהשיעור פתוח, ולכן מציירים אותם בכל מצב
+  if(active==='acid')safe(drawTit);
+  if(active==='evo'){safe(drawFinch);safe(drawBact);}
   safe(fxStep);
 }
 if(document.fonts&&document.fonts.ready)document.fonts.ready.then(()=>{});
