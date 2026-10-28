@@ -564,7 +564,6 @@ canvas.xcv{touch-action:auto;cursor:default}
           <button class="go alt" id="fSeed">☀️ בצורת<small>רק זרעים קשים</small></button>
           <button class="go alt" id="fBug">🌧️ גשמים<small>הרבה חרקים</small></button>
         </div>
-        <div class="fact pager" id="fHow"></div>
         <ul class="missions"><li id="fm0">משימה 1: לבחור ☀️ בצורת שוב ושוב, עד שלרוב הפרושים באי יהיה מקור עבה</li><li id="fm1">משימה 2: לבחור 🌧️ גשמים, עד שלרוב הפרושים יהיה מקור דק</li></ul>
       </div></div>
   </section>
@@ -1329,7 +1328,7 @@ const T={lv:0,base:0,acid:0,drops:[],bub:[],done:false,t:0,ph:2};
 T.lv=TLV.findIndex((_,i)=>!hasStar('tit',i));if(T.lv<0)T.lv=0;
 const tEx=()=>TLV[T.lv].a+T.acid-T.base,tPh=()=>7-5*Math.tanh(tEx()/3);
 function titLoad(){T.base=0;T.acid=0;T.drops=[];T.bub=[];T.done=false;T.ph=tPh();$('tNext').hidden=true;tUI();
-  $('tSay').innerHTML=`בכוס יש <b>${TLV[T.lv].n}</b> ${TLV[T.lv].e} עם קצת מיץ כרוב, ולכן הוא ורוד־אדום. טפטפי <b>בסיס</b> עד שהצבע יהיה <b>סגול</b>, כלומר ניטרלי. כמה טיפות צריך? תגלי בעצמך!`;}
+  $('tSay').innerHTML=`בכוס: <b>${TLV[T.lv].n}</b> ${TLV[T.lv].e}. טפטפי בסיס עד שיהיה סגול!`;}
 function tUI(){$('tBase').disabled=$('tAcid').disabled=T.done;prog($('tProg'),TLV.length,i=>hasStar('tit',i),T.lv);}
 function tDrop(kind){if(T.done)return;T.drops.push({kind,y:46,vy:0});beep(kind==='b'?520:620,.05,'sine',.05);}
 $('tBase').onclick=()=>tDrop('b');$('tAcid').onclick=()=>tDrop('a');$('tNext').onclick=()=>{T.lv=(T.lv+1)%TLV.length;titLoad();};
@@ -1515,7 +1514,7 @@ const E={gen:1,pop:[],caught:0,bg:0,hist:[],t:0,envChanged:false};
 const ePlace=v=>({v,x:24+Math.random()*(EW-48),y:22+Math.random()*(BH-44),r:(Math.random()-.5)*.8,alive:true});
 const eAvg=()=>E.pop.reduce((s,m)=>s+m.v,0)/E.pop.length,eLight=()=>E.pop.filter(m=>m.v>.5).length;
 function evoStart(){E.gen=1;E.bg=0;E.envChanged=false;E.pop=Array.from({length:EN},()=>ePlace(.05+Math.random()*.9));E.caught=0;E.hist=[eAvg()];E.l0=eLight();E.g1=0;E.l1=0;E.gEnv=0;E.ms=[0,0];$('eSum').hidden=true;$('eAgain').hidden=true;evoUI();
-  say($('eSay'),'את <b>ציפור רעבה</b> 🐦! על גזע העץ נחים פרפרים בגוונים שונים. הקישי על <b>הפרפרים שהכי קל לראות</b>. בכל דור אפשר לאכול עד <b>10</b>. מי שלא נאכל, ישרוד ויביא צאצאים.');}
+  say($('eSay'),'🐦 הקישי על הפרפרים שהכי קל לראות!');}
 function evoUI(){$('eGen').textContent=`דור ${E.gen}`;
   $('eInfo').innerHTML=E.caught<EMIN?`אכלת <b>${E.caught}</b> פרפרים. אחרי ${EMIN} אפשר כבר לעבור לדור הבא.`:E.caught<EBITE?`אכלת <b>${E.caught}</b> מתוך ${EBITE}. אפשר להמשיך לצוד, או ללחוץ "הדור הבא". את השאר יאכלו ציפורים אחרות.`:'השורדים מוכנים להטיל ביצים. לחצי "הדור הבא".';
   $('eNext').disabled=E.caught<EMIN;$('em0').classList.toggle('ok',!!(E.ms&&E.ms[0]));$('em1').classList.toggle('ok',!!(E.ms&&E.ms[1]));
@@ -1654,7 +1653,7 @@ function drawFinch(){F.t++;const c=fiCtx;c.clearRect(0,0,FW,FH);finchScene(c);
   const y0=282,y1=FH-12,X=i=>40+i*((FW-80)/11),Y=v=>y1-v*(y1-y0),h=F.hist.slice(-12);c.fillStyle=C.paper;c.fillRect(0,264,FW,FH-264);
   c.strokeStyle=C.lab;c.lineWidth=2;c.beginPath();h.forEach((v,i)=>i?c.lineTo(X(i),Y(v)):c.moveTo(X(i),Y(v)));c.stroke();h.forEach((v,i)=>{c.fillStyle=C.lab;c.beginPath();c.arc(X(i),Y(v),4.5,0,PI2);c.fill();});
   text(c,'עבה',FW-18,y0,12,C.muted,700);text(c,'דק',FW-18,y1,12,C.muted,700);text(c,'עובי המקור הממוצע בכל דור',120,y0-10,12,C.muted,700);}
-pager($('fHow'),'איך זה עובד?',['🌰 <b>אוכל:</b> מקור עבה מפצח זרעים קשים. מקור דק תופס חרקים.','🥚 <b>רבייה:</b> מי ששבע מטיל ביצים. מי שרעב, לא.','🐣 <b>תורשה:</b> לגוזלים יש מקור כמו של ההורים.','🔁 <b>הרבה דורות:</b> כל שנה יש יותר מהמקור המתאים. זו <b>ברירה טבעית</b>.']);
+
 finchStart();
 
 /* ---------- חיידקים ותרופה: מנה הורגת בעיקר רגישים, וחיכוי נותן לשורדים להתחלק ---------- */
@@ -1665,7 +1664,7 @@ const bAlive=()=>B.cells.filter(c=>c.alive),bRes=c=>c.r>=.5;
 function bSnap(){const a=bAlive();B.hist.push([a.filter(c=>!bRes(c)).length,a.filter(bRes).length]);if(B.hist.length>12)B.hist.shift();}
 function bactStart(){B.cells=[];for(let i=0;i<30;i++){const p=bInDish();B.cells.push({...p,r:i<3?.7+Math.random()*.25:.05+Math.random()*.3,ang:Math.random()*PI2,alive:true,die:0});}
   B.hist=[];B.doses=0;B.waitsAfterDose=0;B.ms=[0,0];bSnap();bactUI();
-  $('bSay').innerHTML='בצלחת יש חיידקים שגורמים למחלה. רובם <b style="color:#2e8b57">ירוקים: רגישים</b> לתרופה, ויש כמה <b style="color:#8e44ad">סגולים: עמידים</b>, שקשה יותר להרוג. תני תרופה או חכי, וראי מה קורה.';}
+  $('bSay').innerHTML='בחרי: מנת תרופה, או לחכות יום.';}
 function bactUI(){const n=bAlive().length;$('bDose').disabled=!n;$('bWait').disabled=!n;$('bm0').classList.toggle('ok',!!B.ms[0]);$('bm1').classList.toggle('ok',!!B.ms[1]);}
 $('bDose').onclick=()=>{let k=0;bAlive().forEach(c=>{if(Math.random()<(bRes(c)?.35:.95)){c.alive=false;c.die=1;k++;}});B.doses++;B.waitsAfterDose=0;bSnap();buzz();
   const a=bAlive(),r=a.filter(bRes).length;
@@ -1698,6 +1697,18 @@ addRestart(lastSide('st-part'),partLoad);
 addRestart(lastSide('st-evo'),evoStart);
 addRestart(lastSide('x-finch'),finchStart);
 addRestart(lastSide('x-tit'),titLoad);
+/* ---------- "איך משחקים?" בדפדוף, בראש כל משחק ---------- */
+function addHow(side,steps){let d=side.querySelector('.how');if(!d){d=document.createElement('div');d.className='fact pager how';side.prepend(d);}pager(d,'איך משחקים?',steps);}
+addHow(lastSide('st-atom'),['🎯 המטרה: לבנות אטום של היסוד שבכרטיס.','🔴 גררי <b>פרוטונים</b> לגרעין, כמו המספר הוורוד: המספר האטומי.','⚪ הוסיפי <b>נייטרונים</b>, עד שמספר המסה הכחול יתאים.','🔵 הוסיפי <b>אלקטרונים</b> כמספר הפרוטונים, והאטום מאוזן!']);
+addHow(lastSide('st-mol'),['🎯 המטרה: לבנות את המולקולה שכתובה בצד.','🎨 בהתחלה, <b>הצבע</b> של כל משבצת מגלה איזה אטום צריך.','🔤 אחר כך <b>נוסחה</b>: האות היא סוג האטום, והמספר הקטן אומר כמה.','👆 גררי אטום מהמגש למשבצת, או הקישי עליו.']);
+addHow(lastSide('st-acid'),['🎯 המטרה: לגלות אם כל חומר חומצי, ניטרלי או בסיסי.','🧴 בחרי חומר מהמדף, והוא נשפך לכוס.','🥬 שפכי מיץ כרוב סגול, וראי לאיזה צבע הוא הופך.','🗂️ שימי את החומר במדף הנכון לפי הצבע.']);
+addHow(lastSide('st-heat'),['🎯 המטרה: להשלים 3 משימות עם המים.','🔥 החזיקי <b>חימום</b> או <b>קירור</b>, או הזיזי את הסרגל.','💨 ככל שחם יותר, המולקולות זזות מהר יותר.','🧊 מתחת ל־<bdi dir="ltr">0°</bdi> קרח, ומעל <bdi dir="ltr">100°</bdi> אדים.']);
+addHow(lastSide('st-part'),['🎯 המטרה: לבנות חלקיק משלושה קווארקים.','🟠 קווארק <b>למעלה</b> (u) מוסיף <bdi dir="ltr">+⅔</bdi>.','🟢 קווארק <b>למטה</b> (d) מוסיף <bdi dir="ltr">−⅓</bdi>.','📏 התאימי את המטען ל־🎯 שעל המד.']);
+addHow(lastSide('st-evo'),['🐦 את ציפור רעבה, ועל העץ נחים פרפרים.','👆 הקישי על הפרפרים שהכי קל לראות: 5 עד 10 בכל דור.','🥚 מי שלא נאכל מביא צאצאים בגוון דומה לשלו.','📈 עקבי בגרף אחרי הגוון. אחר כך נסי 🏭 עשן מפעלים.']);
+addHow(lastSide('x-finch'),['🎯 בכל שנה בחרי: ☀️ <b>בצורת</b> או 🌧️ <b>גשמים</b>.','🌰 מקור עבה מפצח זרעים קשים, ומקור דק תופס חרקים.','🥚 רק מי ששבע מטיל ביצים, והגוזלים מקבלים מקור כמו של ההורים.','🔁 שנה אחרי שנה המקור המתאים נהיה נפוץ. זו <b>ברירה טבעית</b>.']);
+addHow(lastSide('x-bact'),['🧫 בצלחת: <b style="color:#2e8b57">ירוקים</b> רגישים לתרופה, ו<b style="color:#8e44ad">סגולים</b> עמידים.','💊 מנת תרופה הורגת כמעט את כל הירוקים, ורק חלק מהסגולים.','⏳ לחכות יום: כל חיידק שנשאר מתחלק לשניים.','🔬 נסי טיפול עד הסוף, ונסי גם להפסיק באמצע. מה ההבדל?']);
+addHow(lastSide('x-tit'),['🧪 בכוס יש חומצה עם מיץ כרוב, ולכן היא ורודה.','💧 טפטפי <b>בסיס</b>, וראי את הצבע ואת ה־pH משתנים.','🟣 המטרה: <b>סגול</b>, pH <bdi dir="ltr">7</bdi>, בדיוק באמצע.','🍋 הגזמת? טיפת חומצה מתקנת.']);
+
 
 
 
