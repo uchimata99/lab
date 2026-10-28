@@ -289,6 +289,7 @@ button:focus-visible,input:focus-visible{outline:3px solid var(--ink);outline-of
 .qbtns button{flex:1 1 0;display:flex;flex-direction:column;align-items:center;gap:2px;font-size:16px;padding:10px 8px}
 .qbtns button small{font-size:14px;font-weight:600;color:var(--ink-muted)}
 .qsum{font-size:24px;font-weight:700;text-align:center;min-height:34px}
+.quiz .qreset{font-size:15px;padding:6px 12px}
 .quiz .qq{font-size:20px;line-height:30px;font-weight:600;margin:0}
 .quiz .qopts{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:8px}
 .quiz .qopts button{min-height:var(--answer-tile);border:2px solid var(--line);background:var(--surface-100);color:var(--ink);border-radius:var(--radius-md);font-family:var(--font);font-size:17px;font-weight:600;padding:var(--space-2) var(--space-4);cursor:pointer}
@@ -1412,8 +1413,8 @@ explorer('xPart',XPART,p=>p.k,(c,p)=>{const x0=34,y0=18,w=64,h=50;
 
 /* ---------- תרגול: שאלות בחירה מתחת לתחנה. התשובה הנכונה היא תמיד הראשונה ברשימה, והן מעורבבות בתצוגה ---------- */
 function makeQuiz(st,title,qs){const sec=document.createElement('section');sec.className='card quiz';sec.dataset.for=st;sec.hidden=true;
-  sec.innerHTML=`<div class="lhead"><h2>${title}</h2><div class="progress"></div></div><p class="qq"></p><div class="qopts"></div><p class="pt-info"></p><button class="go glow" hidden></button>`;
-  document.querySelector('.wrap').appendChild(sec);const[pg,qq,op,why,nx]=['.progress','.qq','.qopts','.pt-info','button.go'].map(s=>sec.querySelector(s)),key='q'+st;
+  sec.innerHTML=`<div class="lhead"><h2>${title}</h2><div class="progress"></div><button class="go alt qreset" type="button">🔄 מההתחלה</button></div><p class="qq"></p><div class="qopts"></div><p class="pt-info"></p><button class="go glow qnext" type="button" hidden></button>`;
+  document.querySelector('.wrap').appendChild(sec);const[pg,qq,op,why,nx]=['.progress','.qq','.qopts','.pt-info','.qnext'].map(s=>sec.querySelector(s)),key='q'+st;
   let i=Math.max(0,qs.findIndex((_,k)=>!hasStar(key,k)));
   const mix=a=>{for(let k=a.length-1;k>0;k--){const j=Math.floor(Math.random()*(k+1));[a[k],a[j]]=[a[j],a[k]];}return a;};
   function show(){const q=qs[i];qq.innerHTML=`${i+1}. ${q.q}`;why.innerHTML='';nx.hidden=true;op.innerHTML='';
@@ -1422,7 +1423,7 @@ function makeQuiz(st,title,qs){const sec=document.createElement('section');sec.c
         nx.textContent=i<qs.length-1?'לשאלה הבאה ←':'🎉 סיימת את כל השאלות! מתחילים מההתחלה';nx.hidden=false;prog(pg,qs.length,k2=>hasStar(key,k2),i);}
         else{b.classList.add('no');b.disabled=true;buzz();why.innerHTML='לא בדיוק. נסי תשובה אחרת 🙂';}};op.appendChild(b);});
     prog(pg,qs.length,k=>hasStar(key,k),i);}
-  nx.onclick=()=>{i=(i+1)%qs.length;show();};show();}
+  nx.onclick=()=>{i=(i+1)%qs.length;show();};sec.querySelector('.qreset').onclick=()=>{i=0;show();beep(500,.06,'sine',.05);};show();}
 makeQuiz('mol','תרגול: מולקולות וקשרים',[
  {q:'מה זו מולקולה?',o:['כמה אטומים שמחוברים יחד','אטום אחד לבד','סוג של חיידק'],w:'מולקולה היא קבוצה של אטומים שמחזיקים זה בזה בקשרים.'},
  {q:'כמה אטומי מימן יש במולקולת מים, H₂O?',o:['2','1','3','0'],w:'המספר הקטן 2 אחרי ה־H אומר שיש שני מימנים.'},
@@ -1641,6 +1642,18 @@ function drawBact(){B.t++;const c=bctx;c.clearRect(0,0,BW,BHH);
   const y1=BHH-14,Hm=70,bw=Math.min(24,(BW-80)/12-4);B.hist.forEach(([w,r],i)=>{const x=46+i*(bw+4),hw=w/BMAX*Hm,hr=r/BMAX*Hm;c.fillStyle='#3fae6a';c.fillRect(x,y1-hw,bw,hw);c.fillStyle='#8e44ad';c.fillRect(x,y1-hw-hr-(hr&&hw?2:0),bw,hr);});
   c.fillStyle='#3fae6a';c.fillRect(BW-26,BHH-62,12,12);text(c,'רגישים',BW-58,BHH-56,12,C.ink,700);c.fillStyle='#8e44ad';c.fillRect(BW-26,BHH-42,12,12);text(c,'עמידים',BW-58,BHH-36,12,C.ink,700);}
 bactStart();
+/* ---------- כפתור "התחלה מחדש" לכל משחק. הכוכבים שהורווחו נשמרים ---------- */
+function addRestart(side,fn){const b=document.createElement('button');b.type='button';b.className='go alt restart';b.textContent='🔄 התחלה מחדש';b.onclick=()=>{fn();beep(500,.06,'sine',.05);};side.appendChild(b);}
+const lastSide=id=>{const s=$(id).querySelectorAll('.side');return s[s.length-1];};
+addRestart(lastSide('st-atom'),()=>{A.parts.forEach(p=>p.leave=true);A.done=false;$('aNext').hidden=true;atomUI();layoutAtom();afterAtom();});
+addRestart(lastSide('st-mol'),molLoad);
+addRestart(lastSide('st-acid'),()=>$('cReset').onclick());
+addRestart(lastSide('st-heat'),()=>{H.msDone=[false,false,false];H.wasSolid=false;H.rate=0;[0,1,2].forEach(m=>$('ms'+m).classList.remove('ok'));setT(20);say($('hSay'),'מתחילים מחדש! המים שוב בטמפרטורת החדר. נסי להשלים את 3 המשימות.');});
+addRestart(lastSide('st-part'),partLoad);
+addRestart(lastSide('st-evo'),evoStart);
+addRestart(lastSide('x-finch'),finchStart);
+addRestart(lastSide('x-tit'),titLoad);
+
 
 
 
