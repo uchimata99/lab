@@ -1496,11 +1496,11 @@ const BARK=[barkTex(EBG[0]),barkTex(EBG[1])];
 const E={gen:1,pop:[],caught:0,bg:0,hist:[],t:0,envChanged:false};
 const ePlace=v=>({v,x:24+Math.random()*(EW-48),y:22+Math.random()*(BH-44),r:(Math.random()-.5)*.8,alive:true});
 const eAvg=()=>E.pop.reduce((s,m)=>s+m.v,0)/E.pop.length,eLight=()=>E.pop.filter(m=>m.v>.5).length;
-function evoStart(){E.gen=1;E.bg=0;E.envChanged=false;E.pop=Array.from({length:EN},()=>ePlace(.05+Math.random()*.9));E.caught=0;E.hist=[eAvg()];E.l0=eLight();E.g1=0;E.l1=0;E.gEnv=0;$('eSum').hidden=true;$('eAgain').hidden=true;evoUI();
+function evoStart(){E.gen=1;E.bg=0;E.envChanged=false;E.pop=Array.from({length:EN},()=>ePlace(.05+Math.random()*.9));E.caught=0;E.hist=[eAvg()];E.l0=eLight();E.g1=0;E.l1=0;E.gEnv=0;E.ms=[0,0];$('eSum').hidden=true;$('eAgain').hidden=true;evoUI();
   say($('eSay'),'את <b>ציפור רעבה</b> 🐦! על גזע העץ נחים פרפרים בגוונים שונים. הקישי על <b>הפרפרים שהכי קל לראות</b>. בכל דור אפשר לאכול עד <b>10</b>. מי שלא נאכל, ישרוד ויביא צאצאים.');}
 function evoUI(){$('eGen').textContent=`דור ${E.gen}`;
   $('eInfo').innerHTML=E.caught<EMIN?`אכלת <b>${E.caught}</b> פרפרים. אחרי ${EMIN} אפשר כבר לעבור לדור הבא.`:E.caught<EBITE?`אכלת <b>${E.caught}</b> מתוך ${EBITE}. אפשר להמשיך לצוד, או ללחוץ "הדור הבא". את השאר יאכלו ציפורים אחרות.`:'השורדים מוכנים להטיל ביצים. לחצי "הדור הבא".';
-  $('eNext').disabled=E.caught<EMIN;$('em0').classList.toggle('ok',hasStar('evo',0));$('em1').classList.toggle('ok',hasStar('evo',1));
+  $('eNext').disabled=E.caught<EMIN;$('em0').classList.toggle('ok',!!(E.ms&&E.ms[0]));$('em1').classList.toggle('ok',!!(E.ms&&E.ms[1]));
   $('eEnv').textContent=E.bg?'🌳 החזרת העץ הבהיר':'🏭 שינוי הסביבה: עשן מפעלים';}
 ecv.addEventListener('pointerdown',ev=>{if(E.caught>=EBITE)return;const p=pt(ecv,EW,EH,ev);let best=null,bd=26;
   for(const m of E.pop)if(m.alive){const d=Math.hypot(m.x-p.x,m.y-p.y);if(d<bd){bd=d;best=m;}}
@@ -1512,8 +1512,8 @@ $('eNext').onclick=()=>{if(E.caught<EMIN)return;const kids=[],bg0=EBG[E.bg],more
   E.pop.filter(m=>m.alive).forEach(m=>{for(let k=0;k<2;k++){const jump=Math.random()<.1?(Math.random()-.5)*.7:(Math.random()-.5)*.24;kids.push(ePlace(clamp(m.v+jump,0,1)));}});
   E.pop=kids;E.caught=0;E.gen++;E.hist.push(eAvg());beep(600,.1,'sine',.05);const a=eAvg(),bg=EBG[E.bg];
   if(!E.g1&&!E.bg&&E.gen>=3&&a>.62){E.g1=E.gen;E.l1=eLight();}
-  if(!E.bg&&E.gen>=3&&a>.62&&!hasStar('evo',0)){addStar('evo',0);burstEl(ecv,80);say($('eSay'),'🎉 ראי! רוב הפרפרים <b>בהירים</b> עכשיו, כמו העץ. הם מוסווים, ולכן קשה למצוא אותם. זו <b>ברירה טבעית</b>! עכשיו נסי ללחוץ על "שינוי הסביבה".','ok');}
-  else if(E.bg&&E.envChanged&&a<.42&&$('eSum').hidden){addStar('evo',1);evoSummary();burstEl(ecv,80);say($('eSay'),'🎉 מדהים! אחרי שהעץ השחיר, הפרפרים הכהים שרדו, ועכשיו רובם <b>כהים</b>. בדיוק כך קרה באנגליה לפני כ־200 שנה, לעש שנקרא עש הכסוף!','ok');}
+  if(!E.bg&&E.gen>=3&&a>.62&&!E.ms[0]){E.ms[0]=1;addStar('evo',0);burstEl(ecv,80);say($('eSay'),'🎉 ראי! רוב הפרפרים <b>בהירים</b> עכשיו, כמו העץ. הם מוסווים, ולכן קשה למצוא אותם. זו <b>ברירה טבעית</b>! עכשיו נסי ללחוץ על "שינוי הסביבה".','ok');}
+  else if(E.bg&&E.envChanged&&a<.42&&!E.ms[1]){E.ms[1]=1;addStar('evo',1);evoSummary();burstEl(ecv,80);say($('eSay'),'🎉 מדהים! אחרי שהעץ השחיר, הפרפרים הכהים שרדו, ועכשיו רובם <b>כהים</b>. בדיוק כך קרה באנגליה לפני כ־200 שנה, לעש שנקרא עש הכסוף!','ok');}
   else say($('eSay'),`${more?`ציפורים אחרות אכלו עוד ${more}. `:''}דור ${E.gen}: הגוון הממוצע ${Math.abs(a-bg)<.15?'כבר קרוב מאוד לצבע העץ':'עוד רחוק מהצבע של העץ'}. המשיכי לצוד את מי שבולט.`);
   evoUI();};
 $('eEnv').onclick=()=>{E.bg=1-E.bg;if(E.bg){E.envChanged=true;if(!E.gEnv)E.gEnv=E.gen;}beep(300,.2,'square',.03);
@@ -1578,12 +1578,12 @@ $('eAgain').onclick=()=>{evoStart();beep(600,.08,'sine',.05);};
 
 /* ---------- המקורים של דרווין: בצורת מעדיפה מקור עבה, גשמים מעדיפים מקור דק ---------- */
 const FW=420,FH=340,fiCv=$('finchCv'),fiCtx=setup(fiCv,FW,FH),FN=12;
-const F={birds:[],food:null,phase:'idle',timer:0,gen:1,hist:[],t:0};
+const F={birds:[],food:null,phase:'idle',timer:0,gen:1,hist:[],t:0,ms:[0,0]};
 const fAvg=()=>F.birds.reduce((s,b)=>s+b.b,0)/F.birds.length;
 function finchNew(list){F.birds=list.map(b=>({b,ok:true,fade:1}));}
-function finchStart(){finchNew(Array.from({length:FN},()=>.2+Math.random()*.6));F.gen=1;F.hist=[fAvg()];F.phase='idle';F.food=null;finchUI();
+function finchStart(){finchNew(Array.from({length:FN},(_,i)=>clamp(.08+i/(FN-1)*.84+(Math.random()-.5)*.08,0,1)).sort(()=>Math.random()-.5));F.gen=1;F.hist=[fAvg()];F.phase='idle';F.food=null;F.ms=[0,0];finchUI();
   $('fSay').innerHTML='באי חיים פרושים עם מקורים בעובי שונה. מקור <b>עבה</b> טוב לפיצוח זרעים קשים, ומקור <b>דק</b> טוב לתפיסת חרקים. בחרי מה יקרה באי השנה, וצפי מי מצליח לאכול.';}
-function finchUI(){$('fGen').textContent=`דור ${F.gen}`;$('fSeed').disabled=$('fBug').disabled=F.phase!=='idle';$('fm0').classList.toggle('ok',hasStar('fin',0));$('fm1').classList.toggle('ok',hasStar('fin',1));}
+function finchUI(){$('fGen').textContent=`דור ${F.gen}`;$('fSeed').disabled=$('fBug').disabled=F.phase!=='idle';$('fm0').classList.toggle('ok',!!F.ms[0]);$('fm1').classList.toggle('ok',!!F.ms[1]);}
 function finchYear(food){if(F.phase!=='idle')return;F.food=food;F.phase='feed';F.start=performance.now();
   F.birds.forEach(b=>{const fit=food==='seed'?b.b:1-b.b;b.ok=Math.random()<.05+.95*fit*fit;});
   // תמיד שורדים לפחות שלושה, המתאימים ביותר
@@ -1594,13 +1594,13 @@ $('fSeed').onclick=()=>finchYear('seed');$('fBug').onclick=()=>finchYear('bug');
 function finchBreed(){const surv=F.birds.filter(b=>b.ok).map(b=>b.b),kids=[];
   for(let i=0;kids.length<FN;i++){const p=surv[i%surv.length],j=Math.random()<.1?(Math.random()-.5)*.5:(Math.random()-.5)*.2;kids.push(clamp(p+j,0,1));}
   const n=surv.length;finchNew(kids);F.gen++;F.hist.push(fAvg());F.phase='idle';const a=fAvg();
-  if(a>.7&&!hasStar('fin',0)){addStar('fin',0);burstEl(fiCv,70);$('fSay').innerHTML='🎉 רוב הפרושים עם <b>מקור עבה</b>! בדיוק את זה מדדו חוקרים בשם פיטר ורוזמרי גרנט באיי גלפגוס: אחרי בצורת קשה בשנת 1977, לפרושים של הדור הבא היו מקורים עבים יותר!';}
-  else if(a<.3&&!hasStar('fin',1)){addStar('fin',1);burstEl(fiCv,70);$('fSay').innerHTML='🎉 עכשיו רוב המקורים <b>דקים</b>. אותו מין של ציפור, אוכל אחר, ותוך כמה דורות המקורים השתנו.';}
+  if(a>.7&&!F.ms[0]){F.ms[0]=1;addStar('fin',0);burstEl(fiCv,70);$('fSay').innerHTML='🎉 רוב הפרושים עם <b>מקור עבה</b>! בדיוק את זה מדדו חוקרים בשם פיטר ורוזמרי גרנט באיי גלפגוס: אחרי בצורת קשה בשנת 1977, לפרושים של הדור הבא היו מקורים עבים יותר!';}
+  else if(a<.3&&!F.ms[1]){F.ms[1]=1;addStar('fin',1);burstEl(fiCv,70);$('fSay').innerHTML='🎉 עכשיו רוב המקורים <b>דקים</b>. אותו מין של ציפור, אוכל אחר, ותוך כמה דורות המקורים השתנו.';}
   else $('fSay').innerHTML=`רק ${n} מתוך ${FN} פרושים מצאו מספיק אוכל, והם הביאו את הצאצאים. לצאצאים יש מקורים <b>דומים להורים</b>. ${a>.55?'המקורים נעשים עבים יותר.':a<.45?'המקורים נעשים דקים יותר.':'בחרי שוב מה יקרה באי.'}`;
   finchUI();}
 function finchDraw(c,x,y,b,alpha,food,ok){c.globalAlpha=alpha;c.fillStyle='#8a6d4b';c.beginPath();c.ellipse(x-6,y+8,24,17,0,0,PI2);c.fill();c.beginPath();c.arc(x+12,y-8,12,0,PI2);c.fill();
   c.fillStyle='#fff';c.beginPath();c.arc(x+16,y-11,3.2,0,PI2);c.fill();c.fillStyle='#222';c.beginPath();c.arc(x+17,y-11,1.6,0,PI2);c.fill();
-  const h=2+b*9,L=24-b*9;c.fillStyle='#e0a030';c.beginPath();c.moveTo(x+21,y-8-h);c.lineTo(x+21+L,y-7);c.lineTo(x+21,y-8+h);c.closePath();c.fill();c.strokeStyle='rgba(0,0,0,.25)';c.lineWidth=1;c.stroke();
+  const h=1.2+b*13,L=32-b*16;c.fillStyle='#e0a030';c.beginPath();c.moveTo(x+21,y-8-h);c.lineTo(x+21+L,y-7);c.lineTo(x+21,y-8+h);c.closePath();c.fill();c.strokeStyle='rgba(0,0,0,.25)';c.lineWidth=1;c.stroke();
   if(food)emoji(c,ok?(food==='seed'?'🌰':'🐛'):'💤',x+6,y-30,ok?18:16);c.globalAlpha=1;}
 function drawFinch(){F.t++;const c=fiCtx;c.clearRect(0,0,FW,FH);c.fillStyle=F.food==='seed'?'#efe2c4':F.food==='bug'?'#d9ecd2':C.well;c.fillRect(0,0,FW,262);
   const el=F.phase==='feed'?performance.now()-F.start:0;if(F.phase==='feed'&&el>2000)finchBreed();
@@ -1614,23 +1614,23 @@ finchStart();
 
 /* ---------- חיידקים ותרופה: מנה הורגת בעיקר רגישים, וחיכוי נותן לשורדים להתחלק ---------- */
 const BW=420,BHH=340,bcv=$('bactCv'),bctx=setup(bcv,BW,BHH),BCX=210,BCY=128,BR=112,BMAX=80;
-const B={cells:[],hist:[],doses:0,waitsAfterDose:0,t:0};
+const B={cells:[],hist:[],doses:0,waitsAfterDose:0,t:0,ms:[0,0]};
 const bInDish=()=>{const a=Math.random()*PI2,r=Math.sqrt(Math.random())*(BR-12);return{x:BCX+Math.cos(a)*r,y:BCY+Math.sin(a)*r};};
 const bAlive=()=>B.cells.filter(c=>c.alive),bRes=c=>c.r>=.5;
 function bSnap(){const a=bAlive();B.hist.push([a.filter(c=>!bRes(c)).length,a.filter(bRes).length]);if(B.hist.length>12)B.hist.shift();}
 function bactStart(){B.cells=[];for(let i=0;i<30;i++){const p=bInDish();B.cells.push({...p,r:i<3?.7+Math.random()*.25:.05+Math.random()*.3,ang:Math.random()*PI2,alive:true,die:0});}
-  B.hist=[];B.doses=0;B.waitsAfterDose=0;bSnap();bactUI();
+  B.hist=[];B.doses=0;B.waitsAfterDose=0;B.ms=[0,0];bSnap();bactUI();
   $('bSay').innerHTML='בצלחת יש חיידקים שגורמים למחלה. רובם <b style="color:#2e8b57">ירוקים: רגישים</b> לתרופה, ויש כמה <b style="color:#8e44ad">סגולים: עמידים</b>, שקשה יותר להרוג. תני תרופה או חכי, וראי מה קורה.';}
-function bactUI(){const n=bAlive().length;$('bDose').disabled=!n;$('bWait').disabled=!n;$('bm0').classList.toggle('ok',hasStar('bac',0));$('bm1').classList.toggle('ok',hasStar('bac',1));}
+function bactUI(){const n=bAlive().length;$('bDose').disabled=!n;$('bWait').disabled=!n;$('bm0').classList.toggle('ok',!!B.ms[0]);$('bm1').classList.toggle('ok',!!B.ms[1]);}
 $('bDose').onclick=()=>{let k=0;bAlive().forEach(c=>{if(Math.random()<(bRes(c)?.35:.95)){c.alive=false;c.die=1;k++;}});B.doses++;B.waitsAfterDose=0;bSnap();buzz();
   const a=bAlive(),r=a.filter(bRes).length;
-  if(!a.length){if(!hasStar('bac',0))addStar('bac',0);burstEl(bcv,80);$('bSay').innerHTML=`🎉 <b>הצלחת!</b> כל החיידקים מתו אחרי ${B.doses} מנות. בגלל זה רופאים אומרים לקחת את <b>כל</b> הטיפול עד הסוף, גם כשכבר מרגישים טוב.`;}
+  if(!a.length){B.ms[0]=1;addStar('bac',0);burstEl(bcv,80);$('bSay').innerHTML=`🎉 <b>הצלחת!</b> כל החיידקים מתו אחרי ${B.doses} מנות. בגלל זה רופאים אומרים לקחת את <b>כל</b> הטיפול עד הסוף, גם כשכבר מרגישים טוב.`;}
   else $('bSay').innerHTML=`💊 התרופה הרגה ${k} חיידקים. נשארו ${a.length}${r?`, ומהם ${r} <b style="color:#8e44ad">עמידים</b>`:''}. ${r>a.length/2?'שימי לב: רוב מי שנשאר עמיד!':''}`;
   bactUI();};
 $('bWait').onclick=()=>{const a=bAlive();a.forEach(c=>{if(B.cells.filter(x=>x.alive).length>=BMAX)return;const p=bInDish();B.cells.push({x:clamp(c.x+(p.x-BCX)*.25,BCX-BR+12,BCX+BR-12),y:clamp(c.y+(p.y-BCY)*.25,BCY-BR+12,BCY+BR-12),r:clamp(c.r+(Math.random()-.5)*.1,0,1),ang:Math.random()*PI2,alive:true,die:0});});
   B.cells=B.cells.filter(c=>c.alive||c.die>0);if(B.doses)B.waitsAfterDose++;bSnap();pop();
   const n=bAlive().length,r=bAlive().filter(bRes).length;
-  if(B.doses&&r>n*.6&&n>=10){if(!hasStar('bac',1))addStar('bac',1);burstEl(bcv,60);$('bSay').innerHTML=`😮 ראי: כמעט כל החיידקים עכשיו <b style="color:#8e44ad">סגולים, עמידים</b>! הפסקנו את התרופה באמצע: הרגישים מתו, והעמידים שרדו והתרבו. ככה נוצרים חיידקים שתרופה כבר לא עוזרת נגדם. זו אבולוציה מהירה, כי לחיידקים יש דור חדש בערך כל 20 דקות.`;}
+  if(B.doses&&r>n*.6&&n>=10){B.ms[1]=1;addStar('bac',1);burstEl(bcv,60);$('bSay').innerHTML=`😮 ראי: כמעט כל החיידקים עכשיו <b style="color:#8e44ad">סגולים, עמידים</b>! הפסקנו את התרופה באמצע: הרגישים מתו, והעמידים שרדו והתרבו. ככה נוצרים חיידקים שתרופה כבר לא עוזרת נגדם. זו אבולוציה מהירה, כי לחיידקים יש דור חדש בערך כל 20 דקות.`;}
   else $('bSay').innerHTML=`⏳ עבר יום. החיידקים שנשארו התחלקו לשניים, ועכשיו יש ${n}${n>=BMAX?' (הצלחת מלאה!)':''}. הצאצאים דומים להורים: מעמיד יוצא עמיד.`;
   bactUI();};
 $('bReset').onclick=()=>{bactStart();beep(500,.08,'sine',.05);};
