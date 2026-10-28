@@ -295,6 +295,13 @@ button:focus-visible,input:focus-visible{outline:3px solid var(--ink);outline-of
 .quiz .qopts button{min-height:var(--answer-tile);border:2px solid var(--line);background:var(--surface-100);color:var(--ink);border-radius:var(--radius-md);font-family:var(--font);font-size:17px;font-weight:600;padding:var(--space-2) var(--space-4);cursor:pointer}
 .quiz .qopts button.ok{border-color:var(--correct);background:color-mix(in srgb,var(--correct) 16%,var(--surface-100))}
 .quiz .qopts button.no{border-color:var(--retry);background:var(--retry-soft)}
+.pg-head{display:flex;justify-content:space-between;align-items:center;gap:8px}
+.pg-n{font-size:14px;color:var(--ink-muted);font-variant-numeric:tabular-nums}
+.pg-txt{min-height:52px;margin:4px 0}
+.pg-nav{display:flex;align-items:center;justify-content:space-between;gap:8px}
+.pg-nav button{min-height:38px;padding:4px 14px;font-size:15px}
+.pg-dots span{display:inline-block;width:8px;height:8px;border-radius:50%;background:var(--line);margin:0 3px;opacity:.5}
+.pg-dots span.on{background:var(--accent);opacity:1}
 .xstage{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:18px;align-items:start}
 @media (max-width:720px){.xstage{grid-template-columns:1fr}}
 .xstage>*{min-width:0}
@@ -486,7 +493,7 @@ canvas.xcv{touch-action:auto;cursor:default}
           <li id="em0">משימה 1: לצוד דור אחרי דור, עד שרוב הפרפרים יהיו בהירים ומוסווים על העץ</li>
           <li id="em1">משימה 2: ללחוץ 🏭 עשן מפעלים ולהמשיך לצוד, עד שרוב הפרפרים יהיו כהים</li>
         </ul>
-        <div class="fact" id="eSum" hidden></div>
+        <div class="fact pager" id="eSum" hidden></div>
         <button class="go alt" id="eAgain" hidden>🔄 לשחק שוב מההתחלה</button>
       </div>
     </div>
@@ -557,7 +564,7 @@ canvas.xcv{touch-action:auto;cursor:default}
           <button class="go alt" id="fSeed">☀️ בצורת<small>רק זרעים קשים</small></button>
           <button class="go alt" id="fBug">🌧️ גשמים<small>הרבה חרקים</small></button>
         </div>
-        <div class="fact"><b>איך זה עובד?</b><br>1️⃣ <b>אוכל:</b> כל מקור טוב לאוכל אחר. מקור עבה מפצח זרעים קשים, ומקור דק תופס חרקים.<br>2️⃣ <b>שרידה ורבייה:</b> מי שמוצא מספיק אוכל, שבע וחזק ומטיל ביצים. מי שרעב, לא.<br>3️⃣ <b>תורשה:</b> הגוזלים מקבלים מקור דומה לשל ההורים.<br>4️⃣ <b>הרבה דורות:</b> כל שנה עוד קצת פרושים עם המקור המתאים, עד שהם הרוב. זו <b>ברירה טבעית</b>.</div>
+        <div class="fact pager" id="fHow"></div>
         <ul class="missions"><li id="fm0">משימה 1: לבחור ☀️ בצורת שוב ושוב, עד שלרוב הפרושים באי יהיה מקור עבה</li><li id="fm1">משימה 2: לבחור 🌧️ גשמים, עד שלרוב הפרושים יהיה מקור דק</li></ul>
       </div></div>
   </section>
@@ -1578,22 +1585,20 @@ makeQuiz('evo','תרגול: אבולוציה',[
 
 // סיכום של הציפור הרעבה, עם המספרים מהמשחק עצמו
 function evoSummary(){const dark=E.pop.filter(m=>m.v<=.5).length,g=E.gen-(E.gEnv||E.gen);
-  $('eSum').innerHTML=`<b>מה קרה כאן?</b><br>
-1️⃣ <b>שונות:</b> בדור 1 היו פרפרים בהירים וכהים: ${E.l0} בהירים ו־${20-E.l0} כהים.<br>
-2️⃣ <b>ברירה:</b> הציפורים, כלומר את, אכלו קודם את מי שבלט על העץ.<br>
-3️⃣ <b>תורשה:</b> השורדים הביאו צאצאים שדומים להם.${E.g1?` בדור ${E.g1} כבר ${E.l1} מתוך 20 היו בהירים.`:''}<br>
-4️⃣ <b>הסביבה השתנתה:</b> כשהעשן השחיר את העץ, דווקא הבהירים בלטו. ${g?`אחרי ${g} דורות`:'בסוף'} ${dark} מתוך 20 היו כהים.<br>
-אף פרפר לא שינה צבע בעצמו! מה שהשתנה הוא <b>מי שרד והביא צאצאים</b>. זו אבולוציה.`;
+  pager($('eSum'),'מה קרה כאן?',[`🦋 <b>שונות:</b> בהתחלה היו ${E.l0} בהירים ו־${20-E.l0} כהים.`,'🐦 <b>ברירה:</b> את אכלת קודם את מי שבלט על העץ.',`🥚 <b>תורשה:</b> השורדים הביאו צאצאים דומים להם.${E.g1?` בדור ${E.g1}: ${E.l1} מתוך 20 בהירים.`:''}`,`🏭 <b>הסביבה השתנתה:</b> העץ השחיר, והבהירים בלטו. ${g?`אחרי ${g} דורות: `:''}${dark} מתוך 20 כהים.`,'✨ אף פרפר לא שינה צבע. השתנה <b>מי שרד</b>. זו אבולוציה!']);
   $('eSum').hidden=false;$('eAgain').hidden=false;}
 $('eAgain').onclick=()=>{evoStart();beep(600,.08,'sine',.05);};
 
+// דפדוף: שלב אחד בכל פעם, עם הקודם/הבא ונקודות
+function pager(el,title,steps){let i=0;const show=()=>{el.innerHTML=`<div class="pg-head"><b>${title}</b><span class="pg-n">${i+1}/${steps.length}</span></div><div class="pg-txt">${steps[i]}</div><div class="pg-nav"><button type="button" class="go alt pg-prev">→ הקודם</button><span class="pg-dots">${steps.map((_,k)=>`<span class="${k===i?'on':''}"></span>`).join('')}</span><button type="button" class="go alt pg-next">הבא ←</button></div>`;
+  const pv=el.querySelector('.pg-prev'),nx=el.querySelector('.pg-next');pv.disabled=i===0;nx.disabled=i===steps.length-1;pv.onclick=()=>{i--;show();};nx.onclick=()=>{i++;show();};};show();}
 /* ---------- המקורים של דרווין: בצורת מעדיפה מקור עבה, גשמים מעדיפים מקור דק ---------- */
 const FW=420,FH=340,fiCv=$('finchCv'),fiCtx=setup(fiCv,FW,FH),FN=12;
 const F={birds:[],food:null,phase:'idle',timer:0,gen:1,hist:[],t:0,ms:[0,0]};
 const fAvg=()=>F.birds.reduce((s,b)=>s+b.b,0)/F.birds.length;
 function finchNew(list){F.birds=list.map(b=>({b,ok:true,fade:1}));}
 function finchStart(){finchNew(Array.from({length:FN},(_,i)=>clamp(.08+i/(FN-1)*.84+(Math.random()-.5)*.08,0,1)).sort(()=>Math.random()-.5));F.gen=1;F.hist=[fAvg()];F.phase='idle';F.food=null;F.ms=[0,0];finchUI();
-  $('fSay').innerHTML='באי חיים פרושים עם מקורים בעובי שונה. מקור <b>עבה</b> טוב לפיצוח זרעים קשים, ומקור <b>דק</b> טוב לתפיסת חרקים. בחרי מה יקרה באי השנה, וצפי מי מצליח לאכול.';}
+  $('fSay').innerHTML='בחרי מה יקרה באי השנה, וצפי מי מצליח לאכול. 👀';}
 function finchUI(){$('fGen').textContent=`דור ${F.gen}`;$('fSeed').disabled=$('fBug').disabled=F.phase!=='idle';$('fm0').classList.toggle('ok',!!F.ms[0]);$('fm1').classList.toggle('ok',!!F.ms[1]);}
 function finchYear(food){if(F.phase!=='idle')return;F.food=food;F.phase='feed';F.start=performance.now();
   F.birds.forEach(b=>{const fit=food==='seed'?b.b:1-b.b;b.ok=Math.random()<.15+.75*fit*fit;});
@@ -1601,15 +1606,15 @@ function finchYear(food){if(F.phase!=='idle')return;F.food=food;F.phase='feed';F
   if(F.birds.filter(b=>b.ok).length<3)F.birds.slice().sort((x,y)=>food==='seed'?y.b-x.b:x.b-y.b).slice(0,3).forEach(b=>b.ok=true);
   const thick=b=>b.b>=.5;F.st={tk:F.birds.filter(b=>b.ok&&thick(b)).length,tn:F.birds.filter(b=>b.ok&&!thick(b)).length,eggs:false};
   beep(food==='seed'?300:700,.15,'sine',.05);finchUI();
-  $('fSay').innerHTML=food==='seed'?'☀️ <b>שלב 1, אוכל:</b> בצורת! נשארו רק זרעים קשים. מקור עבה וחזק מפצח אותם 🌰. מקור דק לא מצליח, ובעליו נשארים רעבים 💤.':'🌧️ <b>שלב 1, אוכל:</b> שנה גשומה! יש המון חרקים קטנים וזריזים. מקור דק וחד תופס אותם 🐛. עם מקור עבה קשה לתפוס אותם, ובעליו נשארים רעבים 💤.';}
+  $('fSay').innerHTML=food==='seed'?'☀️ בצורת: נשארו רק זרעים קשים.':'🌧️ שנה גשומה: יש המון חרקים.';F.cap=[1,food==='seed'?'אוכל: רק מקור עבה מפצח זרעים':'אוכל: מקור דק תופס חרקים'];}
 $('fSeed').onclick=()=>finchYear('seed');$('fBug').onclick=()=>finchYear('bug');
 function finchBreed(){const surv=F.birds.filter(b=>b.ok).map(b=>b.b),kids=[];
   for(let i=0;kids.length<FN;i++){const p=surv[i%surv.length],j=Math.random()<.1?(Math.random()-.5)*.5:(Math.random()-.5)*.2;kids.push(clamp(p+j,0,1));}
   finchNew(kids);F.gen++;F.hist.push(fAvg());F.phase='idle';const a=fAvg(),nk=F.birds.filter(b=>b.b>=.5).length,st=F.st,good=F.food==='seed'?'עבה':'דק';
-  const story=`🐣 <b>שלב 3, תורשה:</b> הגוזלים בקעו, ולכל אחד מקור <b>דומה למקור של ההורים</b>. שבעו ${st.tk} פרושים עם מקור עבה ו־${st.tn} עם מקור דק, ולכן עכשיו, בדור ${F.gen}, יש <b>${nk} עם מקור עבה ו־${FN-nk} עם מקור דק</b>. ככה, שנה אחרי שנה, המקור ה${good} נהיה נפוץ יותר.`;
-  if(a>.7&&!F.ms[0]){F.ms[0]=1;addStar('fin',0);burstEl(fiCv,70);$('fSay').innerHTML=story+'<br>🎉 רוב הפרושים עם <b>מקור עבה</b>! בדיוק את זה מדדו חוקרים בשם פיטר ורוזמרי גרנט באיי גלפגוס: אחרי בצורת קשה בשנת 1977, לפרושים של הדור הבא היו מקורים עבים יותר!';}
-  else if(a<.3&&!F.ms[1]){F.ms[1]=1;addStar('fin',1);burstEl(fiCv,70);$('fSay').innerHTML=story+'<br>🎉 עכשיו רוב המקורים <b>דקים</b>. אותו מין של ציפור, אוכל אחר, ותוך כמה דורות המקורים השתנו.';}
-  else $('fSay').innerHTML=story+' בחרי מה יקרה באי בשנה הבאה.';
+  const story=`🐣 דור ${F.gen}: <b>${nk}</b> עם מקור עבה, <b>${FN-nk}</b> עם מקור דק.`;F.cap=[3,'גוזלים: מקור כמו של ההורים'];F.capUntil=performance.now()+2600;
+  if(a>.7&&!F.ms[0]){F.ms[0]=1;addStar('fin',0);burstEl(fiCv,70);$('fSay').innerHTML=story+'<br>🎉 רוב המקורים עבים! כך בדיוק קרה באיי גלפגוס אחרי הבצורת של 1977.';}
+  else if(a<.3&&!F.ms[1]){F.ms[1]=1;addStar('fin',1);burstEl(fiCv,70);$('fSay').innerHTML=story+'<br>🎉 עכשיו רוב המקורים דקים!';}
+  else $('fSay').innerHTML=story;
   finchUI();}
 // פרוש: זנב, גוף מוצל עם בטן בהירה, כנף עם נוצות, ראש, עין עם ברק, ומקור משני חלקים שעוביו לפי b
 function finchDraw(c,x,y,b,alpha,food,ok){c.save();c.globalAlpha=alpha;
@@ -1627,6 +1632,9 @@ function finchDraw(c,x,y,b,alpha,food,ok){c.save();c.globalAlpha=alpha;
   c.fillStyle='#fff';c.beginPath();c.arc(x+15,y-12,3.6,0,PI2);c.fill();c.fillStyle='#1b1410';c.beginPath();c.arc(x+15.8,y-12,2.3,0,PI2);c.fill();c.fillStyle='#fff';c.beginPath();c.arc(x+16.6,y-12.9,.8,0,PI2);c.fill();
   c.restore();if(food){c.save();c.globalAlpha=Math.max(alpha,.6);emoji(c,ok?(food==='seed'?'🌰':'🐛'):'💤',x+8,y-34,ok?18:16);c.restore();}}
 // רקע האי: שמיים, ים וחוף, ולפי מזג האוויר שמש ואדמה יבשה או גשם וצמחייה
+// כותרת השלב על הקנבס: מספר השלב ומשפט קצר
+function finchCap(c,n,t){c.save();c.font='700 15px Rubik, sans-serif';c.direction='rtl';const w=c.measureText(t).width+58,x=(FW-w)/2;c.shadowColor='rgba(0,0,0,.2)';c.shadowBlur=8;c.fillStyle='rgba(31,42,48,.86)';rr(c,x,6,w,30,15);c.fill();c.shadowBlur=0;
+  c.fillStyle='#e07a1f';c.beginPath();c.arc(x+w-17,21,11,0,PI2);c.fill();c.fillStyle='#fff';c.textAlign='center';c.textBaseline='middle';c.fillText(String(n),x+w-17,22);c.textAlign='right';c.fillText(t,x+w-34,22);c.restore();}
 function finchScene(c){const dry=F.food==='seed',wet=F.food==='bug';
   let g=c.createLinearGradient(0,0,0,262);g.addColorStop(0,dry?'#f7d9a0':wet?'#b9c7cf':'#cfe6f1');g.addColorStop(.55,dry?'#f3e4c2':wet?'#d6e2d8':'#eaf3ef');g.addColorStop(1,dry?'#e2c48f':wet?'#a9cf9a':'#e8dcc0');c.fillStyle=g;c.fillRect(0,0,FW,262);
   if(dry){g=c.createRadialGradient(360,30,4,360,30,70);g.addColorStop(0,'rgba(255,214,90,.95)');g.addColorStop(1,'rgba(255,214,90,0)');c.fillStyle=g;c.fillRect(280,0,140,110);}
@@ -1636,15 +1644,17 @@ function finchScene(c){const dry=F.food==='seed',wet=F.food==='bug';
     c.strokeStyle='rgba(255,255,255,.18)';c.lineWidth=1.5;c.beginPath();c.moveTo(10,y);c.quadraticCurveTo(FW/2,y-8+k*2,FW-10,y+1);c.stroke();c.lineCap='butt';});}
 function drawFinch(){F.t++;const c=fiCtx;c.clearRect(0,0,FW,FH);finchScene(c);
   const el=F.phase==='feed'?performance.now()-F.start:0;
-  if(F.phase==='feed'&&el>1900&&!F.st.eggs){F.st.eggs=true;$('fSay').innerHTML=`🥚 <b>שלב 2, רבייה:</b> רק מי ששבע היה חזק מספיק כדי להטיל ביצים. הפרושים הרעבים לא הטילו ביצים. השנה הטילו ביצים ${F.st.tk} פרושים עם מקור עבה ו־${F.st.tn} עם מקור דק.`;beep(520,.1,'sine',.05);}
+  if(F.phase==='feed'&&el>1900&&!F.st.eggs){F.st.eggs=true;$('fSay').innerHTML=`🥚 הטילו ביצים: ${F.st.tk} עם מקור עבה, ${F.st.tn} עם מקור דק.`;F.cap=[2,'ביצים: רק מי ששבע מטיל ביצים'];beep(520,.1,'sine',.05);}
   if(F.phase==='feed'&&el>4200)finchBreed();
   F.birds.forEach((b,i)=>{const x=64+(i%4)*98,y=56+Math.floor(i/4)*80,bob=Math.sin(F.t*.06+i)*1.2;
     const fade=F.phase==='feed'&&!b.ok?Math.max(.25,1-el/1100):1;finchDraw(c,x,y+bob,b.b,fade,F.phase==='feed'&&el<1900?F.food:null,b.ok);
     if(F.phase==='feed'&&el>=1900)emoji(c,b.ok?'🥚🥚':'💤',x+4,y+30,b.ok?16:14);});
+  if(F.cap&&(F.phase==='feed'||performance.now()<(F.capUntil||0)))finchCap(c,F.cap[0],F.cap[1]);
   // גרף: עובי המקור הממוצע בכל דור
   const y0=282,y1=FH-12,X=i=>40+i*((FW-80)/11),Y=v=>y1-v*(y1-y0),h=F.hist.slice(-12);c.fillStyle=C.paper;c.fillRect(0,264,FW,FH-264);
   c.strokeStyle=C.lab;c.lineWidth=2;c.beginPath();h.forEach((v,i)=>i?c.lineTo(X(i),Y(v)):c.moveTo(X(i),Y(v)));c.stroke();h.forEach((v,i)=>{c.fillStyle=C.lab;c.beginPath();c.arc(X(i),Y(v),4.5,0,PI2);c.fill();});
   text(c,'עבה',FW-18,y0,12,C.muted,700);text(c,'דק',FW-18,y1,12,C.muted,700);text(c,'עובי המקור הממוצע בכל דור',120,y0-10,12,C.muted,700);}
+pager($('fHow'),'איך זה עובד?',['🌰 <b>אוכל:</b> מקור עבה מפצח זרעים קשים. מקור דק תופס חרקים.','🥚 <b>רבייה:</b> מי ששבע מטיל ביצים. מי שרעב, לא.','🐣 <b>תורשה:</b> לגוזלים יש מקור כמו של ההורים.','🔁 <b>הרבה דורות:</b> כל שנה יש יותר מהמקור המתאים. זו <b>ברירה טבעית</b>.']);
 finchStart();
 
 /* ---------- חיידקים ותרופה: מנה הורגת בעיקר רגישים, וחיכוי נותן לשורדים להתחלק ---------- */
