@@ -557,6 +557,7 @@ canvas.xcv{touch-action:auto;cursor:default}
           <button class="go alt" id="fSeed">☀️ בצורת<small>רק זרעים קשים</small></button>
           <button class="go alt" id="fBug">🌧️ גשמים<small>הרבה חרקים</small></button>
         </div>
+        <div class="fact"><b>איך זה עובד?</b><br>1️⃣ <b>אוכל:</b> כל מקור טוב לאוכל אחר. מקור עבה מפצח זרעים קשים, ומקור דק תופס חרקים.<br>2️⃣ <b>שרידה ורבייה:</b> מי שמוצא מספיק אוכל, שבע וחזק ומטיל ביצים. מי שרעב, לא.<br>3️⃣ <b>תורשה:</b> הגוזלים מקבלים מקור דומה לשל ההורים.<br>4️⃣ <b>הרבה דורות:</b> כל שנה עוד קצת פרושים עם המקור המתאים, עד שהם הרוב. זו <b>ברירה טבעית</b>.</div>
         <ul class="missions"><li id="fm0">משימה 1: לבחור ☀️ בצורת שוב ושוב, עד שלרוב הפרושים באי יהיה מקור עבה</li><li id="fm1">משימה 2: לבחור 🌧️ גשמים, עד שלרוב הפרושים יהיה מקור דק</li></ul>
       </div></div>
   </section>
@@ -1588,24 +1589,29 @@ function finchYear(food){if(F.phase!=='idle')return;F.food=food;F.phase='feed';F
   F.birds.forEach(b=>{const fit=food==='seed'?b.b:1-b.b;b.ok=Math.random()<.05+.95*fit*fit;});
   // תמיד שורדים לפחות שלושה, המתאימים ביותר
   if(F.birds.filter(b=>b.ok).length<3)F.birds.slice().sort((x,y)=>food==='seed'?y.b-x.b:x.b-y.b).slice(0,3).forEach(b=>b.ok=true);
+  const thick=b=>b.b>=.5;F.st={tk:F.birds.filter(b=>b.ok&&thick(b)).length,tn:F.birds.filter(b=>b.ok&&!thick(b)).length,eggs:false};
   beep(food==='seed'?300:700,.15,'sine',.05);finchUI();
-  $('fSay').innerHTML=food==='seed'?'☀️ <b>בצורת!</b> נשארו רק זרעים קשים. מי שיש לו מקור עבה מצליח לפצח אותם. מי שלא, נשאר רעב...':'🌧️ <b>שנה גשומה!</b> יש המון חרקים. מקור דק וחד תופס אותם בקלות.';}
+  $('fSay').innerHTML=food==='seed'?'☀️ <b>שלב 1, אוכל:</b> בצורת! נשארו רק זרעים קשים. מקור עבה וחזק מפצח אותם 🌰. מקור דק לא מצליח, ובעליו נשארים רעבים 💤.':'🌧️ <b>שלב 1, אוכל:</b> שנה גשומה! יש המון חרקים קטנים וזריזים. מקור דק וחד תופס אותם 🐛. עם מקור עבה קשה לתפוס אותם, ובעליו נשארים רעבים 💤.';}
 $('fSeed').onclick=()=>finchYear('seed');$('fBug').onclick=()=>finchYear('bug');
 function finchBreed(){const surv=F.birds.filter(b=>b.ok).map(b=>b.b),kids=[];
   for(let i=0;kids.length<FN;i++){const p=surv[i%surv.length],j=Math.random()<.1?(Math.random()-.5)*.5:(Math.random()-.5)*.2;kids.push(clamp(p+j,0,1));}
-  const n=surv.length;finchNew(kids);F.gen++;F.hist.push(fAvg());F.phase='idle';const a=fAvg();
-  if(a>.7&&!F.ms[0]){F.ms[0]=1;addStar('fin',0);burstEl(fiCv,70);$('fSay').innerHTML='🎉 רוב הפרושים עם <b>מקור עבה</b>! בדיוק את זה מדדו חוקרים בשם פיטר ורוזמרי גרנט באיי גלפגוס: אחרי בצורת קשה בשנת 1977, לפרושים של הדור הבא היו מקורים עבים יותר!';}
-  else if(a<.3&&!F.ms[1]){F.ms[1]=1;addStar('fin',1);burstEl(fiCv,70);$('fSay').innerHTML='🎉 עכשיו רוב המקורים <b>דקים</b>. אותו מין של ציפור, אוכל אחר, ותוך כמה דורות המקורים השתנו.';}
-  else $('fSay').innerHTML=`רק ${n} מתוך ${FN} פרושים מצאו מספיק אוכל, והם הביאו את הצאצאים. לצאצאים יש מקורים <b>דומים להורים</b>. ${a>.55?'המקורים נעשים עבים יותר.':a<.45?'המקורים נעשים דקים יותר.':'בחרי שוב מה יקרה באי.'}`;
+  finchNew(kids);F.gen++;F.hist.push(fAvg());F.phase='idle';const a=fAvg(),nk=F.birds.filter(b=>b.b>=.5).length,st=F.st,good=F.food==='seed'?'עבה':'דק';
+  const story=`🐣 <b>שלב 3, תורשה:</b> הגוזלים בקעו, ולכל אחד מקור <b>דומה למקור של ההורים</b>. שבעו ${st.tk} פרושים עם מקור עבה ו־${st.tn} עם מקור דק, ולכן עכשיו, בדור ${F.gen}, יש <b>${nk} עם מקור עבה ו־${FN-nk} עם מקור דק</b>. ככה, שנה אחרי שנה, המקור ה${good} נהיה נפוץ יותר.`;
+  if(a>.7&&!F.ms[0]){F.ms[0]=1;addStar('fin',0);burstEl(fiCv,70);$('fSay').innerHTML=story+'<br>🎉 רוב הפרושים עם <b>מקור עבה</b>! בדיוק את זה מדדו חוקרים בשם פיטר ורוזמרי גרנט באיי גלפגוס: אחרי בצורת קשה בשנת 1977, לפרושים של הדור הבא היו מקורים עבים יותר!';}
+  else if(a<.3&&!F.ms[1]){F.ms[1]=1;addStar('fin',1);burstEl(fiCv,70);$('fSay').innerHTML=story+'<br>🎉 עכשיו רוב המקורים <b>דקים</b>. אותו מין של ציפור, אוכל אחר, ותוך כמה דורות המקורים השתנו.';}
+  else $('fSay').innerHTML=story+' בחרי מה יקרה באי בשנה הבאה.';
   finchUI();}
 function finchDraw(c,x,y,b,alpha,food,ok){c.globalAlpha=alpha;c.fillStyle='#8a6d4b';c.beginPath();c.ellipse(x-6,y+8,24,17,0,0,PI2);c.fill();c.beginPath();c.arc(x+12,y-8,12,0,PI2);c.fill();
   c.fillStyle='#fff';c.beginPath();c.arc(x+16,y-11,3.2,0,PI2);c.fill();c.fillStyle='#222';c.beginPath();c.arc(x+17,y-11,1.6,0,PI2);c.fill();
   const h=1.2+b*13,L=32-b*16;c.fillStyle='#e0a030';c.beginPath();c.moveTo(x+21,y-8-h);c.lineTo(x+21+L,y-7);c.lineTo(x+21,y-8+h);c.closePath();c.fill();c.strokeStyle='rgba(0,0,0,.25)';c.lineWidth=1;c.stroke();
   if(food)emoji(c,ok?(food==='seed'?'🌰':'🐛'):'💤',x+6,y-30,ok?18:16);c.globalAlpha=1;}
 function drawFinch(){F.t++;const c=fiCtx;c.clearRect(0,0,FW,FH);c.fillStyle=F.food==='seed'?'#efe2c4':F.food==='bug'?'#d9ecd2':C.well;c.fillRect(0,0,FW,262);
-  const el=F.phase==='feed'?performance.now()-F.start:0;if(F.phase==='feed'&&el>2000)finchBreed();
+  const el=F.phase==='feed'?performance.now()-F.start:0;
+  if(F.phase==='feed'&&el>1900&&!F.st.eggs){F.st.eggs=true;$('fSay').innerHTML=`🥚 <b>שלב 2, רבייה:</b> רק מי ששבע היה חזק מספיק כדי להטיל ביצים. הפרושים הרעבים לא הטילו ביצים. השנה הטילו ביצים ${F.st.tk} פרושים עם מקור עבה ו־${F.st.tn} עם מקור דק.`;beep(520,.1,'sine',.05);}
+  if(F.phase==='feed'&&el>4200)finchBreed();
   F.birds.forEach((b,i)=>{const x=60+(i%4)*100,y=52+Math.floor(i/4)*80,bob=Math.sin(F.t*.07+i)*2;
-    const fade=F.phase==='feed'&&!b.ok?Math.max(.25,1-el/1100):1;finchDraw(c,x,y+bob,b.b,fade,F.phase==='feed'?F.food:null,b.ok);});
+    const fade=F.phase==='feed'&&!b.ok?Math.max(.25,1-el/1100):1;finchDraw(c,x,y+bob,b.b,fade,F.phase==='feed'&&el<1900?F.food:null,b.ok);
+    if(F.phase==='feed'&&el>=1900)emoji(c,b.ok?'🥚🥚':'💤',x+4,y+30,b.ok?16:14);});
   // גרף: עובי המקור הממוצע בכל דור
   const y0=282,y1=FH-12,X=i=>40+i*((FW-80)/11),Y=v=>y1-v*(y1-y0),h=F.hist.slice(-12);c.fillStyle=C.paper;c.fillRect(0,264,FW,FH-264);
   c.strokeStyle=C.lab;c.lineWidth=2;c.beginPath();h.forEach((v,i)=>i?c.lineTo(X(i),Y(v)):c.moveTo(X(i),Y(v)));c.stroke();h.forEach((v,i)=>{c.fillStyle=C.lab;c.beginPath();c.arc(X(i),Y(v),4.5,0,PI2);c.fill();});
