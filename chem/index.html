@@ -176,7 +176,7 @@ nav button[aria-selected="true"]{border-color:var(--primary);background:var(--la
 @media (min-width:720px){.card{padding:var(--space-8)}}
 .stage{gap:var(--space-6)}
 .side{gap:var(--space-4)}
-canvas.cv{background:var(--surface-100);border:2px solid var(--hair);border-radius:var(--radius-md)}
+canvas.cv{background:radial-gradient(130% 95% at 50% 0%,#fffdf9 0%,var(--surface-100) 58%,#f2ebdd 100%);border:2px solid var(--hair);border-radius:var(--radius-md);box-shadow:inset 0 1px 0 #fff,0 1px 2px rgba(60,40,20,.06),0 8px 20px -14px rgba(60,40,20,.25)}
 .avatar{width:var(--touch-min);height:var(--touch-min);background:var(--lab-soft);border-color:var(--primary)}
 .bubble{font-size:18px;line-height:28px;font-weight:400;border-radius:4px var(--radius-md) var(--radius-md) var(--radius-md);padding:var(--space-2) var(--space-4);background:var(--lab-soft);color:var(--ink)}
 .bubble b{font-weight:700}
@@ -606,10 +606,14 @@ function toClient(cv,W,H,x,y){const r=cv.getBoundingClientRect();return{x:r.left
 function hexRgb(h){h=h.replace('#','');if(h.length===3)h=h.split('').map(x=>x+x).join('');return[parseInt(h.slice(0,2),16),parseInt(h.slice(2,4),16),parseInt(h.slice(4,6),16)];}
 function shade(hex,amt){const c=hexRgb(hex),f=amt<0?0:255,t=Math.abs(amt);return`rgb(${c.map(v=>Math.round(lerp(v,f,t))).join(',')})`;}
 function rr(ctx,x,y,w,h,r){ctx.beginPath();ctx.moveTo(x+r,y);ctx.arcTo(x+w,y,x+w,y+h,r);ctx.arcTo(x+w,y+h,x,y+h,r);ctx.arcTo(x,y+h,x,y,r);ctx.arcTo(x,y,x+w,y,r);ctx.closePath();}
+// כדור תלת־ממדי: מילוי רדיאלי מבהיר לכהה, צל רך מתחת, וברק קטן
 function ball(ctx,x,y,r,col,label,lc){
-  ctx.fillStyle=col;ctx.beginPath();ctx.arc(x,y,r,0,PI2);ctx.fill();
-  ctx.lineWidth=1.5;ctx.strokeStyle='rgba(31,42,48,.35)';ctx.stroke();
-  ctx.fillStyle='rgba(255,255,255,.55)';ctx.beginPath();ctx.arc(x-r*.35,y-r*.38,r*.26,0,PI2);ctx.fill();
+  const hex=typeof col==='string'&&col[0]==='#';
+  ctx.save();if(r>=5){ctx.shadowColor='rgba(40,30,20,.22)';ctx.shadowBlur=r*.55;ctx.shadowOffsetY=r*.2;}
+  if(hex&&r>=4){const g=ctx.createRadialGradient(x-r*.38,y-r*.42,r*.08,x,y,r);g.addColorStop(0,shade(col,.5));g.addColorStop(.45,col);g.addColorStop(1,shade(col,-.28));ctx.fillStyle=g;}else ctx.fillStyle=col;
+  ctx.beginPath();ctx.arc(x,y,r,0,PI2);ctx.fill();ctx.restore();
+  ctx.lineWidth=Math.max(.8,r*.07);ctx.strokeStyle='rgba(31,42,48,.22)';ctx.beginPath();ctx.arc(x,y,r,0,PI2);ctx.stroke();
+  if(r>=4){ctx.fillStyle='rgba(255,255,255,.5)';ctx.beginPath();ctx.ellipse(x-r*.36,y-r*.42,r*.22,r*.14,-.6,0,PI2);ctx.fill();}
   if(label){ctx.fillStyle=lc||'#fff';ctx.font=`700 ${Math.round(r*.95)}px Rubik, sans-serif`;ctx.textAlign='center';ctx.textBaseline='middle';ctx.direction='ltr';ctx.fillText(label,x,y+1);}
 }
 function text(ctx,s,x,y,size,col,weight){ctx.fillStyle=col;ctx.font=`${weight||600} ${size}px Rubik, sans-serif`;ctx.textAlign='center';ctx.textBaseline='middle';ctx.direction='rtl';ctx.fillText(s,x,y);}
@@ -1053,7 +1057,7 @@ $('hState').textContent=SN.liquid[0];
    LESSONS — animated slides, read-aloud, ask the guide
    ========================================================= */
 const LW=420,LH=300,lcv=$('lCv'),lctx=setup(lcv,LW,LH);
-function emoji(c,s,x,y,size){c.font=`${size}px sans-serif`;c.textAlign='center';c.textBaseline='middle';c.direction='ltr';c.fillText(s,x,y);}
+function emoji(c,s,x,y,size){c.save();c.shadowColor='rgba(40,30,20,.2)';c.shadowBlur=size*.14;c.shadowOffsetY=size*.06;c.font=`${size}px sans-serif`;c.textAlign='center';c.textBaseline='middle';c.direction='ltr';c.fillText(s,x,y);c.restore();}
 function wmol(c,x,y,ang,r){r=r||1;for(const sg of[-1,1]){const a=ang+Math.PI/2+sg*.92;ball(c,x+Math.cos(a)*12*r,y+Math.sin(a)*12*r,6.5*r,'#f1f1ee');}ball(c,x,y,10.5*r,C.p);}
 function nucleus(c,x,y,z,n,t,r){const arr=[];for(let i=0;i<Math.max(z,n);i++){if(i<z)arr.push('p');if(i<n)arr.push('n');}
   arr.forEach((k,i)=>{const rr_=i?(r||8)*Math.sqrt(i):0,a=i*2.39996;ball(c,x+Math.cos(a)*rr_+Math.sin(t*.1+i)*.6,y+Math.sin(a)*rr_,(r||8)+1,k==='p'?C.p:C.n,k==='p'?'+':'','#fff');});}
@@ -1333,9 +1337,9 @@ function drawTit(){T.t++;const c=tctx;c.clearRect(0,0,TW,TH);T.ph=lerp(T.ph,tPh(
   // טפטפת
   c.fillStyle=C.muted;rr(c,186,8,28,26,6);c.fill();c.fillStyle='#e8eef5';c.strokeStyle=C.muted;c.lineWidth=2;c.beginPath();c.moveTo(192,34);c.lineTo(208,34);c.lineTo(202,48);c.lineTo(198,48);c.closePath();c.fill();c.stroke();
   // נוזל, בועות וכוס
-  c.save();c.beginPath();c.moveTo(x0+2,ly);c.lineTo(x1-2,ly);c.lineTo(x1-2,yb-2);c.lineTo(x0+2,yb-2);c.closePath();c.clip();c.fillStyle=indColor(T.ph);c.globalAlpha=.85;c.fillRect(x0,ly,x1-x0,yb-ly);c.globalAlpha=1;
+  c.fillStyle='rgba(255,255,255,.35)';c.fillRect(x0,top-6,x1-x0,yb-top+6);c.save();c.beginPath();c.moveTo(x0+2,ly);c.lineTo(x1-2,ly);c.lineTo(x1-2,yb-2);c.lineTo(x0+2,yb-2);c.closePath();c.clip();const lc=hexRgb(indColor(T.ph)),lg=c.createLinearGradient(0,ly,0,yb);lg.addColorStop(0,`rgba(${lc.map(v=>Math.min(255,v+40)).join(',')},.85)`);lg.addColorStop(1,`rgba(${lc.map(v=>Math.round(v*.8)).join(',')},.95)`);c.fillStyle=lg;c.fillRect(x0,ly,x1-x0,yb-ly);c.fillStyle='rgba(255,255,255,.35)';c.beginPath();c.ellipse((x0+x1)/2,ly,(x1-x0)/2-2,4,0,0,PI2);c.fill();
   T.bub=T.bub.filter(b=>{b.y-=b.v;c.strokeStyle='rgba(255,255,255,.8)';c.lineWidth=1.5;c.beginPath();c.arc(b.x+Math.sin((b.y+b.x)*.1)*2,b.y,b.r,0,PI2);c.stroke();return b.y>ly+2;});c.restore();
-  c.strokeStyle=C.ink;c.lineWidth=4;c.beginPath();c.moveTo(x0,top-6);c.lineTo(x0,yb);c.lineTo(x1,yb);c.lineTo(x1,top-6);c.stroke();emoji(c,TLV[T.lv].e,x0+26,yb-24,26);
+  c.strokeStyle='rgba(90,110,125,.9)';c.lineWidth=4;c.lineJoin='round';c.beginPath();c.moveTo(x0-4,top-8);c.lineTo(x0,top-4);c.lineTo(x0,yb-6);c.quadraticCurveTo(x0,yb,x0+6,yb);c.lineTo(x1-6,yb);c.quadraticCurveTo(x1,yb,x1,yb-6);c.lineTo(x1,top-4);c.lineTo(x1+4,top-8);c.stroke();c.strokeStyle='rgba(255,255,255,.75)';c.lineWidth=3;c.beginPath();c.moveTo(x0+8,top+8);c.lineTo(x0+8,yb-14);c.stroke();c.strokeStyle='rgba(90,110,125,.6)';c.lineWidth=1.5;for(let k=1;k<5;k++){const yy=yb-k*36;c.beginPath();c.moveTo(x1-16,yy);c.lineTo(x1-4,yy);c.stroke();}emoji(c,TLV[T.lv].e,x0+26,yb-24,26);
   // טיפות נופלות
   T.drops=T.drops.filter(d=>{d.vy+=.35;d.y+=d.vy;ball(c,200,d.y,6,d.kind==='b'?'#3e6fd0':'#f2c94c','','');if(d.y>=ly){tLand(d.kind);return false;}return true;});
   // מד pH אנכי: 0 למעלה (חומצי) ו־14 למטה (בסיסי)
@@ -1484,9 +1488,15 @@ makeQuiz('part','תרגול: עולם החלקיקים',[
    STATION 6 — EVOLUTION: הציפור הרעבה (ברירה טבעית של עש הכסוף)
    ========================================================= */
 // פרפר: v הוא הגוון, 0 כהה ו־1 בהיר
-function moth(c,x,y,v,rot,s){s=s||1;const g=Math.round(30+v*205),col=`rgb(${g},${Math.round(g*.96)},${Math.round(g*.9)})`;c.save();c.translate(x,y);c.rotate(rot||0);c.scale(s,s);
-  c.fillStyle=col;c.strokeStyle='rgba(40,30,20,.28)';c.lineWidth=1;[[-1,-.35],[1,.35]].forEach(([d,a])=>{c.beginPath();c.ellipse(d*8,-2,10,7,a,0,PI2);c.fill();c.stroke();c.beginPath();c.ellipse(d*6,6,6,5,-a,0,PI2);c.fill();c.stroke();});
-  c.fillStyle=`rgb(${Math.round(g*.7)},${Math.round(g*.65)},${Math.round(g*.6)})`;c.beginPath();c.ellipse(0,0,2.5,9,0,0,PI2);c.fill();c.restore();}
+function moth(c,x,y,v,rot,s){s=s||1;const g=Math.round(30+v*205),col=`rgb(${g},${Math.round(g*.96)},${Math.round(g*.9)})`,dk=Math.round(g*.55);c.save();c.translate(x,y);c.rotate(rot||0);c.scale(s,s);
+  c.strokeStyle='rgba(40,30,20,.3)';c.lineWidth=.8;
+  [-1,1].forEach(d=>{c.fillStyle=col;c.beginPath();c.moveTo(0,1);c.bezierCurveTo(d*5,4,d*13,6,d*11,11);c.bezierCurveTo(d*7,13,d*2,9,0,5);c.closePath();c.fill();c.stroke();
+    c.beginPath();c.moveTo(0,-3);c.bezierCurveTo(d*6,-14,d*20,-12,d*19,-2);c.bezierCurveTo(d*17,4,d*8,4,0,2);c.closePath();c.fill();c.stroke();});
+  // נקודות כמו בעש הכסוף, תמיד באותו מקום לכל פרפר
+  let sd=(Math.round(x*7+y*13)%9973)+1;const R=()=>(sd=sd*16807%2147483647)/2147483647;c.fillStyle=`rgba(${dk},${Math.round(dk*.95)},${Math.round(dk*.9)},.45)`;
+  for(let k=0;k<16;k++){const d=k%2?1:-1,px=d*(3+R()*14),py=-8+R()*10;c.beginPath();c.arc(px,py,.6+R()*1.1,0,PI2);c.fill();}
+  c.fillStyle=`rgb(${Math.round(g*.6)},${Math.round(g*.55)},${Math.round(g*.5)})`;c.beginPath();c.ellipse(0,1,2.6,8.5,0,0,PI2);c.fill();c.beginPath();c.arc(0,-7.5,2.3,0,PI2);c.fill();
+  c.strokeStyle=`rgba(${dk},${dk},${dk},.7)`;c.lineWidth=.8;c.beginPath();c.moveTo(-1,-9);c.quadraticCurveTo(-4,-14,-7,-15);c.moveTo(1,-9);c.quadraticCurveTo(4,-14,7,-15);c.stroke();c.restore();}
 const EW=420,EH=370,BH=290,ecv=$('evoCv'),ectx=setup(ecv,EW,EH);
 const EBG=[.8,.2],EN=20,EBITE=10,EMIN=5;
 // מרקם של קליפת עץ, נבנה פעם אחת לכל צבע רקע
@@ -1586,7 +1596,7 @@ function finchStart(){finchNew(Array.from({length:FN},(_,i)=>clamp(.08+i/(FN-1)*
   $('fSay').innerHTML='באי חיים פרושים עם מקורים בעובי שונה. מקור <b>עבה</b> טוב לפיצוח זרעים קשים, ומקור <b>דק</b> טוב לתפיסת חרקים. בחרי מה יקרה באי השנה, וצפי מי מצליח לאכול.';}
 function finchUI(){$('fGen').textContent=`דור ${F.gen}`;$('fSeed').disabled=$('fBug').disabled=F.phase!=='idle';$('fm0').classList.toggle('ok',!!F.ms[0]);$('fm1').classList.toggle('ok',!!F.ms[1]);}
 function finchYear(food){if(F.phase!=='idle')return;F.food=food;F.phase='feed';F.start=performance.now();
-  F.birds.forEach(b=>{const fit=food==='seed'?b.b:1-b.b;b.ok=Math.random()<.05+.95*fit*fit;});
+  F.birds.forEach(b=>{const fit=food==='seed'?b.b:1-b.b;b.ok=Math.random()<.15+.75*fit*fit;});
   // תמיד שורדים לפחות שלושה, המתאימים ביותר
   if(F.birds.filter(b=>b.ok).length<3)F.birds.slice().sort((x,y)=>food==='seed'?y.b-x.b:x.b-y.b).slice(0,3).forEach(b=>b.ok=true);
   const thick=b=>b.b>=.5;F.st={tk:F.birds.filter(b=>b.ok&&thick(b)).length,tn:F.birds.filter(b=>b.ok&&!thick(b)).length,eggs:false};
@@ -1601,15 +1611,34 @@ function finchBreed(){const surv=F.birds.filter(b=>b.ok).map(b=>b.b),kids=[];
   else if(a<.3&&!F.ms[1]){F.ms[1]=1;addStar('fin',1);burstEl(fiCv,70);$('fSay').innerHTML=story+'<br>🎉 עכשיו רוב המקורים <b>דקים</b>. אותו מין של ציפור, אוכל אחר, ותוך כמה דורות המקורים השתנו.';}
   else $('fSay').innerHTML=story+' בחרי מה יקרה באי בשנה הבאה.';
   finchUI();}
-function finchDraw(c,x,y,b,alpha,food,ok){c.globalAlpha=alpha;c.fillStyle='#8a6d4b';c.beginPath();c.ellipse(x-6,y+8,24,17,0,0,PI2);c.fill();c.beginPath();c.arc(x+12,y-8,12,0,PI2);c.fill();
-  c.fillStyle='#fff';c.beginPath();c.arc(x+16,y-11,3.2,0,PI2);c.fill();c.fillStyle='#222';c.beginPath();c.arc(x+17,y-11,1.6,0,PI2);c.fill();
-  const h=1.2+b*13,L=32-b*16;c.fillStyle='#e0a030';c.beginPath();c.moveTo(x+21,y-8-h);c.lineTo(x+21+L,y-7);c.lineTo(x+21,y-8+h);c.closePath();c.fill();c.strokeStyle='rgba(0,0,0,.25)';c.lineWidth=1;c.stroke();
-  if(food)emoji(c,ok?(food==='seed'?'🌰':'🐛'):'💤',x+6,y-30,ok?18:16);c.globalAlpha=1;}
-function drawFinch(){F.t++;const c=fiCtx;c.clearRect(0,0,FW,FH);c.fillStyle=F.food==='seed'?'#efe2c4':F.food==='bug'?'#d9ecd2':C.well;c.fillRect(0,0,FW,262);
+// פרוש: זנב, גוף מוצל עם בטן בהירה, כנף עם נוצות, ראש, עין עם ברק, ומקור משני חלקים שעוביו לפי b
+function finchDraw(c,x,y,b,alpha,food,ok){c.save();c.globalAlpha=alpha;
+  c.strokeStyle='#5a4128';c.lineWidth=2;c.beginPath();c.moveTo(x-8,y+22);c.lineTo(x-10,y+31);c.moveTo(x+2,y+22);c.lineTo(x+2,y+31);c.stroke();
+  c.fillStyle='#4a3826';c.beginPath();c.moveTo(x-24,y+10);c.lineTo(x-44,y+20);c.lineTo(x-40,y+8);c.closePath();c.fill();
+  let g=c.createRadialGradient(x-10,y,4,x-6,y+8,28);g.addColorStop(0,'#a2835c');g.addColorStop(1,'#5f4730');c.fillStyle=g;c.beginPath();c.ellipse(x-6,y+8,25,17,-.08,0,PI2);c.fill();
+  c.fillStyle='rgba(222,196,150,.75)';c.beginPath();c.ellipse(x-1,y+14,15,8,-.1,0,PI2);c.fill();
+  g=c.createLinearGradient(x-24,y,x+4,y+16);g.addColorStop(0,'#3f2f20');g.addColorStop(1,'#6b5238');c.fillStyle=g;c.beginPath();c.ellipse(x-12,y+6,16,9,-.25,0,PI2);c.fill();
+  c.strokeStyle='rgba(255,240,215,.35)';c.lineWidth=1;for(let k=0;k<3;k++){c.beginPath();c.arc(x-12-k*4,y+2+k*3,8,.2,1.4);c.stroke();}
+  g=c.createRadialGradient(x+9,y-13,2,x+12,y-8,14);g.addColorStop(0,'#8f7250');g.addColorStop(1,'#4d3a27');c.fillStyle=g;c.beginPath();c.arc(x+12,y-8,13,0,PI2);c.fill();
+  const h=1.2+b*12,L=30-b*14,bx=x+22,by=y-8;g=c.createLinearGradient(bx,by-h,bx,by+h);g.addColorStop(0,'#f3c46d');g.addColorStop(1,'#b97a22');c.fillStyle=g;
+  c.beginPath();c.moveTo(bx-2,by-h);c.quadraticCurveTo(bx+L*.55,by-h*.55,bx+L,by);c.lineTo(bx-2,by);c.closePath();c.fill();
+  c.fillStyle='#a8691b';c.beginPath();c.moveTo(bx-2,by+.6);c.lineTo(bx+L*.92,by+.6);c.quadraticCurveTo(bx+L*.5,by+h*.8,bx-2,by+h*.85);c.closePath();c.fill();
+  c.strokeStyle='rgba(70,40,10,.45)';c.lineWidth=1;c.beginPath();c.moveTo(bx-1,by+.5);c.lineTo(bx+L*.9,by+.5);c.stroke();
+  c.fillStyle='#fff';c.beginPath();c.arc(x+15,y-12,3.6,0,PI2);c.fill();c.fillStyle='#1b1410';c.beginPath();c.arc(x+15.8,y-12,2.3,0,PI2);c.fill();c.fillStyle='#fff';c.beginPath();c.arc(x+16.6,y-12.9,.8,0,PI2);c.fill();
+  c.restore();if(food){c.save();c.globalAlpha=Math.max(alpha,.6);emoji(c,ok?(food==='seed'?'🌰':'🐛'):'💤',x+8,y-34,ok?18:16);c.restore();}}
+// רקע האי: שמיים, ים וחוף, ולפי מזג האוויר שמש ואדמה יבשה או גשם וצמחייה
+function finchScene(c){const dry=F.food==='seed',wet=F.food==='bug';
+  let g=c.createLinearGradient(0,0,0,262);g.addColorStop(0,dry?'#f7d9a0':wet?'#b9c7cf':'#cfe6f1');g.addColorStop(.55,dry?'#f3e4c2':wet?'#d6e2d8':'#eaf3ef');g.addColorStop(1,dry?'#e2c48f':wet?'#a9cf9a':'#e8dcc0');c.fillStyle=g;c.fillRect(0,0,FW,262);
+  if(dry){g=c.createRadialGradient(360,30,4,360,30,70);g.addColorStop(0,'rgba(255,214,90,.95)');g.addColorStop(1,'rgba(255,214,90,0)');c.fillStyle=g;c.fillRect(280,0,140,110);}
+  c.fillStyle=wet?'rgba(90,140,110,.35)':'rgba(70,130,160,.25)';c.beginPath();c.moveTo(0,40);for(let x=0;x<=FW;x+=20)c.lineTo(x,40+Math.sin(x*.05+F.t*.02)*2);c.lineTo(FW,52);c.lineTo(0,52);c.closePath();c.fill();
+  if(wet){c.strokeStyle='rgba(80,110,140,.35)';c.lineWidth=1.2;for(let i=0;i<40;i++){const x=(i*53+F.t*3)%FW,y=(i*37+F.t*7)%262;c.beginPath();c.moveTo(x,y);c.lineTo(x-3,y+10);c.stroke();}}
+  [[0,88],[0,168],[0,248]].forEach(([_,y],k)=>{c.strokeStyle='#6b4f33';c.lineWidth=5;c.lineCap='round';c.beginPath();c.moveTo(10,y+2);c.quadraticCurveTo(FW/2,y-6+k*2,FW-10,y+3);c.stroke();
+    c.strokeStyle='rgba(255,255,255,.18)';c.lineWidth=1.5;c.beginPath();c.moveTo(10,y);c.quadraticCurveTo(FW/2,y-8+k*2,FW-10,y+1);c.stroke();c.lineCap='butt';});}
+function drawFinch(){F.t++;const c=fiCtx;c.clearRect(0,0,FW,FH);finchScene(c);
   const el=F.phase==='feed'?performance.now()-F.start:0;
   if(F.phase==='feed'&&el>1900&&!F.st.eggs){F.st.eggs=true;$('fSay').innerHTML=`🥚 <b>שלב 2, רבייה:</b> רק מי ששבע היה חזק מספיק כדי להטיל ביצים. הפרושים הרעבים לא הטילו ביצים. השנה הטילו ביצים ${F.st.tk} פרושים עם מקור עבה ו־${F.st.tn} עם מקור דק.`;beep(520,.1,'sine',.05);}
   if(F.phase==='feed'&&el>4200)finchBreed();
-  F.birds.forEach((b,i)=>{const x=60+(i%4)*100,y=52+Math.floor(i/4)*80,bob=Math.sin(F.t*.07+i)*2;
+  F.birds.forEach((b,i)=>{const x=64+(i%4)*98,y=56+Math.floor(i/4)*80,bob=Math.sin(F.t*.06+i)*1.2;
     const fade=F.phase==='feed'&&!b.ok?Math.max(.25,1-el/1100):1;finchDraw(c,x,y+bob,b.b,fade,F.phase==='feed'&&el<1900?F.food:null,b.ok);
     if(F.phase==='feed'&&el>=1900)emoji(c,b.ok?'🥚🥚':'💤',x+4,y+30,b.ok?16:14);});
   // גרף: עובי המקור הממוצע בכל דור
@@ -1641,9 +1670,9 @@ $('bWait').onclick=()=>{const a=bAlive();a.forEach(c=>{if(B.cells.filter(x=>x.al
   bactUI();};
 $('bReset').onclick=()=>{bactStart();beep(500,.08,'sine',.05);};
 function drawBact(){B.t++;const c=bctx;c.clearRect(0,0,BW,BHH);
-  c.fillStyle='#f3efd9';c.beginPath();c.arc(BCX,BCY,BR,0,PI2);c.fill();c.strokeStyle='#b8b39a';c.lineWidth=5;c.stroke();c.strokeStyle='rgba(255,255,255,.6)';c.lineWidth=3;c.beginPath();c.arc(BCX,BCY,BR-8,-2.4,-1.2);c.stroke();
+  c.save();c.shadowColor='rgba(60,50,30,.25)';c.shadowBlur=14;c.shadowOffsetY=5;let ag=c.createRadialGradient(BCX-30,BCY-40,10,BCX,BCY,BR);ag.addColorStop(0,'#fbf6df');ag.addColorStop(1,'#e9dfb8');c.fillStyle=ag;c.beginPath();c.arc(BCX,BCY,BR,0,PI2);c.fill();c.restore();c.strokeStyle='rgba(150,160,170,.75)';c.lineWidth=6;c.beginPath();c.arc(BCX,BCY,BR,0,PI2);c.stroke();c.strokeStyle='rgba(255,255,255,.85)';c.lineWidth=2;c.beginPath();c.arc(BCX,BCY,BR+1,0,PI2);c.stroke();c.strokeStyle='rgba(255,255,255,.7)';c.lineWidth=4;c.lineCap='round';c.beginPath();c.arc(BCX,BCY,BR-9,-2.5,-1.6);c.stroke();c.lineCap='butt';
   B.cells.forEach(b=>{if(!b.alive){b.die=Math.max(0,b.die-.03);if(!b.die)return;}const g=hexRgb('#3fae6a'),p=hexRgb('#8e44ad'),col=`rgb(${g.map((v,i)=>Math.round(lerp(v,p[i],b.r))).join(',')})`;
-    c.save();c.translate(b.x,b.y);c.rotate(b.ang+Math.sin(B.t*.03+b.x)*.1);c.globalAlpha=b.alive?1:b.die*.6;c.fillStyle=col;rr(c,-8,-3.5,16,7,3.5);c.fill();c.restore();c.globalAlpha=1;});
+    c.save();c.translate(b.x,b.y);c.rotate(b.ang+Math.sin(B.t*.03+b.x)*.1);c.globalAlpha=b.alive?1:b.die*.6;c.strokeStyle=col;c.lineWidth=1;c.beginPath();c.moveTo(-8,0);for(let k=1;k<=6;k++)c.lineTo(-8-k*1.6,Math.sin(B.t*.2+k+b.x)*1.6);c.stroke();c.fillStyle=col;rr(c,-8,-3.6,16,7.2,3.6);c.fill();c.strokeStyle='rgba(0,0,0,.18)';c.lineWidth=.8;c.stroke();c.fillStyle='rgba(255,255,255,.35)';rr(c,-5,-1.8,10,1.6,.8);c.fill();c.restore();c.globalAlpha=1;});
   // גרף עמודות: כמה רגישים וכמה עמידים אחרי כל צעד
   const y1=BHH-14,Hm=70,bw=Math.min(24,(BW-80)/12-4);B.hist.forEach(([w,r],i)=>{const x=46+i*(bw+4),hw=w/BMAX*Hm,hr=r/BMAX*Hm;c.fillStyle='#3fae6a';c.fillRect(x,y1-hw,bw,hw);c.fillStyle='#8e44ad';c.fillRect(x,y1-hw-hr-(hr&&hw?2:0),bw,hr);});
   c.fillStyle='#3fae6a';c.fillRect(BW-26,BHH-62,12,12);text(c,'רגישים',BW-58,BHH-56,12,C.ink,700);c.fillStyle='#8e44ad';c.fillRect(BW-26,BHH-42,12,12);text(c,'עמידים',BW-58,BHH-36,12,C.ink,700);}
