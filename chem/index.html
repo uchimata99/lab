@@ -1764,15 +1764,18 @@ document.querySelectorAll('nav button').forEach(b=>b.addEventListener('click',()
   if(!seen[active])openLesson(active,0);else{stopSpeak();mode='game';setView();}
 }));
 if(!seen.atom)openLesson('atom',0);else{mode='game';setView();}
+// כל ציור רץ בנפרד: אם אחד נכשל, השאר ממשיכים, והלולאה לא נעצרת
+function safe(f){try{f();}catch(e){if(!safe.seen){safe.seen=1;console.error('draw error',e);}}}
 function loop(){
-  if(mode==='lesson'){drawLesson();}
-  else if(active==='atom'){updAtom();drawAtom();}
-  else if(active==='mol'){updMol();drawMol();}
-  else if(active==='acid'){updAcid();drawAcid();drawTit();}
-  else if(active==='part'){drawPart();}
-  else if(active==='evo'){drawEvo();drawFinch();drawBact();}
-  else{updHeat();drawHeat();}
-  fxStep();requestAnimationFrame(loop);
+  requestAnimationFrame(loop);
+  if(mode==='lesson'){safe(drawLesson);}
+  else if(active==='atom'){safe(()=>{updAtom();drawAtom();});}
+  else if(active==='mol'){safe(()=>{updMol();drawMol();});}
+  else if(active==='acid'){safe(()=>{updAcid();drawAcid();});safe(drawTit);}
+  else if(active==='part'){safe(drawPart);}
+  else if(active==='evo'){safe(drawEvo);safe(drawFinch);safe(drawBact);}
+  else{safe(()=>{updHeat();drawHeat();});}
+  safe(fxStep);
 }
 if(document.fonts&&document.fonts.ready)document.fonts.ready.then(()=>{});
 loop();
